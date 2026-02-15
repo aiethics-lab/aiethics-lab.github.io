@@ -52,12 +52,20 @@
 </head>
 
 <body
-    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white">
-    <aside
-        class="w-64 flex-shrink-0 fixed h-full z-20 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col">
-        <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
-            <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
-            <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
+    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white overflow-x-hidden">
+    <!-- Mobile Overlay -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity opacity-0"></div>
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0">
+        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
+            <a href="../index.html" class="flex items-center hover:opacity-80 transition-opacity">
+                <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
+                <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
+            </a>
+            <button id="closeSidebar"
+                class="md:hidden text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                <span class="material-icons-outlined">close</span>
+            </button>
         </div>
         <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
             <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group"
@@ -99,25 +107,33 @@
                 Detector</a>
         </nav>
         <div class="border-t border-slate-200 dark:border-slate-800 p-4">
-            <p class="text-[10px] text-slate-400 mb-2">© 2026 <a href="https://hamedyaghoobian.com" class="text-primary hover:underline">Hamed Yaghoobian</a></p>
+            <p class="text-[10px] text-slate-400 mb-2">© 2026 <a href="https://hamedyaghoobian.com"
+                    class="text-primary hover:underline">Hamed Yaghoobian</a></p>
             <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Version
-                    2.1.0</span><a class="hover:text-primary" href="#">Legal</a></div>
+                    2.1.0</span><a class="hover:text-primary" href="../legal.html">Legal</a></div>
         </div>
     </aside>
 
-    <main class="flex-1 ml-64 p-8 overflow-y-auto h-screen">
-        <header class="flex justify-between items-center mb-6">
-            <div>
-                <div class="flex items-center mb-1">
-                    <a href="../index.html" class="text-slate-400 hover:text-primary text-sm mr-2">Toolkit</a>
-                    <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
-                    <span class="text-primary text-sm ml-2">Privacy Lab</span>
+    <main class="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto h-screen flex flex-col">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 md:gap-0">
+            <div class="flex items-center w-full md:w-auto justify-between">
+                <div>
+                    <div class="flex items-center mb-1">
+                        <a href="../index.html" class="text-slate-400 hover:text-primary text-sm mr-2">Toolkit</a>
+                        <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
+                        <span class="text-primary text-sm ml-2">Privacy Lab</span>
+                    </div>
+                    <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Privacy & Anonymization Lab</h1>
+                    <p class="text-slate-500 dark:text-slate-400 mt-1">Explore PII detection, data anonymization
+                        techniques,
+                        and differential privacy.</p>
                 </div>
-                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Privacy & Anonymization Lab</h1>
-                <p class="text-slate-500 dark:text-slate-400 mt-1">Explore PII detection, data anonymization techniques,
-                    and differential privacy.</p>
+                <!-- Mobile Menu Button -->
+                <button id="openSidebar" class="md:hidden p-2 text-slate-500 hover:text-primary transition-colors">
+                    <span class="material-icons-outlined text-2xl">menu</span>
+                </button>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
+            <label class="relative inline-flex items-center cursor-pointer self-end md:self-auto">
                 <input type="checkbox" id="themeToggle" class="sr-only peer" checked />
                 <div
                     class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
@@ -315,6 +331,14 @@ Thanks, John</textarea>
                 </div>
             </div>
         </div>
+        <!-- Disclaimer Footer -->
+        <footer class="mt-auto py-6 border-t border-slate-200 dark:border-slate-800">
+            <div class="text-center text-xs text-slate-400 dark:text-slate-500 px-4">
+                <p>AI Ethics Toolkit &copy; 2026 Hamed Yaghoobian. Developed for the Computer Science Program at
+                    Muhlenberg College (Spring 2027). Feedback: <a href="mailto:hamedyaghoobian@muhlenberg.edu"
+                        class="hover:text-primary transition-colors">hamedyaghoobian@muhlenberg.edu</a></p>
+            </div>
+        </footer>
     </main>
 
     <script>
@@ -643,6 +667,30 @@ Thanks, John</textarea>
         }
 
         renderOriginalData();
+    </script>
+    <script>
+        // ==================== MOBILE MENU ====================
+        const sidebar = document.getElementById('sidebar');
+        const openSidebarBtn = document.getElementById('openSidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+
+        function toggleSidebar() {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+                mobileOverlay.classList.remove('hidden');
+                setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                mobileOverlay.classList.add('opacity-0');
+                setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
+            }
+        }
+
+        openSidebarBtn?.addEventListener('click', toggleSidebar);
+        closeSidebarBtn?.addEventListener('click', toggleSidebar);
+        mobileOverlay?.addEventListener('click', toggleSidebar);
     </script>
 </body>
 
