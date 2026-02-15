@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>AI Ethics Toolkit</title>
+    <meta name="description" content="An interactive toolkit for exploring AI ethics concepts including bias detection, model explainability, adversarial robustness, and more."/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-hover": "#0f6bd1",
+                        "primary-light": "#4da3f5",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#182430",
+                        "surface-dark-lighter": "#212e3b",
+                        "danger": "#ef4444",
+                        "success": "#22c55e",
+                        "warning": "#f59e0b",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #101922; }
+        ::-webkit-scrollbar-thumb { background: #2d3f50; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #137fec; }
+        .light ::-webkit-scrollbar-track { background: #f1f5f9; }
+        .light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white">
+    <!-- Sidebar -->
+    <aside class="w-64 flex-shrink-0 fixed h-full z-20 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
+            <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
+            <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a class="flex items-center px-3 py-2.5 rounded-lg bg-primary/10 text-primary dark:text-primary font-medium group" href="index.html">
+                <span class="material-icons-outlined mr-3 text-2xl group-hover:scale-110 transition-transform">grid_view</span>
+                Toolkit Overview
+            </a>
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
+            </div>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm" href="tools/word-embeddings.html">
+                <span class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">scatter_plot</span>
+                Word Embeddings
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm" href="tools/explainability-lab.html">
+                <span class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">visibility</span>
+                Explainability Lab
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm" href="tools/bias-auditor.html">
+                <span class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">saved_search</span>
+                Bias Auditor
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm" href="tools/adversarial-sandbox.html">
+                <span class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">security</span>
+                Adversarial Sandbox
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm" href="tools/filter-bubble.html">
+                <span class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">bubble_chart</span>
+                Filter Bubble Sim
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm" href="tools/privacy-lab.html">
+                <span class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">vpn_key</span>
+                Privacy Lab
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm" href="tools/value-alignment.html">
+                <span class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">balance</span>
+                Value Alignment
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm" href="tools/proxy-detector.html">
+                <span class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">find_replace</span>
+                Proxy Detector
+            </a>
+        </nav>
+        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
+            <p class="text-[10px] text-slate-400 mb-2">© 2025 <a href="https://hamedyaghoobian.com" class="text-primary hover:underline" target="_blank">Hamed Yaghoobian</a></p>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>Version 2.1.0</span>
+                <a class="hover:text-primary transition-colors" href="#">Legal</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-8 overflow-y-auto h-screen">
+        <header class="flex justify-between items-end mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Toolkit Overview</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-2">Select a tool to begin your analysis.</p>
+            </div>
+            <div class="flex space-x-3 items-center">
+                <!-- Theme Toggle -->
+                <div class="flex items-center mr-2">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="themeToggle" class="sr-only peer" checked/>
+                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        <span class="ml-2 text-sm text-slate-500 dark:text-slate-400">
+                            <span class="material-icons-outlined text-sm align-middle">dark_mode</span>
+                        </span>
+                    </label>
+                </div>
+                <button class="flex items-center justify-center px-4 py-2 rounded-lg bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-primary hover:border-primary transition-all text-sm font-medium">
+                    <span class="material-icons-outlined mr-2 text-lg">description</span>
+                    User Guide
+                </button>
+                <button class="flex items-center justify-center w-10 h-10 rounded-lg bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-primary hover:border-primary transition-all">
+                    <span class="material-icons-outlined text-xl">settings</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Featured Tool Banner -->
+        <section class="mb-10">
+            <div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-surface-dark to-surface-dark-lighter dark:from-surface-dark dark:to-[#1e2e3e] border border-primary/20 shadow-lg shadow-primary/5 p-1">
+                <div class="absolute top-0 right-0 -mt-16 -mr-16 w-64 h-64 rounded-full bg-primary/5 blur-3xl"></div>
+                <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 rounded-full bg-primary/10 blur-2xl"></div>
+                <div class="relative flex flex-col md:flex-row items-center justify-between p-6 md:p-8">
+                    <div class="mb-6 md:mb-0 md:mr-8 flex-1">
+                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary mb-3 border border-primary/20">
+                            <span class="material-icons-outlined text-sm mr-1">star</span>
+                            Featured Tool
+                        </div>
+                        <h2 class="text-2xl font-bold text-white mb-2">Model Explainability Lab</h2>
+                        <p class="text-slate-400 text-sm md:text-base max-w-2xl mb-4">
+                            Demystify complex AI decisions. Use state-of-the-art interpretability techniques like SHAP and LIME to visualize feature importance and understand model behavior.
+                        </p>
+                        <div class="flex items-center space-x-4 text-sm text-slate-400">
+                            <div class="flex items-center">
+                                <span class="material-icons-outlined mr-1.5 text-lg">science</span>
+                                Interactive Lab
+                            </div>
+                            <div class="flex items-center">
+                                <span class="material-icons-outlined mr-1.5 text-lg">visibility</span>
+                                Explainability
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0 flex flex-col items-center gap-3">
+                        <a href="tools/explainability-lab.html" class="bg-primary hover:bg-primary-hover text-white font-medium py-3 px-6 rounded-lg shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center">
+                            Launch Tool
+                            <span class="material-icons-outlined ml-2 text-lg">launch</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search and Filter -->
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white">All Tools</h3>
+            <div class="flex space-x-2">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="material-icons-outlined text-slate-400">search</span>
+                    </span>
+                    <input id="toolSearch" class="pl-10 pr-4 py-1.5 text-sm rounded-md bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 focus:ring-primary focus:border-primary w-64" placeholder="Search tools..." type="text"/>
+                </div>
+                <select id="categoryFilter" class="pl-3 pr-8 py-1.5 text-sm rounded-md bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 focus:ring-primary focus:border-primary">
+                    <option value="all">All Categories</option>
+                    <option value="word-spaces">Word Spaces</option>
+                    <option value="explainability">Explainability</option>
+                    <option value="fairness">Fairness Lab</option>
+                    <option value="privacy">Privacy</option>
+                    <option value="safety">Safety</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tools Grid -->
+        <div id="toolsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-8">
+        </div>
+    </main>
+
+    <script>
+    // ==================== THEME TOGGLE ====================
+    const themeToggle = document.getElementById('themeToggle');
+    function setTheme(dark) {
+        if (dark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+        }
+        localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light');
+    }
+    // Initialize theme
+    const savedTheme = localStorage.getItem('ethicsToolkitTheme');
+    if (savedTheme === 'light') {
+        setTheme(false);
+        themeToggle.checked = false;
+    } else {
+        setTheme(true);
+        themeToggle.checked = true;
+    }
+    themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
+
+    // ==================== TOOLS DATA ====================
+    const tools = [
+        {
+            id: 'word-embeddings',
+            name: 'Word Embeddings Workbench',
+            description: 'Visualize semantic relationships and explore gender biases in vector space using pre-trained models.',
+            icon: 'scatter_plot',
+            color: 'blue',
+            category: 'word-spaces',
+            href: 'tools/word-embeddings.html'
+        },
+        {
+            id: 'explainability-lab',
+            name: 'Model Explainability Lab',
+            description: 'Use SHAP and LIME to interpret predictions and visualize decision boundaries on image data.',
+            icon: 'visibility',
+            color: 'purple',
+            category: 'explainability',
+            href: 'tools/explainability-lab.html'
+        },
+        {
+            id: 'bias-auditor',
+            name: 'Dataset Bias Auditor',
+            description: 'Scan datasets for representation imbalances and historical bias patterns before training starts.',
+            icon: 'saved_search',
+            color: 'orange',
+            category: 'fairness',
+            href: 'tools/bias-auditor.html'
+        },
+        {
+            id: 'adversarial-sandbox',
+            name: 'Adversarial Robustness Sandbox',
+            description: 'Test model resilience by generating adversarial attacks and evaluating failure modes.',
+            icon: 'security',
+            color: 'red',
+            category: 'safety',
+            href: 'tools/adversarial-sandbox.html'
+        },
+        {
+            id: 'filter-bubble',
+            name: 'Filter Bubble Simulator',
+            description: 'Observe how recommendation algorithms create echo chambers through feedback loops.',
+            icon: 'bubble_chart',
+            color: 'teal',
+            category: 'fairness',
+            href: 'tools/filter-bubble.html'
+        },
+        {
+            id: 'privacy-lab',
+            name: 'Privacy & Anonymization Lab',
+            description: 'Apply differential privacy techniques and k-anonymity to protect sensitive user data.',
+            icon: 'vpn_key',
+            color: 'indigo',
+            category: 'privacy',
+            href: 'tools/privacy-lab.html'
+        },
+        {
+            id: 'value-alignment',
+            name: 'Value Alignment Tool',
+            description: 'Experiment with reward functions to align AI agents with human values in complex environments.',
+            icon: 'balance',
+            color: 'pink',
+            category: 'safety',
+            href: 'tools/value-alignment.html'
+        },
+        {
+            id: 'proxy-detector',
+            name: 'Proxy Variable Detector',
+            description: 'Identify variables that correlate with protected attributes and cause indirect discrimination.',
+            icon: 'find_replace',
+            color: 'cyan',
+            category: 'fairness',
+            href: 'tools/proxy-detector.html'
+        }
+    ];
+
+    // ==================== RENDER TOOLS ====================
+    function renderTools(filteredTools) {
+        const grid = document.getElementById('toolsGrid');
+        grid.innerHTML = filteredTools.map(tool => `
+            <div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5 hover:border-primary/40 dark:hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/5 flex flex-col h-full" data-category="${tool.category}">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 rounded-lg bg-${tool.color}-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <span class="material-icons-outlined text-${tool.color}-500 text-2xl">${tool.icon}</span>
+                    </div>
+                </div>
+                <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-2 leading-tight">${tool.name}</h4>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 flex-grow">${tool.description}</p>
+                <div class="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                    <a href="${tool.href}" class="w-full py-2 bg-slate-50 dark:bg-slate-800 hover:bg-primary hover:text-white dark:hover:bg-primary rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors flex items-center justify-center">
+                        Launch
+                        <span class="material-icons-outlined ml-2 text-base">arrow_forward</span>
+                    </a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    renderTools(tools);
+
+    // ==================== SEARCH & FILTER ====================
+    const searchInput = document.getElementById('toolSearch');
+    const categoryFilter = document.getElementById('categoryFilter');
+
+    function filterTools() {
+        const query = searchInput.value.toLowerCase();
+        const category = categoryFilter.value;
+        const filtered = tools.filter(t => {
+            const matchesSearch = t.name.toLowerCase().includes(query) || t.description.toLowerCase().includes(query);
+            const matchesCategory = category === 'all' || t.category === category;
+            return matchesSearch && matchesCategory;
+        });
+        renderTools(filtered);
+    }
+
+    searchInput.addEventListener('input', filterTools);
+    categoryFilter.addEventListener('change', filterTools);
+    </script>
+</body>
+</html>

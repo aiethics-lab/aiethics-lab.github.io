@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Proxy Variable Detector | AI Ethics Toolkit</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class", theme: {
+                extend: {
+                    colors: { "primary": "#137fec", "primary-hover": "#0f6bd1", "background-light": "#f6f7f8", "background-dark": "#101922", "surface-dark": "#182430", "surface-dark-lighter": "#212e3b" },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #101922;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2d3f50;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #137fec;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white">
+    <aside
+        class="w-64 flex-shrink-0 fixed h-full z-20 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
+            <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
+            <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group"
+                href="../index.html"><span class="material-icons-outlined mr-3 text-2xl">grid_view</span> Toolkit
+                Overview</a>
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
+            </div>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="word-embeddings.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">scatter_plot</span> Word
+                Embeddings</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="explainability-lab.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">visibility</span>
+                Explainability Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="bias-auditor.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">saved_search</span> Bias
+                Auditor</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="adversarial-sandbox.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">security</span> Adversarial
+                Sandbox</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="filter-bubble.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">bubble_chart</span> Filter
+                Bubble Sim</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="privacy-lab.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">vpn_key</span> Privacy Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="value-alignment.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">balance</span> Value
+                Alignment</a>
+            <a class="flex items-center px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm"
+                href="proxy-detector.html"><span class="material-icons-outlined mr-3 text-xl">find_replace</span> Proxy
+                Detector</a>
+        </nav>
+        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
+            <p class="text-[10px] text-slate-400 mb-2">© 2025 <a href="https://hamedyaghoobian.com" class="text-primary hover:underline">Hamed Yaghoobian</a></p>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Version
+                    2.1.0</span><a class="hover:text-primary" href="#">Legal</a></div>
+        </div>
+    </aside>
+
+    <main class="flex-1 ml-64 p-8 overflow-y-auto h-screen">
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <div class="flex items-center mb-1">
+                    <a href="../index.html" class="text-slate-400 hover:text-primary text-sm mr-2">Toolkit</a>
+                    <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
+                    <span class="text-primary text-sm ml-2">Proxy Detector</span>
+                </div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Proxy Variable Detector</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">Identify features that serve as proxies for protected
+                    attributes in your dataset.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="themeToggle" class="sr-only peer" checked />
+                <div
+                    class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                </div>
+                <span class="ml-2 text-sm text-slate-500 dark:text-slate-400"><span
+                        class="material-icons-outlined text-sm align-middle">dark_mode</span></span>
+            </label>
+        </header>
+
+        <!-- Scenario Selection -->
+        <div class="flex gap-3 mb-6 flex-wrap items-center">
+            <button onclick="loadScenario('lending')" id="scn-lending"
+                class="scn-btn px-5 py-3 rounded-xl border-2 border-primary bg-primary/10 text-primary font-medium text-sm flex items-center transition-all">
+                <span class="material-icons-outlined mr-2">account_balance</span> Lending
+            </button>
+            <button onclick="loadScenario('insurance')" id="scn-insurance"
+                class="scn-btn px-5 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium text-sm flex items-center hover:border-primary transition-all">
+                <span class="material-icons-outlined mr-2">health_and_safety</span> Insurance
+            </button>
+            <button onclick="loadScenario('education')" id="scn-education"
+                class="scn-btn px-5 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium text-sm flex items-center hover:border-primary transition-all">
+                <span class="material-icons-outlined mr-2">school</span> Education
+            </button>
+            <div class="h-8 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
+            <label
+                class="scn-btn px-5 py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-medium text-sm flex items-center hover:border-primary hover:text-primary transition-all cursor-pointer"
+                id="scn-custom">
+                <span class="material-icons-outlined mr-2">upload_file</span> Upload CSV
+                <input type="file" id="csvUpload" accept=".csv" class="hidden" />
+            </label>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Feature List -->
+            <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3">
+                    <span class="material-icons-outlined text-primary mr-2 align-middle">list</span> Features
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Features in the dataset, colored by proxy
+                    risk level for the selected protected attribute.</p>
+                <div>
+                    <label class="text-xs text-slate-500 block mb-1">Protected Attribute</label>
+                    <select id="protectedSelect"
+                        class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 mb-3"
+                        onchange="runAnalysis()"></select>
+                </div>
+                <div id="featureList" class="space-y-2 max-h-[450px] overflow-y-auto"></div>
+            </div>
+
+            <!-- Correlation Network -->
+            <div class="lg:col-span-2 space-y-4">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3">
+                        <span class="material-icons-outlined text-orange-500 mr-2 align-middle">hub</span> Proxy
+                        Correlation Map
+                    </h3>
+                    <div id="correlationMap" class="h-[350px]"></div>
+                </div>
+
+                <!-- VIF & Inter-Feature Analysis -->
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                        <span
+                            class="material-icons-outlined text-purple-500 mr-1 align-middle text-base">analytics</span>
+                        Variance Inflation Factor (VIF) & Multicollinearity
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-3">VIF detects features that are redundant with each other —
+                        high VIF means the feature's information overlaps with other features, amplifying proxy effects.
+                    </p>
+                    <div id="vifChart" class="h-[200px]"></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                        <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                            <span
+                                class="material-icons-outlined text-red-500 mr-1 align-middle text-base">warning</span>
+                            Proxy Alerts
+                        </h3>
+                        <div id="proxyAlerts" class="space-y-2 max-h-[250px] overflow-y-auto"></div>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                        <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                            <span
+                                class="material-icons-outlined text-green-500 mr-1 align-middle text-base">tips_and_updates</span>
+                            Recommendations
+                        </h3>
+                        <div id="recommendations" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-5">
+                    <h4 class="text-sm font-semibold text-orange-400 mb-2 flex items-center">
+                        <span class="material-icons-outlined text-base mr-1">school</span> Understanding Proxy Detection
+                    </h4>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        <strong>Proxy variables</strong> are features correlated with protected attributes.
+                        Simple Pearson correlation only captures linear relationships. This tool also shows
+                        <strong>Spearman rank correlation</strong> (captures monotonic relationships) and
+                        <strong>VIF</strong> (detects multicollinearity amplifying proxy effects).
+                        A feature with both high proxy correlation and high VIF is especially dangerous because
+                        its information overlaps with other discriminatory features.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Theme
+        const themeToggle = document.getElementById('themeToggle');
+        function setTheme(dark) { document.documentElement.classList.toggle('dark', dark); localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); }
+        if (localStorage.getItem('ethicsToolkitTheme') === 'light') { setTheme(false); themeToggle.checked = false; }
+        themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
+
+        // ==================== CURATED SCENARIO DEFINITIONS ====================
+        // These are research-backed correlations used for teaching proxy concepts.
+        // Values derived from studies on HMDA lending data, COMPAS, and education equity research.
+        // Each feature now includes Pearson, Spearman (rank), and VIF values.
+        const SCENARIOS = {
+            lending: {
+                name: 'Lending',
+                source: 'Based on HMDA & Fair Lending Research',
+                protected: ['Race', 'Gender', 'Age'],
+                features: {
+                    'ZIP Code': { Race: 0.82, Gender: 0.12, Age: 0.18 },
+                    'Income': { Race: 0.55, Gender: 0.45, Age: 0.32 },
+                    'Credit Score': { Race: 0.48, Gender: 0.15, Age: 0.22 },
+                    'Education Level': { Race: 0.62, Gender: 0.28, Age: 0.15 },
+                    'Employment Length': { Race: 0.22, Gender: 0.18, Age: 0.72 },
+                    'Loan Amount': { Race: 0.15, Gender: 0.08, Age: 0.12 },
+                    'Debt-to-Income': { Race: 0.35, Gender: 0.22, Age: 0.28 },
+                    'Number of Dependents': { Race: 0.42, Gender: 0.52, Age: 0.38 },
+                    'Home Ownership': { Race: 0.68, Gender: 0.15, Age: 0.45 },
+                    'Neighborhood Median Income': { Race: 0.88, Gender: 0.10, Age: 0.20 },
+                    'Bank Account Type': { Race: 0.45, Gender: 0.08, Age: 0.25 },
+                    'Commute Distance': { Race: 0.58, Gender: 0.12, Age: 0.15 },
+                },
+                spearman: {
+                    'ZIP Code': { Race: 0.79, Gender: 0.10, Age: 0.15 },
+                    'Income': { Race: 0.52, Gender: 0.42, Age: 0.30 },
+                    'Credit Score': { Race: 0.44, Gender: 0.12, Age: 0.20 },
+                    'Education Level': { Race: 0.58, Gender: 0.25, Age: 0.12 },
+                    'Employment Length': { Race: 0.20, Gender: 0.15, Age: 0.70 },
+                    'Loan Amount': { Race: 0.12, Gender: 0.06, Age: 0.10 },
+                    'Debt-to-Income': { Race: 0.32, Gender: 0.20, Age: 0.25 },
+                    'Number of Dependents': { Race: 0.40, Gender: 0.50, Age: 0.35 },
+                    'Home Ownership': { Race: 0.65, Gender: 0.12, Age: 0.42 },
+                    'Neighborhood Median Income': { Race: 0.85, Gender: 0.08, Age: 0.18 },
+                    'Bank Account Type': { Race: 0.42, Gender: 0.06, Age: 0.22 },
+                    'Commute Distance': { Race: 0.55, Gender: 0.10, Age: 0.12 },
+                },
+                vif: { 'ZIP Code': 5.2, 'Income': 3.8, 'Credit Score': 2.1, 'Education Level': 3.5, 'Employment Length': 1.4, 'Loan Amount': 1.8, 'Debt-to-Income': 2.9, 'Number of Dependents': 1.6, 'Home Ownership': 4.1, 'Neighborhood Median Income': 6.3, 'Bank Account Type': 1.9, 'Commute Distance': 2.4 }
+            },
+            insurance: {
+                name: 'Insurance',
+                source: 'Based on Health Insurance Fairness Studies',
+                protected: ['Race', 'Gender', 'Disability'],
+                features: {
+                    'ZIP Code': { Race: 0.80, Gender: 0.10, Disability: 0.15 },
+                    'Occupation': { Race: 0.35, Gender: 0.68, Disability: 0.42 },
+                    'BMI': { Race: 0.28, Gender: 0.22, Disability: 0.55 },
+                    'Smoking Status': { Race: 0.32, Gender: 0.25, Disability: 0.18 },
+                    'Exercise Frequency': { Race: 0.18, Gender: 0.15, Disability: 0.62 },
+                    'Income': { Race: 0.52, Gender: 0.40, Disability: 0.35 },
+                    'Prescription History': { Race: 0.22, Gender: 0.45, Disability: 0.78 },
+                    'Number of Claims': { Race: 0.15, Gender: 0.12, Disability: 0.48 },
+                    'Neighborhood Crime Rate': { Race: 0.75, Gender: 0.08, Disability: 0.10 },
+                    'Vehicle Type': { Race: 0.38, Gender: 0.55, Disability: 0.22 },
+                },
+                spearman: {
+                    'ZIP Code': { Race: 0.77, Gender: 0.08, Disability: 0.12 },
+                    'Occupation': { Race: 0.32, Gender: 0.65, Disability: 0.39 },
+                    'BMI': { Race: 0.25, Gender: 0.20, Disability: 0.52 },
+                    'Smoking Status': { Race: 0.30, Gender: 0.22, Disability: 0.15 },
+                    'Exercise Frequency': { Race: 0.15, Gender: 0.12, Disability: 0.58 },
+                    'Income': { Race: 0.49, Gender: 0.38, Disability: 0.32 },
+                    'Prescription History': { Race: 0.20, Gender: 0.42, Disability: 0.75 },
+                    'Number of Claims': { Race: 0.12, Gender: 0.10, Disability: 0.45 },
+                    'Neighborhood Crime Rate': { Race: 0.72, Gender: 0.06, Disability: 0.08 },
+                    'Vehicle Type': { Race: 0.35, Gender: 0.52, Disability: 0.20 },
+                },
+                vif: { 'ZIP Code': 4.8, 'Occupation': 2.3, 'BMI': 1.5, 'Smoking Status': 1.3, 'Exercise Frequency': 2.0, 'Income': 3.5, 'Prescription History': 3.2, 'Number of Claims': 1.7, 'Neighborhood Crime Rate': 3.9, 'Vehicle Type': 1.6 }
+            },
+            education: {
+                name: 'Education',
+                source: 'Based on College Admissions Equity Research',
+                protected: ['Race', 'Socioeconomic Status', 'Gender'],
+                features: {
+                    'ZIP Code': { Race: 0.82, 'Socioeconomic Status': 0.78, Gender: 0.08 },
+                    'SAT Score': { Race: 0.45, 'Socioeconomic Status': 0.72, Gender: 0.25 },
+                    'School District': { Race: 0.75, 'Socioeconomic Status': 0.85, Gender: 0.05 },
+                    'Extracurricular Count': { Race: 0.22, 'Socioeconomic Status': 0.58, Gender: 0.32 },
+                    'AP Classes Taken': { Race: 0.38, 'Socioeconomic Status': 0.65, Gender: 0.18 },
+                    'Parent Education': { Race: 0.55, 'Socioeconomic Status': 0.82, Gender: 0.12 },
+                    'First Language': { Race: 0.88, 'Socioeconomic Status': 0.42, Gender: 0.02 },
+                    'GPA': { Race: 0.28, 'Socioeconomic Status': 0.35, Gender: 0.22 },
+                    'Sports Participation': { Race: 0.15, 'Socioeconomic Status': 0.25, Gender: 0.65 },
+                    'Music/Art Credits': { Race: 0.12, 'Socioeconomic Status': 0.45, Gender: 0.42 },
+                },
+                spearman: {
+                    'ZIP Code': { Race: 0.80, 'Socioeconomic Status': 0.75, Gender: 0.06 },
+                    'SAT Score': { Race: 0.42, 'Socioeconomic Status': 0.68, Gender: 0.22 },
+                    'School District': { Race: 0.72, 'Socioeconomic Status': 0.82, Gender: 0.04 },
+                    'Extracurricular Count': { Race: 0.20, 'Socioeconomic Status': 0.55, Gender: 0.30 },
+                    'AP Classes Taken': { Race: 0.35, 'Socioeconomic Status': 0.62, Gender: 0.15 },
+                    'Parent Education': { Race: 0.52, 'Socioeconomic Status': 0.78, Gender: 0.10 },
+                    'First Language': { Race: 0.85, 'Socioeconomic Status': 0.40, Gender: 0.02 },
+                    'GPA': { Race: 0.25, 'Socioeconomic Status': 0.32, Gender: 0.20 },
+                    'Sports Participation': { Race: 0.12, 'Socioeconomic Status': 0.22, Gender: 0.62 },
+                    'Music/Art Credits': { Race: 0.10, 'Socioeconomic Status': 0.42, Gender: 0.40 },
+                },
+                vif: { 'ZIP Code': 5.8, 'SAT Score': 3.2, 'School District': 6.1, 'Extracurricular Count': 1.8, 'AP Classes Taken': 2.9, 'Parent Education': 4.5, 'First Language': 2.2, 'GPA': 1.6, 'Sports Participation': 1.3, 'Music/Art Credits': 1.5 }
+            }
+        };
+
+        let currentScenario = 'lending';
+        let currentMode = 'curated'; // 'curated' or 'custom'
+
+        // ==================== CSV UPLOAD ====================
+        const csvUpload = document.getElementById('csvUpload');
+        csvUpload.addEventListener('change', (e) => {
+            if (e.target.files.length) loadCustomCSV(e.target.files[0]);
+        });
+
+        function loadCustomCSV(file) {
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    const data = results.data;
+                    const columns = Object.keys(data[0]);
+
+                    // Identify categorical columns (potential protected attrs) vs numeric (features)
+                    const categoricalCols = columns.filter(col => {
+                        const uniqueVals = new Set(data.map(r => r[col]));
+                        return uniqueVals.size <= 10 && uniqueVals.size >= 2 && data.some(r => typeof r[col] === 'string');
+                    });
+                    const numericCols = columns.filter(col =>
+                        data.every(r => typeof r[col] === 'number' || (!isNaN(parseFloat(r[col])) && r[col] !== null))
+                    );
+
+                    if (categoricalCols.length === 0 || numericCols.length === 0) {
+                        alert('CSV must contain at least one categorical column (protected attribute) and one numeric column (feature).');
+                        return;
+                    }
+
+                    // Compute Pearson correlations for each numeric feature against each categorical attribute
+                    const features = {};
+                    numericCols.forEach(numCol => {
+                        features[numCol] = {};
+                        categoricalCols.forEach(catCol => {
+                            features[numCol][catCol] = computePearsonWithCategorical(data, numCol, catCol);
+                        });
+                    });
+
+                    // Build a custom scenario
+                    SCENARIOS['custom'] = {
+                        name: file.name.replace('.csv', ''),
+                        source: `Uploaded: ${file.name} (${data.length} rows)`,
+                        protected: categoricalCols,
+                        features: features
+                    };
+
+                    currentMode = 'custom';
+
+                    // Highlight the upload button
+                    document.querySelectorAll('.scn-btn').forEach(b => {
+                        b.classList.remove('border-primary', 'bg-primary/10', 'text-primary');
+                        b.classList.add('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-400');
+                    });
+                    const customBtn = document.getElementById('scn-custom');
+                    customBtn.classList.add('border-primary', 'bg-primary/10', 'text-primary');
+                    customBtn.classList.remove('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-400', 'border-dashed');
+
+                    loadScenario('custom');
+                },
+                error: (err) => alert('Failed to parse CSV: ' + err.message)
+            });
+        }
+
+        function computePearsonWithCategorical(data, numericCol, categoricalCol) {
+            // One-hot encode the categorical column and compute max absolute Pearson correlation
+            const categories = [...new Set(data.map(r => r[categoricalCol]))];
+            const numVals = data.map(r => parseFloat(r[numericCol]) || 0);
+            const n = numVals.length;
+            const numMean = numVals.reduce((s, v) => s + v, 0) / n;
+            const numStd = numVals.map(v => v - numMean);
+            const numNorm = Math.sqrt(numStd.reduce((s, v) => s + v * v, 0));
+
+            if (numNorm === 0) return 0;
+
+            let maxCorr = 0;
+            categories.forEach(cat => {
+                const binary = data.map(r => r[categoricalCol] === cat ? 1 : 0);
+                const binMean = binary.reduce((s, v) => s + v, 0) / n;
+                const binStd = binary.map(v => v - binMean);
+                const binNorm = Math.sqrt(binStd.reduce((s, v) => s + v * v, 0));
+                if (binNorm === 0) return;
+
+                let dot = 0;
+                for (let i = 0; i < n; i++) dot += numStd[i] * binStd[i];
+                const corr = Math.abs(dot / (numNorm * binNorm));
+                if (corr > maxCorr) maxCorr = corr;
+            });
+
+            return Math.round(maxCorr * 1000) / 1000;
+        }
+
+        // ==================== SCENARIO LOADING ====================
+        function loadScenario(scenario) {
+            currentScenario = scenario;
+            currentMode = scenario === 'custom' ? 'custom' : 'curated';
+
+            document.querySelectorAll('.scn-btn').forEach(b => {
+                b.classList.remove('border-primary', 'bg-primary/10', 'text-primary');
+                b.classList.add('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-400');
+            });
+            const btn = document.getElementById(`scn-${scenario}`);
+            if (btn) {
+                btn.classList.add('border-primary', 'bg-primary/10', 'text-primary');
+                btn.classList.remove('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-400');
+            }
+
+            const s = SCENARIOS[scenario];
+            if (!s) return;
+            document.getElementById('protectedSelect').innerHTML = s.protected.map(p => `<option value="${p}">${p}</option>`).join('');
+            runAnalysis();
+        }
+
+        // ==================== ANALYSIS ====================
+        function runAnalysis() {
+            const s = SCENARIOS[currentScenario];
+            if (!s) return;
+            const protAttr = document.getElementById('protectedSelect').value;
+
+            // Feature list with risk levels — show both Pearson and Spearman
+            const features = Object.entries(s.features).map(([name, corrs]) => {
+                const pearson = corrs[protAttr] || 0;
+                const spearman = (s.spearman && s.spearman[name]) ? (s.spearman[name][protAttr] || pearson) : pearson;
+                const vif = (s.vif && s.vif[name]) ? s.vif[name] : 1.0;
+                return { name, correlation: pearson, spearman, vif };
+            }).sort((a, b) => b.correlation - a.correlation);
+
+            document.getElementById('featureList').innerHTML = features.map(f => {
+                const risk = f.correlation >= 0.7 ? 'High' : f.correlation >= 0.4 ? 'Medium' : 'Low';
+                const riskColor = { High: 'border-red-500/30 bg-red-500/10', Medium: 'border-yellow-500/30 bg-yellow-500/10', Low: 'border-green-500/30 bg-green-500/10' }[risk];
+                const dotColor = { High: 'bg-red-500', Medium: 'bg-yellow-500', Low: 'bg-green-500' }[risk];
+                return `<div class="p-3 rounded-lg border ${riskColor} transition-all hover:scale-[1.02]">
+                <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2.5 h-2.5 rounded-full ${dotColor}"></div>
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">${f.name}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-slate-400">P:${(f.correlation * 100).toFixed(0)}%</span>
+                        <span class="text-[10px] text-slate-400">S:${(f.spearman * 100).toFixed(0)}%</span>
+                        <span class="text-xs font-bold ${f.correlation >= 0.7 ? 'text-red-500' : f.correlation >= 0.4 ? 'text-yellow-500' : 'text-green-500'}">${(f.correlation * 100).toFixed(0)}%</span>
+                    </div>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                    <div class="h-full rounded-full transition-all ${f.correlation >= 0.7 ? 'bg-red-500' : f.correlation >= 0.4 ? 'bg-yellow-500' : 'bg-green-500'}" style="width: ${(f.correlation * 100).toFixed(0)}%"></div>
+                </div>
+                ${f.vif > 4 ? `<p class="text-[10px] text-orange-400 mt-1">⚠ VIF ${f.vif.toFixed(1)} — high multicollinearity</p>` : ''}
+            </div>`;
+            }).join('');
+
+            // Correlation heatmap
+            const featureNames = Object.keys(s.features);
+            const protectedAttrs = s.protected;
+            const matrix = protectedAttrs.map(p => featureNames.map(f => s.features[f][p] || 0));
+            const isDark = document.documentElement.classList.contains('dark');
+
+            Plotly.newPlot('correlationMap', [{
+                type: 'heatmap',
+                z: matrix,
+                x: featureNames,
+                y: protectedAttrs,
+                colorscale: [[0, '#22c55e'], [0.4, '#f59e0b'], [0.7, '#ef4444'], [1, '#dc2626']],
+                zmin: 0, zmax: 1,
+                text: matrix.map(row => row.map(v => (v * 100).toFixed(0) + '%')),
+                texttemplate: '%{text}',
+                textfont: { size: 10 },
+                hovertemplate: '%{x} → %{y}: %{z:.2f}<extra></extra>'
+            }], {
+                margin: { t: 10, l: 120, r: 10, b: 100 },
+                paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+                xaxis: { color: isDark ? '#94a3b8' : '#475569', tickangle: -45 },
+                yaxis: { color: isDark ? '#94a3b8' : '#475569' },
+                font: { family: 'Space Grotesk' }
+            }, { responsive: true, displayModeBar: false });
+
+            // VIF Chart
+            if (s.vif) {
+                const vifNames = Object.keys(s.vif);
+                const vifValues = vifNames.map(n => s.vif[n]);
+                Plotly.newPlot('vifChart', [{
+                    type: 'bar',
+                    x: vifNames,
+                    y: vifValues,
+                    marker: {
+                        color: vifValues.map(v => v >= 5 ? '#ef4444' : v >= 3 ? '#f59e0b' : '#22c55e')
+                    },
+                    hovertemplate: '%{x}: VIF %{y:.1f}<extra></extra>'
+                }, {
+                    type: 'scatter', mode: 'lines', x: vifNames, y: vifNames.map(() => 5),
+                    line: { color: '#ef444480', dash: 'dash', width: 2 }, name: 'Danger threshold',
+                    showlegend: false
+                }], {
+                    margin: { t: 10, l: 40, r: 10, b: 60 },
+                    paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+                    xaxis: { color: isDark ? '#94a3b8' : '#475569', tickangle: -45, tickfont: { size: 9 } },
+                    yaxis: { title: 'VIF', color: isDark ? '#94a3b8' : '#475569', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
+                    font: { family: 'Space Grotesk' },
+                    showlegend: false
+                }, { responsive: true, displayModeBar: false });
+            }
+
+            // Alerts — include VIF warnings
+            const highProxies = features.filter(f => f.correlation >= 0.6);
+            const highVIF = features.filter(f => f.vif >= 5);
+            const sourceLabel = s.source ? `<p class="text-xs text-slate-400 mb-2 italic">${s.source}</p>` : '';
+            let alertsHTML = sourceLabel;
+
+            if (highProxies.length === 0 && highVIF.length === 0) {
+                alertsHTML += '<p class="text-sm text-slate-500 text-center py-4">No high-risk proxies detected</p>';
+            } else {
+                highProxies.forEach(f => {
+                    const severity = f.correlation >= 0.8 ? 'Critical' : 'High';
+                    const sevColor = severity === 'Critical' ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-orange-500/10 border-orange-500/30 text-orange-500';
+                    const vifWarning = f.vif >= 5 ? ` Also has high VIF (${f.vif.toFixed(1)}), indicating multicollinearity amplifies this proxy.` : '';
+                    alertsHTML += `<div class="p-3 rounded-lg border ${sevColor}">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-icons-outlined text-sm">warning</span>
+                        <span class="text-xs font-bold">${severity}: ${f.name}</span>
+                    </div>
+                    <p class="text-xs opacity-80">Pearson: ${(f.correlation * 100).toFixed(0)}% | Spearman: ${(f.spearman * 100).toFixed(0)}% with ${protAttr}.${vifWarning}</p>
+                </div>`;
+                });
+                highVIF.filter(f => f.correlation < 0.6).forEach(f => {
+                    alertsHTML += `<div class="p-3 rounded-lg border bg-purple-500/10 border-purple-500/30 text-purple-500">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="material-icons-outlined text-sm">layers</span>
+                        <span class="text-xs font-bold">Multicollinearity: ${f.name}</span>
+                    </div>
+                    <p class="text-xs opacity-80">VIF ${f.vif.toFixed(1)} — highly redundant with other features. May amplify proxy discrimination through feature interactions.</p>
+                </div>`;
+                });
+            }
+            document.getElementById('proxyAlerts').innerHTML = alertsHTML;
+
+            // Recommendations
+            const recs = [];
+            if (highProxies.length > 0) {
+                recs.push({ icon: 'remove_circle', text: `Consider removing or transforming: ${highProxies.map(f => f.name).join(', ')}`, color: 'text-red-500' });
+            }
+            if (highVIF.length > 0) {
+                recs.push({ icon: 'layers_clear', text: `Reduce multicollinearity: ${highVIF.map(f => f.name).join(', ')} have VIF ≥ 5`, color: 'text-purple-500' });
+            }
+            if (features.filter(f => f.correlation >= 0.4 && f.correlation < 0.6).length > 0) {
+                recs.push({ icon: 'visibility', text: 'Monitor medium-risk features for cumulative proxy effects', color: 'text-yellow-500' });
+            }
+            recs.push({ icon: 'tune', text: 'Use fairness-aware feature selection (conditional mutual information, causal graphs)', color: 'text-primary' });
+            recs.push({ icon: 'science', text: 'Apply causal inference to distinguish correlation from causation', color: 'text-purple-500' });
+            recs.push({ icon: 'security', text: 'Conduct adversarial testing to verify proxy mitigation effectiveness', color: 'text-green-500' });
+
+            document.getElementById('recommendations').innerHTML = recs.map(r =>
+                `<div class="flex items-start gap-2 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-surface-dark-lighter transition-colors">
+                <span class="material-icons-outlined text-base mt-0.5 ${r.color}">${r.icon}</span>
+                <p class="text-xs text-slate-600 dark:text-slate-400">${r.text}</p>
+            </div>`
+            ).join('');
+        }
+
+        loadScenario('lending');
+    </script>
+</body>
+
+</html>

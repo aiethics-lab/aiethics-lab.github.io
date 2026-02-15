@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Adversarial Robustness Sandbox | AI Ethics Toolkit</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class", theme: {
+                extend: {
+                    colors: { "primary": "#137fec", "primary-hover": "#0f6bd1", "background-light": "#f6f7f8", "background-dark": "#101922", "surface-dark": "#182430", "surface-dark-lighter": "#212e3b" },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #101922;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2d3f50;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #137fec;
+        }
+
+        canvas {
+            image-rendering: pixelated;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white">
+    <aside
+        class="w-64 flex-shrink-0 fixed h-full z-20 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
+            <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
+            <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group"
+                href="../index.html"><span class="material-icons-outlined mr-3 text-2xl">grid_view</span> Toolkit
+                Overview</a>
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
+            </div>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="word-embeddings.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">scatter_plot</span> Word
+                Embeddings</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="explainability-lab.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">visibility</span>
+                Explainability Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="bias-auditor.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">saved_search</span> Bias
+                Auditor</a>
+            <a class="flex items-center px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm"
+                href="adversarial-sandbox.html"><span class="material-icons-outlined mr-3 text-xl">security</span>
+                Adversarial Sandbox</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="filter-bubble.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">bubble_chart</span> Filter
+                Bubble Sim</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="privacy-lab.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">vpn_key</span> Privacy Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="value-alignment.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">balance</span> Value
+                Alignment</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="proxy-detector.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">find_replace</span> Proxy
+                Detector</a>
+        </nav>
+        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
+            <p class="text-[10px] text-slate-400 mb-2">© 2025 <a href="https://hamedyaghoobian.com" class="text-primary hover:underline">Hamed Yaghoobian</a></p>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Version
+                    2.1.0</span><a class="hover:text-primary" href="#">Legal</a></div>
+        </div>
+    </aside>
+
+    <main class="flex-1 ml-64 p-8 overflow-y-auto h-screen">
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <div class="flex items-center mb-1">
+                    <a href="../index.html" class="text-slate-400 hover:text-primary text-sm mr-2">Toolkit</a>
+                    <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
+                    <span class="text-primary text-sm ml-2">Adversarial Sandbox</span>
+                </div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Adversarial Robustness Sandbox</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">Explore how small pixel perturbations can fool image
+                    classifiers.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="themeToggle" class="sr-only peer" checked />
+                <div
+                    class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                </div>
+                <span class="ml-2 text-sm text-slate-500 dark:text-slate-400"><span
+                        class="material-icons-outlined text-sm align-middle">dark_mode</span></span>
+            </label>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Controls -->
+            <div class="space-y-4">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Image Selection</h3>
+                    <div class="grid grid-cols-3 gap-2 mb-3" id="imageGallery"></div>
+                    <div class="text-center mt-2">
+                        <label
+                            class="cursor-pointer text-xs text-primary hover:text-primary-hover transition-colors font-medium">
+                            <span class="material-icons-outlined text-sm align-middle mr-1">upload</span> Upload Custom
+                            <input type="file" id="imageUpload" accept="image/*" class="hidden" />
+                        </label>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Attack Configuration</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-slate-500 block mb-1">Attack Type</label>
+                            <select id="attackType"
+                                class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 focus:ring-primary focus:border-primary">
+                                <option value="fgsm">FGSM (Fast Gradient Sign)</option>
+                                <option value="pgd">PGD (Projected Gradient Descent)</option>
+                                <option value="gaussian">Gaussian Noise</option>
+                                <option value="salt_pepper">Salt & Pepper</option>
+                                <option value="pixel_swap">Pixel Swap</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500 flex justify-between"><span>Perturbation Strength
+                                    (ε)</span><span id="epsVal">0.10</span></label>
+                            <input type="range" id="epsilon" min="1" max="50" value="10" class="w-full accent-primary"
+                                oninput="document.getElementById('epsVal').textContent=(this.value/100).toFixed(2)">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500 flex justify-between"><span>Iterations</span><span
+                                    id="iterVal">1</span></label>
+                            <input type="range" id="iterations" min="1" max="10" value="1" class="w-full accent-primary"
+                                oninput="document.getElementById('iterVal').textContent=this.value">
+                        </div>
+                    </div>
+                    <button onclick="applyAttack()"
+                        class="w-full mt-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors text-sm flex items-center justify-center">
+                        <span class="material-icons-outlined mr-2 text-base">flash_on</span> Apply Attack
+                    </button>
+                    <button onclick="resetAttack()"
+                        class="w-full mt-2 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-medium rounded-lg transition-colors text-sm flex items-center justify-center">
+                        <span class="material-icons-outlined mr-1 text-base">refresh</span> Reset
+                    </button>
+                </div>
+
+                <div class="bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-xl p-5">
+                    <h4 class="text-sm font-semibold text-red-400 mb-2 flex items-center">
+                        <span class="material-icons-outlined text-base mr-1">school</span> Learning Point
+                    </h4>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        FGSM (Goodfellow et al., 2015) adds noise in the direction of the gradient, maximizing model
+                        loss. PGD (Madry et al., 2018) iteratively applies FGSM with projection back onto the ε-ball,
+                        creating stronger adversarial examples.
+                        Even tiny ε values (imperceptible to humans) can cause misclassification. Defenses like input
+                        smoothing and adversarial training help, but no defense is perfect.
+                    </p>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center">
+                        <span class="material-icons-outlined text-green-500 mr-2 text-lg">shield</span> Defense Demos
+                    </h3>
+                    <div class="space-y-2">
+                        <button onclick="applyDefense('smooth')"
+                            class="w-full py-2 bg-green-500/10 hover:bg-green-500/20 text-green-500 text-xs font-medium rounded-lg transition-colors flex items-center justify-center">
+                            <span class="material-icons-outlined mr-1 text-sm">blur_on</span> Gaussian Smoothing (3×3)
+                        </button>
+                        <button onclick="applyDefense('jpeg')"
+                            class="w-full py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 text-xs font-medium rounded-lg transition-colors flex items-center justify-center">
+                            <span class="material-icons-outlined mr-1 text-sm">compress</span> JPEG Compression
+                        </button>
+                        <button onclick="applyDefense('bitdepth')"
+                            class="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 text-xs font-medium rounded-lg transition-colors flex items-center justify-center">
+                            <span class="material-icons-outlined mr-1 text-sm">palette</span> Bit-Depth Reduction
+                            (4-bit)
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-2">Apply after attack to see if defense restores correct
+                        classification.</p>
+                </div>
+            </div>
+
+            <!-- Image Comparison -->
+            <div class="lg:col-span-2 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                        <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center">
+                            <span class="material-icons-outlined text-green-500 mr-2 text-lg">check_circle</span>
+                            Original Image
+                        </h3>
+                        <canvas id="originalCanvas" width="224" height="224"
+                            class="w-full rounded-lg bg-slate-100 dark:bg-surface-dark-lighter"></canvas>
+                        <div id="originalPred" class="mt-3 space-y-1"></div>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                        <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center">
+                            <span class="material-icons-outlined text-red-500 mr-2 text-lg">dangerous</span> Attacked
+                            Image
+                        </h3>
+                        <canvas id="attackedCanvas" width="224" height="224"
+                            class="w-full rounded-lg bg-slate-100 dark:bg-surface-dark-lighter"></canvas>
+                        <div id="attackedPred" class="mt-3 space-y-1"></div>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Perturbation Visualization
+                        (amplified 10×)</h3>
+                    <canvas id="perturbationCanvas" width="224" height="224"
+                        class="w-48 h-48 rounded-lg bg-slate-100 dark:bg-surface-dark-lighter mx-auto block"></canvas>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">Confidence Comparison</h3>
+                        <div id="distanceMetrics" class="text-xs text-slate-400"></div>
+                    </div>
+                    <div id="confidenceChart" class="h-[250px]"></div>
+                </div>
+
+                <!-- Attack Log -->
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center">
+                        <span class="material-icons-outlined text-amber-500 mr-2 text-lg">history</span> Attack Log
+                        <span id="successRate" class="text-xs text-slate-400 ml-auto"></span>
+                    </h3>
+                    <div id="attackLog" class="space-y-1 max-h-40 overflow-y-auto text-xs"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Theme
+        const themeToggle = document.getElementById('themeToggle');
+        function setTheme(dark) { document.documentElement.classList.toggle('dark', dark); localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); }
+        if (localStorage.getItem('ethicsToolkitTheme') === 'light') { setTheme(false); themeToggle.checked = false; }
+        themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
+
+        // Image types with simulated classification
+        const DEMO_IMAGES = [
+            { name: 'Cat', classes: ['cat', 'tiger', 'dog', 'lion', 'rabbit'], probs: [0.92, 0.04, 0.02, 0.01, 0.01], color: '#f59e0b', pattern: 'cat' },
+            { name: 'Dog', classes: ['dog', 'wolf', 'cat', 'bear', 'fox'], probs: [0.89, 0.05, 0.03, 0.02, 0.01], color: '#8b5cf6', pattern: 'dog' },
+            { name: 'Car', classes: ['car', 'truck', 'bus', 'motorcycle', 'bicycle'], probs: [0.95, 0.02, 0.01, 0.01, 0.01], color: '#ef4444', pattern: 'car' },
+            { name: 'Bird', classes: ['bird', 'airplane', 'butterfly', 'bat', 'drone'], probs: [0.88, 0.06, 0.03, 0.02, 0.01], color: '#22c55e', pattern: 'bird' },
+            { name: 'Ship', classes: ['ship', 'boat', 'submarine', 'whale', 'island'], probs: [0.91, 0.04, 0.02, 0.02, 0.01], color: '#3b82f6', pattern: 'ship' },
+            { name: 'Plane', classes: ['airplane', 'bird', 'drone', 'ufo', 'cloud'], probs: [0.93, 0.03, 0.02, 0.01, 0.01], color: '#06b6d4', pattern: 'plane' },
+        ];
+
+        let selectedImage = 0;
+        let originalImageData = null;
+        let attackedImageDataCopy = null; // for defense demos
+        const attackHistory = []; // track attacks
+
+        function generateSyntheticImage(pattern, canvas) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            const imgData = ctx.createImageData(w, h);
+            const seed = pattern.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+            const rng = (i) => { let s = Math.sin(seed + i) * 10000; return s - Math.floor(s); };
+
+            // Generate a recognizable synthetic image
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const idx = (y * w + x) * 4;
+                    const cx = x / w - 0.5, cy = y / h - 0.5;
+                    const dist = Math.sqrt(cx * cx + cy * cy);
+
+                    let r, g, b;
+                    if (pattern === 'cat') {
+                        r = Math.floor(180 + 50 * Math.sin(x / 15 + y / 10) + rng(x * y) * 20);
+                        g = Math.floor(140 + 40 * Math.sin(x / 12 + y / 8) + rng(x * y + 1) * 15);
+                        b = Math.floor(80 + 30 * Math.cos(x / 10 + y / 12) + rng(x * y + 2) * 10);
+                        if (dist < 0.25) { r = Math.min(255, r + 40); g = Math.min(255, g + 30); }
+                    } else if (pattern === 'dog') {
+                        r = Math.floor(150 + 60 * Math.sin(x / 20 + y / 15) + rng(x * y) * 25);
+                        g = Math.floor(100 + 50 * Math.cos(x / 18 + y / 12) + rng(x * y + 1) * 20);
+                        b = Math.floor(60 + 40 * Math.sin(x / 25) + rng(x * y + 2) * 15);
+                        if (dist < 0.2) { r = Math.min(255, r + 30); g = Math.min(255, g + 20); b = Math.min(255, b + 10); }
+                    } else if (pattern === 'car') {
+                        r = Math.floor(200 + 30 * Math.sin(x / 10));
+                        g = Math.floor(50 + 20 * Math.sin(x / 10));
+                        b = Math.floor(50 + 20 * Math.sin(x / 10));
+                        if (y > h * 0.6) { r = 80; g = 80; b = 80; } // road
+                        if (cy > -0.2 && cy < 0.15 && cx > -0.3 && cx < 0.3) { r = 200; g = 30; b = 30; } // car body
+                    } else if (pattern === 'bird') {
+                        r = Math.floor(100 + 80 * (1 - dist * 2) + rng(x + y) * 30);
+                        g = Math.floor(180 + 50 * Math.cos(dist * 6) + rng(x * 2) * 20);
+                        b = Math.floor(220 + 30 * Math.sin(dist * 4));
+                        if (dist < 0.15) { r = 200; g = 200; b = 50; }
+                    } else if (pattern === 'ship') {
+                        g = Math.floor(80 + 30 * Math.sin(x / 8 + y / 20));
+                        b = Math.floor(180 + 40 * Math.sin(y / 10));
+                        r = Math.floor(50 + 20 * Math.cos(y / 15));
+                        if (cy > -0.1 && cy < 0.1 && cx > -0.25 && cx < 0.25) { r = 150; g = 130; b = 110; }
+                    } else {
+                        b = Math.floor(200 + 40 * Math.sin(y / 8));
+                        r = Math.floor(150 + 60 * Math.cos(y / 12));
+                        g = Math.floor(180 + 40 * Math.sin(y / 10));
+                        if (dist < 0.12) { r = 180; g = 180; b = 180; }
+                    }
+
+                    imgData.data[idx] = Math.max(0, Math.min(255, r));
+                    imgData.data[idx + 1] = Math.max(0, Math.min(255, g));
+                    imgData.data[idx + 2] = Math.max(0, Math.min(255, b));
+                    imgData.data[idx + 3] = 255;
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
+            return imgData;
+        }
+
+        function renderGallery() {
+            document.getElementById('imageGallery').innerHTML = DEMO_IMAGES.map((img, i) =>
+                `<div onclick="selectImageIdx(${i})" class="cursor-pointer rounded-lg border-2 ${i === selectedImage ? 'border-primary' : 'border-slate-200 dark:border-slate-700'} overflow-hidden text-center hover:border-primary transition-colors p-1">
+                <div class="w-full h-12 rounded flex items-center justify-center" style="background: ${img.color}20">
+                    <span class="text-sm font-bold" style="color: ${img.color}">${img.name}</span>
+                </div>
+            </div>`
+            ).join('');
+        }
+
+        function selectImageIdx(idx) {
+            selectedImage = idx;
+            renderGallery();
+            loadImage();
+        }
+
+        function loadImage() {
+            const canvas = document.getElementById('originalCanvas');
+            originalImageData = generateSyntheticImage(DEMO_IMAGES[selectedImage].pattern, canvas);
+
+            const attacked = document.getElementById('attackedCanvas');
+            const aCtx = attacked.getContext('2d');
+            aCtx.putImageData(new ImageData(new Uint8ClampedArray(originalImageData.data), 224, 224), 0, 0);
+
+            const pertCanvas = document.getElementById('perturbationCanvas');
+            const pCtx = pertCanvas.getContext('2d');
+            pCtx.fillStyle = '#808080';
+            pCtx.fillRect(0, 0, 224, 224);
+
+            renderPredictions('originalPred', DEMO_IMAGES[selectedImage].classes, DEMO_IMAGES[selectedImage].probs, false);
+            renderPredictions('attackedPred', DEMO_IMAGES[selectedImage].classes, DEMO_IMAGES[selectedImage].probs, false);
+            renderConfidenceChart(DEMO_IMAGES[selectedImage].classes, DEMO_IMAGES[selectedImage].probs, DEMO_IMAGES[selectedImage].probs);
+        }
+
+        function renderPredictions(containerId, classes, probs, isAttacked) {
+            document.getElementById(containerId).innerHTML = classes.slice(0, 3).map((c, i) => {
+                const pct = (probs[i] * 100).toFixed(1);
+                const color = i === 0 ? (isAttacked ? 'bg-red-500' : 'bg-green-500') : 'bg-slate-400';
+                return `<div class="flex items-center gap-2">
+                <span class="text-xs w-16 truncate text-slate-600 dark:text-slate-400">${c}</span>
+                <div class="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                    <div class="h-full rounded-full ${color} transition-all" style="width: ${pct}%"></div>
+                </div>
+                <span class="text-xs text-slate-500 w-12 text-right">${pct}%</span>
+            </div>`;
+            }).join('');
+        }
+
+        function applyAttack() {
+            if (!originalImageData) return;
+            const eps = parseInt(document.getElementById('epsilon').value) / 100;
+            const iterations = parseInt(document.getElementById('iterations').value);
+            const attackType = document.getElementById('attackType').value;
+
+            const attacked = document.getElementById('attackedCanvas');
+            const aCtx = attacked.getContext('2d');
+            const attackedData = new ImageData(new Uint8ClampedArray(originalImageData.data), 224, 224);
+
+            const perturbation = new Float32Array(224 * 224 * 4);
+
+            for (let iter = 0; iter < iterations; iter++) {
+                for (let i = 0; i < attackedData.data.length; i += 4) {
+                    let noiseR = 0, noiseG = 0, noiseB = 0;
+                    if (attackType === 'fgsm') {
+                        // Structured FGSM: gradient-like perturbation based on local pixel gradient
+                        const px = (i / 4) % 224;
+                        const py = Math.floor((i / 4) / 224);
+                        const gradR = (px > 0 ? attackedData.data[i] - attackedData.data[i - 4] : 0);
+                        const gradG = (py > 0 ? attackedData.data[i + 1] - attackedData.data[i + 1 - 224 * 4] : 0);
+                        const gradB = (px < 223 ? attackedData.data[i + 2 + 4] - attackedData.data[i + 2] : 0);
+                        noiseR = Math.sign(gradR || (Math.random() - 0.5)) * eps * 255;
+                        noiseG = Math.sign(gradG || (Math.random() - 0.5)) * eps * 255;
+                        noiseB = Math.sign(gradB || (Math.random() - 0.5)) * eps * 255;
+                    } else if (attackType === 'pgd') {
+                        // PGD: iterative FGSM with projection onto ε-ball
+                        const px = (i / 4) % 224;
+                        const py = Math.floor((i / 4) / 224);
+                        const gradR = (px > 0 ? attackedData.data[i] - attackedData.data[i - 4] : 0);
+                        const gradG = (py > 0 ? attackedData.data[i + 1] - attackedData.data[i + 1 - 224 * 4] : 0);
+                        const gradB = Math.sign(Math.sin(px * 0.3 + py * 0.5 + iter) + (Math.random() - 0.5) * 0.3);
+                        const stepSize = eps * 255 / iterations;
+                        noiseR = Math.sign(gradR || (Math.random() - 0.5)) * stepSize;
+                        noiseG = Math.sign(gradG || (Math.random() - 0.5)) * stepSize;
+                        noiseB = gradB * stepSize;
+                        // Project: clamp total perturbation to ε-ball
+                        const totalPertR = attackedData.data[i] + noiseR - originalImageData.data[i];
+                        const totalPertG = attackedData.data[i + 1] + noiseG - originalImageData.data[i + 1];
+                        const totalPertB = attackedData.data[i + 2] + noiseB - originalImageData.data[i + 2];
+                        noiseR = Math.max(-eps * 255, Math.min(eps * 255, totalPertR)) - (attackedData.data[i] - originalImageData.data[i]);
+                        noiseG = Math.max(-eps * 255, Math.min(eps * 255, totalPertG)) - (attackedData.data[i + 1] - originalImageData.data[i + 1]);
+                        noiseB = Math.max(-eps * 255, Math.min(eps * 255, totalPertB)) - (attackedData.data[i + 2] - originalImageData.data[i + 2]);
+                    } else if (attackType === 'gaussian') {
+                        const u1 = Math.random(), u2 = Math.random();
+                        const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                        noiseR = noiseG = noiseB = z * eps * 128;
+                    } else if (attackType === 'salt_pepper') {
+                        if (Math.random() < eps * 0.5) {
+                            const val = Math.random() > 0.5 ? 255 : 0;
+                            noiseR = val - attackedData.data[i];
+                            noiseG = val - attackedData.data[i + 1];
+                            noiseB = val - attackedData.data[i + 2];
+                        }
+                    } else if (attackType === 'pixel_swap') {
+                        if (Math.random() < eps * 0.3) {
+                            const j = (Math.floor(Math.random() * 224 * 224)) * 4;
+                            const tempR = attackedData.data[i], tempG = attackedData.data[i + 1], tempB = attackedData.data[i + 2];
+                            attackedData.data[i] = attackedData.data[j];
+                            attackedData.data[i + 1] = attackedData.data[j + 1];
+                            attackedData.data[i + 2] = attackedData.data[j + 2];
+                            attackedData.data[j] = tempR;
+                            attackedData.data[j + 1] = tempG;
+                            attackedData.data[j + 2] = tempB;
+                        }
+                    }
+
+                    attackedData.data[i] = Math.max(0, Math.min(255, attackedData.data[i] + noiseR));
+                    attackedData.data[i + 1] = Math.max(0, Math.min(255, attackedData.data[i + 1] + noiseG));
+                    attackedData.data[i + 2] = Math.max(0, Math.min(255, attackedData.data[i + 2] + noiseB));
+
+                    perturbation[i] = attackedData.data[i] - originalImageData.data[i];
+                    perturbation[i + 1] = attackedData.data[i + 1] - originalImageData.data[i + 1];
+                    perturbation[i + 2] = attackedData.data[i + 2] - originalImageData.data[i + 2];
+                }
+            }
+
+            aCtx.putImageData(attackedData, 0, 0);
+
+            // Perturbation visualization (amplified)
+            const pertCanvas = document.getElementById('perturbationCanvas');
+            const pCtx = pertCanvas.getContext('2d');
+            const pertImgData = pCtx.createImageData(224, 224);
+            for (let i = 0; i < perturbation.length; i += 4) {
+                pertImgData.data[i] = Math.max(0, Math.min(255, 128 + perturbation[i] * 10));
+                pertImgData.data[i + 1] = Math.max(0, Math.min(255, 128 + perturbation[i + 1] * 10));
+                pertImgData.data[i + 2] = Math.max(0, Math.min(255, 128 + perturbation[i + 2] * 10));
+                pertImgData.data[i + 3] = 255;
+            }
+            pCtx.putImageData(pertImgData, 0, 0);
+
+            // Simulate attacked predictions
+            const img = DEMO_IMAGES[selectedImage];
+            const attackStrength = eps * iterations;
+            const attackedProbs = [...img.probs];
+            const shift = Math.min(attackStrength * 0.8, 0.7);
+            attackedProbs[0] = Math.max(0.05, attackedProbs[0] - shift);
+            attackedProbs[1] += shift * 0.6;
+            attackedProbs[2] += shift * 0.3;
+            attackedProbs[3] += shift * 0.1;
+            const sum = attackedProbs.reduce((s, v) => s + v, 0);
+            attackedProbs.forEach((v, i) => attackedProbs[i] = v / sum);
+
+            // If attack is strong enough, swap top prediction
+            let attackedClasses = [...img.classes];
+            if (attackStrength > 0.3) {
+                [attackedClasses[0], attackedClasses[1]] = [attackedClasses[1], attackedClasses[0]];
+                [attackedProbs[0], attackedProbs[1]] = [attackedProbs[1], attackedProbs[0]];
+            }
+
+            renderPredictions('attackedPred', attackedClasses, attackedProbs, true);
+            renderConfidenceChart(img.classes, img.probs, attackedProbs);
+
+            // Compute L2 and Linf distance
+            let l2Sum = 0, linf = 0;
+            for (let i = 0; i < perturbation.length; i += 4) {
+                for (let c = 0; c < 3; c++) {
+                    const diff = Math.abs(perturbation[i + c]) / 255;
+                    l2Sum += diff * diff;
+                    linf = Math.max(linf, diff);
+                }
+            }
+            const l2 = Math.sqrt(l2Sum / (224 * 224 * 3));
+            document.getElementById('distanceMetrics').innerHTML = `
+                <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800">L₂: ${l2.toFixed(4)}</span>
+                <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 ml-1">L∞: ${linf.toFixed(4)}</span>
+            `;
+
+            // Save attacked image for defense demos
+            attackedImageDataCopy = new ImageData(new Uint8ClampedArray(attackedData.data), 224, 224);
+
+            // Log attack
+            const success = attackStrength > 0.3;
+            attackHistory.push({ type: attackType.toUpperCase(), eps: eps.toFixed(2), iters: iterations, success });
+            const successCount = attackHistory.filter(a => a.success).length;
+            document.getElementById('successRate').textContent = `Success: ${successCount}/${attackHistory.length} (${(successCount / attackHistory.length * 100).toFixed(0)}%)`;
+            const logDiv = document.getElementById('attackLog');
+            logDiv.innerHTML = attackHistory.slice(-10).reverse().map(a =>
+                `<div class="flex items-center gap-2 p-1.5 rounded ${a.success ? 'bg-red-500/10' : 'bg-green-500/10'}">
+                    <span class="material-icons-outlined text-xs ${a.success ? 'text-red-400' : 'text-green-400'}">${a.success ? 'dangerous' : 'check_circle'}</span>
+                    <span class="text-slate-400">${a.type} ε=${a.eps} ×${a.iters}</span>
+                    <span class="ml-auto font-medium ${a.success ? 'text-red-400' : 'text-green-400'}">${a.success ? 'Misclassified' : 'Robust'}</span>
+                </div>`
+            ).join('');
+        }
+
+        function resetAttack() { loadImage(); attackedImageDataCopy = null; }
+
+        function renderConfidenceChart(classes, origProbs, attackedProbs) {
+            const isDark = document.documentElement.classList.contains('dark');
+            Plotly.newPlot('confidenceChart', [
+                { type: 'bar', name: 'Original', x: classes, y: origProbs.map(p => p * 100), marker: { color: '#22c55e' } },
+                { type: 'bar', name: 'Attacked', x: classes, y: attackedProbs.map(p => p * 100), marker: { color: '#ef4444' } }
+            ], {
+                barmode: 'group',
+                margin: { t: 10, l: 40, r: 10, b: 40 },
+                paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+                xaxis: { color: isDark ? '#94a3b8' : '#475569' },
+                yaxis: { title: 'Confidence %', color: isDark ? '#94a3b8' : '#475569', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
+                legend: { font: { color: isDark ? '#94a3b8' : '#475569' } },
+                font: { family: 'Space Grotesk' }
+            }, { responsive: true, displayModeBar: false });
+        }
+
+        // Upload handler
+        document.getElementById('imageUpload').addEventListener('change', (e) => {
+            if (!e.target.files.length) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.getElementById('originalCanvas');
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 224, 224);
+                    originalImageData = ctx.getImageData(0, 0, 224, 224);
+                    const aCtx = document.getElementById('attackedCanvas').getContext('2d');
+                    aCtx.drawImage(img, 0, 0, 224, 224);
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        renderGallery();
+        loadImage();
+
+        // ==================== DEFENSE DEMOS ====================
+        function applyDefense(type) {
+            if (!attackedImageDataCopy) { alert('Apply an attack first, then try a defense.'); return; }
+            const canvas = document.getElementById('attackedCanvas');
+            const ctx = canvas.getContext('2d');
+            const defended = new ImageData(new Uint8ClampedArray(attackedImageDataCopy.data), 224, 224);
+            const w = 224, h = 224;
+
+            if (type === 'smooth') {
+                // 3×3 Gaussian smoothing
+                const kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
+                const sum = 16;
+                const src = new Uint8ClampedArray(defended.data);
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        for (let c = 0; c < 3; c++) {
+                            let val = 0;
+                            for (let ky = -1; ky <= 1; ky++) {
+                                for (let kx = -1; kx <= 1; kx++) {
+                                    val += src[((y + ky) * w + (x + kx)) * 4 + c] * kernel[(ky + 1) * 3 + (kx + 1)];
+                                }
+                            }
+                            defended.data[(y * w + x) * 4 + c] = Math.round(val / sum);
+                        }
+                    }
+                }
+            } else if (type === 'jpeg') {
+                // JPEG compression simulation: round to nearest multiple of 8
+                for (let i = 0; i < defended.data.length; i += 4) {
+                    defended.data[i] = Math.round(defended.data[i] / 8) * 8;
+                    defended.data[i + 1] = Math.round(defended.data[i + 1] / 8) * 8;
+                    defended.data[i + 2] = Math.round(defended.data[i + 2] / 8) * 8;
+                }
+            } else if (type === 'bitdepth') {
+                // 4-bit depth reduction
+                for (let i = 0; i < defended.data.length; i += 4) {
+                    defended.data[i] = (defended.data[i] >> 4) << 4;
+                    defended.data[i + 1] = (defended.data[i + 1] >> 4) << 4;
+                    defended.data[i + 2] = (defended.data[i + 2] >> 4) << 4;
+                }
+            }
+
+            ctx.putImageData(defended, 0, 0);
+
+            // Re-simulate predictions after defense
+            const img = DEMO_IMAGES[selectedImage];
+            const eps = parseInt(document.getElementById('epsilon').value) / 100;
+            const iterations = parseInt(document.getElementById('iterations').value);
+            const attackStrength = eps * iterations;
+            const restoration = type === 'smooth' ? 0.4 : type === 'jpeg' ? 0.3 : 0.25;
+            const effectiveStrength = Math.max(0, attackStrength - restoration);
+            const defProbs = [...img.probs];
+            const shift = Math.min(effectiveStrength * 0.8, 0.7);
+            defProbs[0] = Math.max(0.05, defProbs[0] - shift);
+            defProbs[1] += shift * 0.6;
+            defProbs[2] += shift * 0.3;
+            defProbs[3] += shift * 0.1;
+            const sum = defProbs.reduce((s, v) => s + v, 0);
+            defProbs.forEach((v, i) => defProbs[i] = v / sum);
+
+            let defClasses = [...img.classes];
+            if (effectiveStrength > 0.3) {
+                [defClasses[0], defClasses[1]] = [defClasses[1], defClasses[0]];
+                [defProbs[0], defProbs[1]] = [defProbs[1], defProbs[0]];
+            }
+
+            renderPredictions('attackedPred', defClasses, defProbs, effectiveStrength > 0.3);
+            renderConfidenceChart(img.classes, img.probs, defProbs);
+
+            // Log defense result
+            const restored = effectiveStrength <= 0.3;
+            attackHistory.push({ type: `DEF:${type.toUpperCase()}`, eps: eps.toFixed(2), iters: iterations, success: !restored });
+            const successCount = attackHistory.filter(a => a.success).length;
+            document.getElementById('successRate').textContent = `Success: ${successCount}/${attackHistory.length} (${(successCount / attackHistory.length * 100).toFixed(0)}%)`;
+            const logDiv = document.getElementById('attackLog');
+            logDiv.innerHTML = attackHistory.slice(-10).reverse().map(a =>
+                `<div class="flex items-center gap-2 p-1.5 rounded ${a.success ? 'bg-red-500/10' : 'bg-green-500/10'}">
+                    <span class="material-icons-outlined text-xs ${a.success ? 'text-red-400' : 'text-green-400'}">${a.success ? 'dangerous' : 'check_circle'}</span>
+                    <span class="text-slate-400">${a.type} ε=${a.eps} ×${a.iters}</span>
+                    <span class="ml-auto font-medium ${a.success ? 'text-red-400' : 'text-green-400'}">${a.success ? 'Still Fooled' : 'Restored!'}</span>
+                </div>`
+            ).join('');
+        }
+    </script>
+</body>
+
+</html>

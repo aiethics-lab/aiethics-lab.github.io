@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Value Alignment Tool | AI Ethics Toolkit</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class", theme: {
+                extend: {
+                    colors: { "primary": "#137fec", "primary-hover": "#0f6bd1", "background-light": "#f6f7f8", "background-dark": "#101922", "surface-dark": "#182430", "surface-dark-lighter": "#212e3b" },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #101922;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2d3f50;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #137fec;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white">
+    <aside
+        class="w-64 flex-shrink-0 fixed h-full z-20 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
+            <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
+            <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group"
+                href="../index.html"><span class="material-icons-outlined mr-3 text-2xl">grid_view</span> Toolkit
+                Overview</a>
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
+            </div>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="word-embeddings.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">scatter_plot</span> Word
+                Embeddings</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="explainability-lab.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">visibility</span>
+                Explainability Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="bias-auditor.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">saved_search</span> Bias
+                Auditor</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="adversarial-sandbox.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">security</span> Adversarial
+                Sandbox</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="filter-bubble.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">bubble_chart</span> Filter
+                Bubble Sim</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="privacy-lab.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">vpn_key</span> Privacy Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm"
+                href="value-alignment.html"><span class="material-icons-outlined mr-3 text-xl">balance</span> Value
+                Alignment</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="proxy-detector.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">find_replace</span> Proxy
+                Detector</a>
+        </nav>
+        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
+            <p class="text-[10px] text-slate-400 mb-2">© 2025 <a href="https://hamedyaghoobian.com" class="text-primary hover:underline">Hamed Yaghoobian</a></p>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Version
+                    2.1.0</span><a class="hover:text-primary" href="#">Legal</a></div>
+        </div>
+    </aside>
+
+    <main class="flex-1 ml-64 p-8 overflow-y-auto h-screen">
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <div class="flex items-center mb-1">
+                    <a href="../index.html" class="text-slate-400 hover:text-primary text-sm mr-2">Toolkit</a>
+                    <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
+                    <span class="text-primary text-sm ml-2">Value Alignment</span>
+                </div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Value Alignment Tool</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">Explore ethical dilemmas in AI and compare different
+                    value frameworks.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="themeToggle" class="sr-only peer" checked />
+                <div
+                    class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                </div>
+                <span class="ml-2 text-sm text-slate-500 dark:text-slate-400"><span
+                        class="material-icons-outlined text-sm align-middle">dark_mode</span></span>
+            </label>
+        </header>
+
+        <!-- Dilemma Selector -->
+        <div class="flex gap-2 mb-6 flex-wrap" id="dilemmaSelector"></div>
+
+        <!-- Active Dilemma -->
+        <div id="dilemmaContent"></div>
+
+        <!-- Framework Comparison -->
+        <div class="mt-6 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                <span class="material-icons-outlined text-primary mr-2 align-middle">analytics</span> Your Value Profile
+            </h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div id="valueRadar" class="h-[350px]"></div>
+                <div id="responseHistory" class="space-y-3 max-h-[350px] overflow-y-auto"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Theme
+        const themeToggle = document.getElementById('themeToggle');
+        function setTheme(dark) { document.documentElement.classList.toggle('dark', dark); localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); }
+        if (localStorage.getItem('ethicsToolkitTheme') === 'light') { setTheme(false); themeToggle.checked = false; }
+        themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
+
+        // Ethical Frameworks
+        const FRAMEWORKS = {
+            utilitarian: { name: 'Utilitarian', color: '#3b82f6', desc: 'Maximize total benefit/welfare for the most people' },
+            deontological: { name: 'Deontological', color: '#ef4444', desc: 'Follow moral rules regardless of consequences' },
+            virtue: { name: 'Virtue Ethics', color: '#22c55e', desc: 'Act as a virtuous person would act' },
+            care: { name: 'Care Ethics', color: '#f59e0b', desc: 'Prioritize relationships and responsiveness to needs' },
+            justice: { name: 'Justice', color: '#8b5cf6', desc: 'Ensure fair distribution of benefits and burdens' }
+        };
+
+        const DILEMMAS = [
+            {
+                id: 'trolley', title: 'The Self-Driving Car Dilemma', icon: 'directions_car', color: '#ef4444',
+                scenario: 'A self-driving car detects an unavoidable collision. It must choose between: swerving left (harming 1 elderly passenger) or continuing straight (harming 3 pedestrians).',
+                stakeholders: ['Passenger', 'Pedestrians', 'Manufacturer', 'Insurer', 'Regulators'],
+                realCase: 'MIT Moral Machine (2018): 40M responses from 233 countries revealed cultural variation in moral preferences for autonomous vehicles.',
+                options: [
+                    { text: 'Swerve left — prioritize saving more lives', frameworks: { utilitarian: 1, deontological: -0.5, virtue: 0.3, care: 0.2, justice: 0.5 } },
+                    { text: 'Continue straight — don\'t actively redirect harm', frameworks: { utilitarian: -0.5, deontological: 1, virtue: 0.2, care: 0.3, justice: -0.2 } },
+                    { text: 'Randomize the decision to be impartial', frameworks: { utilitarian: -0.3, deontological: 0.3, virtue: -0.2, care: -0.5, justice: 1 } },
+                    { text: 'Always protect the passenger (owner)', frameworks: { utilitarian: -0.5, deontological: 0.2, virtue: -0.3, care: 0.8, justice: -0.8 } }
+                ]
+            },
+            {
+                id: 'surveillance', title: 'AI Surveillance for Safety', icon: 'videocam', color: '#8b5cf6',
+                scenario: 'A city proposes using AI facial recognition in public spaces to reduce crime by 40%. Privacy advocates warn of mass surveillance risks and potential bias against minorities.',
+                stakeholders: ['Citizens', 'Law Enforcement', 'Minority Communities', 'Civil Liberties Groups', 'City Government'],
+                realCase: 'San Francisco banned government use of facial recognition in 2019. London\'s Met Police deployed it despite 81% false positive rate (2020).',
+                options: [
+                    { text: 'Implement fully — the crime reduction benefits everyone', frameworks: { utilitarian: 1, deontological: -0.8, virtue: -0.3, care: 0.4, justice: -0.5 } },
+                    { text: 'Ban it entirely — privacy is a fundamental right', frameworks: { utilitarian: -0.5, deontological: 1, virtue: 0.5, care: 0.2, justice: 0.3 } },
+                    { text: 'Allow with strict regulations and oversight', frameworks: { utilitarian: 0.5, deontological: 0.3, virtue: 0.7, care: 0.5, justice: 0.8 } },
+                    { text: 'Only use in high-crime areas with community consent', frameworks: { utilitarian: 0.3, deontological: 0.1, virtue: 0.4, care: 0.8, justice: -0.3 } }
+                ]
+            },
+            {
+                id: 'hiring', title: 'AI Hiring Algorithm Bias', icon: 'work', color: '#f59e0b',
+                scenario: 'Your company\'s AI hiring tool is 25% more accurate at predicting performance than human recruiters, but analysis shows it systematically ranks women 15% lower for technical roles.',
+                stakeholders: ['Female Applicants', 'Company', 'HR Department', 'Male Applicants', 'Shareholders'],
+                realCase: 'Amazon scrapped its AI recruiting tool in 2018 after discovering it penalized resumes containing the word "women\'s".',
+                options: [
+                    { text: 'Keep using it — overall accuracy matters most', frameworks: { utilitarian: 0.6, deontological: -0.8, virtue: -0.5, care: -0.7, justice: -1 } },
+                    { text: 'Remove all gender-related features and retrain', frameworks: { utilitarian: -0.2, deontological: 0.5, virtue: 0.6, care: 0.5, justice: 0.8 } },
+                    { text: 'Add a fairness constraint even if accuracy drops', frameworks: { utilitarian: -0.3, deontological: 0.4, virtue: 0.5, care: 0.3, justice: 1 } },
+                    { text: 'Abandon AI hiring — go back to human decisions', frameworks: { utilitarian: -0.8, deontological: 0.3, virtue: 0.3, care: 0.6, justice: 0.2 } }
+                ]
+            },
+            {
+                id: 'health', title: 'Healthcare AI Triage', icon: 'local_hospital', color: '#22c55e',
+                scenario: 'During a pandemic, an AI system must help prioritize limited ICU beds. Should it optimize for lives saved, quality-adjusted life years (QALYs), or equal access regardless of prognosis?',
+                stakeholders: ['Patients', 'Doctors', 'Hospital Admins', 'Families', 'Public Health Officials'],
+                realCase: 'Optum\'s algorithm (2019) used healthcare spending as a proxy for need, causing Black patients to receive lower risk scores despite being sicker.',
+                options: [
+                    { text: 'Maximize lives saved — treat the most survivable cases first', frameworks: { utilitarian: 1, deontological: -0.4, virtue: 0.2, care: -0.3, justice: -0.2 } },
+                    { text: 'Maximize QALYs — factor in remaining life expectancy', frameworks: { utilitarian: 0.8, deontological: -0.6, virtue: -0.4, care: -0.5, justice: -0.7 } },
+                    { text: 'First-come, first-served — equal process for all', frameworks: { utilitarian: -0.5, deontological: 0.8, virtue: 0.3, care: 0.2, justice: 1 } },
+                    { text: 'Prioritize essential workers and caregivers', frameworks: { utilitarian: 0.4, deontological: -0.3, virtue: 0.1, care: 1, justice: -0.4 } }
+                ]
+            },
+            {
+                id: 'deepfake', title: 'AI-Generated Content & Deepfakes', icon: 'face_retouching_natural', color: '#3b82f6',
+                scenario: 'A social media platform can detect deepfakes with 90% accuracy. False positives (removing real content) occur 2% of the time. Should it auto-remove detected deepfakes?',
+                stakeholders: ['Content Creators', 'Platform Users', 'Victims of Deepfakes', 'Platform Company', 'Advertisers'],
+                realCase: 'In 2023, AI-generated explicit images of Taylor Swift went viral on X/Twitter, reaching 47M views before removal.',
+                options: [
+                    { text: 'Auto-remove — preventing harm outweighs false positives', frameworks: { utilitarian: 0.7, deontological: -0.3, virtue: 0.4, care: 0.6, justice: -0.2 } },
+                    { text: 'Only label, never remove — protect free expression', frameworks: { utilitarian: -0.2, deontological: 0.8, virtue: 0.3, care: -0.3, justice: 0.5 } },
+                    { text: 'Remove only non-consensual intimate deepfakes', frameworks: { utilitarian: 0.3, deontological: 0.4, virtue: 0.7, care: 1, justice: 0.6 } },
+                    { text: 'Let users decide their own filter settings', frameworks: { utilitarian: 0.1, deontological: 0.6, virtue: 0.2, care: 0.1, justice: 0.7 } }
+                ]
+            },
+            {
+                id: 'predictive', title: 'Predictive Policing', icon: 'policy', color: '#dc2626',
+                scenario: 'A police department\'s AI predicts crime hotspots with 70% accuracy, but officers deployed to predicted areas arrest minorities at 2x the rate. The model learns from historical arrest data.',
+                stakeholders: ['Minority Residents', 'Police Officers', 'Crime Victims', 'City Officials', 'Data Scientists'],
+                realCase: 'PredPol (now Geolitica) was dropped by LAPD in 2020 after audits showed it reinforced racial profiling patterns in historically over-policed neighborhoods.',
+                options: [
+                    { text: 'Continue — it reduces overall crime even if imperfect', frameworks: { utilitarian: 0.5, deontological: -0.7, virtue: -0.5, care: -0.6, justice: -0.9 } },
+                    { text: 'Retrain without race-correlated features (zip code, etc.)', frameworks: { utilitarian: 0.1, deontological: 0.5, virtue: 0.6, care: 0.4, justice: 0.7 } },
+                    { text: 'Use only for resource allocation, not individual stops', frameworks: { utilitarian: 0.4, deontological: 0.3, virtue: 0.4, care: 0.3, justice: 0.5 } },
+                    { text: 'Abolish it — historical data encodes systemic racism', frameworks: { utilitarian: -0.4, deontological: 0.6, virtue: 0.3, care: 0.7, justice: 1 } }
+                ]
+            },
+            {
+                id: 'education', title: 'AI in Student Assessment', icon: 'school', color: '#0891b2',
+                scenario: 'A university deploys AI proctoring software that flags "suspicious behavior" during online exams. Students with disabilities and darker skin tones are flagged 3x more often.',
+                stakeholders: ['Students', 'Disabled Students', 'Faculty', 'University Admin', 'Proctoring Company'],
+                realCase: 'ExamSoft/Examplify was sued in 2020 for failing to recognize Black students\' faces, forcing them to over-illuminate their rooms or be flagged for cheating.',
+                options: [
+                    { text: 'Keep using — academic integrity is paramount', frameworks: { utilitarian: 0.3, deontological: -0.5, virtue: -0.6, care: -0.8, justice: -0.9 } },
+                    { text: 'Switch to honor code system with random audits', frameworks: { utilitarian: -0.1, deontological: 0.6, virtue: 0.7, care: 0.5, justice: 0.6 } },
+                    { text: 'Use AI but allow human appeal for every flag', frameworks: { utilitarian: 0.2, deontological: 0.4, virtue: 0.5, care: 0.6, justice: 0.5 } },
+                    { text: 'Redesign exams to be open-book and application-based', frameworks: { utilitarian: 0.5, deontological: 0.3, virtue: 0.8, care: 0.7, justice: 0.8 } }
+                ]
+            },
+            {
+                id: 'content', title: 'Content Moderation at Scale', icon: 'shield', color: '#7c3aed',
+                scenario: 'A social platform\'s AI removes 95% of hate speech automatically but also removes 12% of legitimate political discourse. Human review would cost $2B/year and take weeks.',
+                stakeholders: ['Marginalized Users', 'Political Activists', 'Platform Moderators', 'Advertisers', 'Free Speech Advocates'],
+                realCase: 'Meta\'s AI moderation removed Palestinian content during the 2021 Israel-Gaza conflict; Myanmar content moderation failures contributed to genocide (2018 UN report).',
+                options: [
+                    { text: 'Automate fully — speed matters more than perfection', frameworks: { utilitarian: 0.5, deontological: -0.6, virtue: -0.3, care: 0.4, justice: -0.4 } },
+                    { text: 'Only auto-remove clear violations, queue borderline cases', frameworks: { utilitarian: 0.3, deontological: 0.5, virtue: 0.6, care: 0.5, justice: 0.7 } },
+                    { text: 'Let communities set and enforce own moderation rules', frameworks: { utilitarian: 0.2, deontological: 0.4, virtue: 0.4, care: 0.8, justice: 0.5 } },
+                    { text: 'Invest in human review — algorithmic errors are too costly', frameworks: { utilitarian: -0.3, deontological: 0.7, virtue: 0.5, care: 0.3, justice: 0.8 } }
+                ]
+            },
+            {
+                id: 'military', title: 'Autonomous Weapons Systems', icon: 'gps_fixed', color: '#991b1b',
+                scenario: 'The military proposes AI drones that can identify and engage combatants without human approval, reducing friendly casualties by 60% but risking civilian misidentification.',
+                stakeholders: ['Military Personnel', 'Civilians in Conflict Zones', 'Defense Contractors', 'International Community', 'Veterans'],
+                realCase: 'The UN has debated autonomous weapons since 2014. In 2021, a UN report documented a Turkish Kargu-2 drone autonomously attacking soldiers in Libya.',
+                options: [
+                    { text: 'Deploy — fewer soldier deaths justifies the technology', frameworks: { utilitarian: 0.6, deontological: -0.9, virtue: -0.7, care: -0.5, justice: -0.6 } },
+                    { text: 'Ban entirely — machines must never decide who lives or dies', frameworks: { utilitarian: -0.3, deontological: 1, virtue: 0.6, care: 0.4, justice: 0.5 } },
+                    { text: 'Allow with mandatory human-in-the-loop for lethal decisions', frameworks: { utilitarian: 0.4, deontological: 0.5, virtue: 0.7, care: 0.6, justice: 0.7 } },
+                    { text: 'Only deploy defensively (e.g., intercepting missiles)', frameworks: { utilitarian: 0.5, deontological: 0.3, virtue: 0.5, care: 0.7, justice: 0.4 } }
+                ]
+            },
+            {
+                id: 'credit', title: 'AI Credit Scoring', icon: 'account_balance', color: '#ca8a04',
+                scenario: 'A bank\'s AI credit model uses social media activity, shopping patterns, and neighborhood data. It\'s 30% more accurate than FICO but encodes socioeconomic and racial proxies.',
+                stakeholders: ['Loan Applicants', 'Banks', 'Regulators', 'Low-Income Communities', 'Data Brokers'],
+                realCase: 'Apple Card (2019): Goldman Sachs\' algorithm gave women lower credit limits than men with identical finances. Steve Wozniak reported his wife got 10x less.',
+                options: [
+                    { text: 'Use it — better predictions mean fewer defaults and lower rates', frameworks: { utilitarian: 0.5, deontological: -0.7, virtue: -0.4, care: -0.6, justice: -0.8 } },
+                    { text: 'Restrict to traditional financial data only', frameworks: { utilitarian: -0.2, deontological: 0.6, virtue: 0.5, care: 0.4, justice: 0.7 } },
+                    { text: 'Use alternative data but audit for disparate impact quarterly', frameworks: { utilitarian: 0.3, deontological: 0.4, virtue: 0.6, care: 0.5, justice: 0.6 } },
+                    { text: 'Provide applicants full transparency into scoring factors', frameworks: { utilitarian: 0.1, deontological: 0.8, virtue: 0.7, care: 0.3, justice: 0.5 } }
+                ]
+            },
+            {
+                id: 'child', title: 'AI & Children\'s Data', icon: 'child_care', color: '#ec4899',
+                scenario: 'An EdTech company collects children\'s learning data to personalize education, improving test scores by 20%. But the data could be used for targeted advertising or sold to data brokers.',
+                stakeholders: ['Children', 'Parents', 'Teachers', 'EdTech Company', 'Advertisers', 'Regulators'],
+                realCase: 'Google settled a $170M FTC fine in 2019 for collecting children\'s data on YouTube without parental consent, violating COPPA.',
+                options: [
+                    { text: 'Allow data collection — educational benefits are clear', frameworks: { utilitarian: 0.4, deontological: -0.7, virtue: -0.5, care: -0.9, justice: -0.4 } },
+                    { text: 'Collect but delete after each school year', frameworks: { utilitarian: 0.1, deontological: 0.5, virtue: 0.5, care: 0.7, justice: 0.6 } },
+                    { text: 'Process on-device only — no cloud storage of children\'s data', frameworks: { utilitarian: 0.2, deontological: 0.7, virtue: 0.6, care: 0.9, justice: 0.5 } },
+                    { text: 'Ban AI personalization for children under 13 entirely', frameworks: { utilitarian: -0.6, deontological: 0.6, virtue: 0.3, care: 0.5, justice: 0.4 } }
+                ]
+            },
+            {
+                id: 'generative', title: 'Generative AI & Creative Work', icon: 'palette', color: '#a855f7',
+                scenario: 'A generative AI can produce art, music, and text indistinguishable from human work. It was trained on millions of copyrighted works without consent. Artists are losing income.',
+                stakeholders: ['Artists', 'AI Companies', 'Consumers', 'Copyright Holders', 'Open-Source Community'],
+                realCase: 'Getty Images sued Stability AI in 2023 for training Stable Diffusion on 12M copyrighted images. Artists filed class-action suits against Midjourney and DeviantArt.',
+                options: [
+                    { text: 'No restrictions — AI art is transformative fair use', frameworks: { utilitarian: 0.4, deontological: -0.8, virtue: -0.6, care: -0.7, justice: -0.5 } },
+                    { text: 'Require opt-in consent and revenue sharing with artists', frameworks: { utilitarian: -0.1, deontological: 0.7, virtue: 0.7, care: 0.8, justice: 0.9 } },
+                    { text: 'Allow training but require AI-generated labels on output', frameworks: { utilitarian: 0.3, deontological: 0.4, virtue: 0.5, care: 0.3, justice: 0.5 } },
+                    { text: 'Only allow training on public domain and licensed data', frameworks: { utilitarian: -0.3, deontological: 0.8, virtue: 0.6, care: 0.5, justice: 0.7 } }
+                ]
+            }
+        ];
+
+        // State
+        let userScores = { utilitarian: 0, deontological: 0, virtue: 0, care: 0, justice: 0 };
+        let responses = [];
+        let currentDilemma = 0;
+
+        function init() {
+            renderDilemmaSelector();
+            renderDilemma(0);
+            updateProfile();
+        }
+
+        function renderDilemmaSelector() {
+            document.getElementById('dilemmaSelector').innerHTML = DILEMMAS.map((d, i) =>
+                `<button onclick="renderDilemma(${i})" id="dilemma-btn-${i}" class="dilemma-btn px-4 py-2.5 rounded-xl border-2 ${i === currentDilemma ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary'} font-medium text-sm flex items-center transition-all">
+                <span class="material-icons-outlined mr-2">${d.icon}</span> ${d.title.split(' ').slice(0, 3).join(' ')}
+            </button>`
+            ).join('');
+        }
+
+        function renderDilemma(idx) {
+            currentDilemma = idx;
+            const d = DILEMMAS[idx];
+            const answered = responses.find(r => r.dilemmaId === d.id);
+
+            renderDilemmaSelector();
+            document.querySelectorAll('.dilemma-btn').forEach((b, i) => {
+                if (i === idx) {
+                    b.classList.add('border-primary', 'bg-primary/10', 'text-primary');
+                    b.classList.remove('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-400');
+                } else {
+                    b.classList.remove('border-primary', 'bg-primary/10', 'text-primary');
+                    b.classList.add('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-400');
+                }
+            });
+
+            // Build stakeholder pills
+            const stakeholderHTML = (d.stakeholders || []).map(s =>
+                `<span class="px-2 py-1 text-xs rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">${s}</span>`
+            ).join('');
+
+            // Build impact assessment if answered
+            let impactHTML = '';
+            if (answered) {
+                const fw = answered.frameworks;
+                const sorted = Object.entries(fw).sort((a, b) => b[1] - a[1]);
+                const best = sorted[0], worst = sorted[sorted.length - 1];
+                impactHTML = `
+                <div class="mt-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-gradient-to-r from-blue-500/5 to-purple-500/5">
+                    <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center">
+                        <span class="material-icons-outlined text-base mr-1 text-primary">assessment</span> Ethical Impact Assessment
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div class="p-2 rounded-lg border border-green-500/30 bg-green-500/5">
+                            <p class="text-xs text-green-600 dark:text-green-400 font-semibold">Strongest Alignment</p>
+                            <p class="text-sm font-bold" style="color:${FRAMEWORKS[best[0]].color}">${FRAMEWORKS[best[0]].name} (${best[1] > 0 ? '+' : ''}${best[1].toFixed(1)})</p>
+                        </div>
+                        <div class="p-2 rounded-lg border border-red-500/30 bg-red-500/5">
+                            <p class="text-xs text-red-600 dark:text-red-400 font-semibold">Biggest Tension</p>
+                            <p class="text-sm font-bold" style="color:${FRAMEWORKS[worst[0]].color}">${FRAMEWORKS[worst[0]].name} (${worst[1] > 0 ? '+' : ''}${worst[1].toFixed(1)})</p>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        ${sorted.map(([k, v]) => {
+                    const pct = ((v + 1) / 2 * 100).toFixed(0);
+                    const clr = v >= 0 ? '#22c55e' : '#ef4444';
+                    return `<div class="flex items-center gap-2">
+                                <span class="text-xs w-24 text-slate-500 dark:text-slate-400">${FRAMEWORKS[k].name}</span>
+                                <div class="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                                    <div class="h-full rounded-full transition-all" style="width:${pct}%;background:${clr}"></div>
+                                </div>
+                                <span class="text-xs w-8 text-right font-mono" style="color:${clr}">${v > 0 ? '+' : ''}${v.toFixed(1)}</span>
+                            </div>`;
+                }).join('')}
+                    </div>
+                </div>`;
+            }
+
+            document.getElementById('dilemmaContent').innerHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4" style="background: ${d.color}20">
+                            <span class="material-icons-outlined text-2xl" style="color: ${d.color}">${d.icon}</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900 dark:text-white">${d.title}</h3>
+                            <span class="text-xs text-slate-500">Scenario ${idx + 1} of ${DILEMMAS.length}</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4 p-4 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">${d.scenario}</p>
+
+                    ${stakeholderHTML ? `<div class="mb-4"><h4 class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 flex items-center"><span class="material-icons-outlined text-sm mr-1">groups</span>Stakeholders Affected</h4><div class="flex flex-wrap gap-1.5">${stakeholderHTML}</div></div>` : ''}
+
+                    <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">What should the AI do?</h4>
+                    <div class="space-y-2">
+                        ${d.options.map((opt, i) => `
+                            <button onclick="selectOption(${idx}, ${i})" class="w-full p-4 rounded-xl border-2 text-left transition-all ${answered && answered.optionIdx === i ? 'border-primary bg-primary/10' : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'} text-sm text-slate-700 dark:text-slate-300">
+                                <div class="flex items-center">
+                                    <span class="w-7 h-7 rounded-full ${answered && answered.optionIdx === i ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'} flex items-center justify-center text-xs font-bold mr-3 flex-shrink-0">${String.fromCharCode(65 + i)}</span>
+                                    ${opt.text}
+                                </div>
+                            </button>
+                        `).join('')}
+                    </div>
+                    ${impactHTML}
+                </div>
+                <div class="space-y-4">
+                    <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Ethical Frameworks</h4>
+                        <div class="space-y-3">
+                            ${Object.entries(FRAMEWORKS).map(([key, fw]) => `
+                                <div class="p-3 rounded-lg border border-slate-200 dark:border-slate-700/60">
+                                    <div class="flex items-center mb-1">
+                                        <div class="w-3 h-3 rounded-full mr-2" style="background: ${fw.color}"></div>
+                                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">${fw.name}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">${fw.desc}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ${d.realCase ? `
+                    <div class="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-5">
+                        <h4 class="text-sm font-semibold text-amber-500 mb-2 flex items-center">
+                            <span class="material-icons-outlined text-base mr-1">history_edu</span> Real-World Case
+                        </h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">${d.realCase}</p>
+                    </div>` : ''}
+                    <div class="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl p-5">
+                        <h4 class="text-sm font-semibold text-blue-400 mb-2 flex items-center">
+                            <span class="material-icons-outlined text-base mr-1">school</span> Learning Point
+                        </h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                            AI systems embed human values in their design. Different ethical frameworks often conflict —
+                            there is no single "correct" answer. Understanding your own value leanings helps you critically
+                            evaluate AI system design decisions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+
+        function selectOption(dilemmaIdx, optionIdx) {
+            const d = DILEMMAS[dilemmaIdx];
+            const opt = d.options[optionIdx];
+
+            // Remove previous response for this dilemma
+            const prevIdx = responses.findIndex(r => r.dilemmaId === d.id);
+            if (prevIdx >= 0) {
+                const prev = responses[prevIdx];
+                Object.entries(prev.frameworks).forEach(([k, v]) => { userScores[k] -= v; });
+                responses.splice(prevIdx, 1);
+            }
+
+            // Add new response
+            Object.entries(opt.frameworks).forEach(([k, v]) => { userScores[k] += v; });
+            responses.push({ dilemmaId: d.id, title: d.title, optionIdx, text: opt.text, frameworks: opt.frameworks });
+
+            renderDilemma(dilemmaIdx);
+            updateProfile();
+        }
+
+        function updateProfile() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const fwKeys = Object.keys(FRAMEWORKS);
+            const fwNames = fwKeys.map(k => FRAMEWORKS[k].name);
+            const values = fwKeys.map(k => Math.max(0, userScores[k]));
+
+            Plotly.newPlot('valueRadar', [{
+                type: 'scatterpolar',
+                r: [...values, values[0]],
+                theta: [...fwNames, fwNames[0]],
+                fill: 'toself',
+                fillcolor: 'rgba(19, 127, 236, 0.2)',
+                line: { color: '#137fec', width: 2 },
+                marker: { size: 6, color: '#137fec' }
+            }], {
+                polar: {
+                    radialaxis: { visible: true, color: isDark ? '#64748b' : '#94a3b8', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
+                    angularaxis: { color: isDark ? '#94a3b8' : '#475569' },
+                    bgcolor: 'transparent'
+                },
+                margin: { t: 30, l: 60, r: 60, b: 30 },
+                paper_bgcolor: 'transparent',
+                font: { family: 'Space Grotesk', size: 11, color: isDark ? '#94a3b8' : '#475569' }
+            }, { responsive: true, displayModeBar: false });
+
+            const historyDiv = document.getElementById('responseHistory');
+            if (responses.length === 0) {
+                historyDiv.innerHTML = '<p class="text-sm text-slate-500 text-center py-8">Answer dilemmas to build your value profile</p>';
+            } else {
+                historyDiv.innerHTML = responses.map(r => {
+                    const topFramework = Object.entries(r.frameworks).sort((a, b) => b[1] - a[1])[0];
+                    return `<div class="p-3 rounded-lg border border-slate-200 dark:border-slate-700/60 hover:border-primary/30 transition-colors">
+                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${r.title}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">${r.text}</p>
+                    <div class="mt-2 flex items-center gap-2">
+                        <span class="text-xs px-2 py-0.5 rounded-full" style="background: ${FRAMEWORKS[topFramework[0]].color}20; color: ${FRAMEWORKS[topFramework[0]].color}">${FRAMEWORKS[topFramework[0]].name}</span>
+                    </div>
+                </div>`;
+                }).join('');
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,401 @@
+Gender,Age,Race,Education,Experience,SkillScore,InterviewScore,Hired
+Male,32,White,High School,5,3,8,Rejected
+Male,32,White,High School,12,5,9,Hired
+Male,27,White,Masters,16,8,4,Hired
+Female,50,Black,High School,7,5,3,Rejected
+Male,52,Black,Masters,12,4,9,Hired
+Male,59,Black,Masters,2,4,3,Rejected
+Male,44,Black,Bachelors,10,6,5,Hired
+Male,55,Hispanic,Masters,3,7,10,Hired
+Female,52,White,Masters,9,3,6,Rejected
+Male,57,White,Bachelors,5,3,6,Rejected
+Male,62,White,Masters,14,4,5,Hired
+Female,39,White,Masters,8,7,4,Hired
+Male,61,Black,Bachelors,14,10,10,Hired
+Male,30,Hispanic,Masters,7,7,4,Hired
+Male,53,Other,Bachelors,8,4,8,Rejected
+Male,47,White,Bachelors,10,9,7,Hired
+Male,37,White,PhD,7,10,7,Hired
+Male,35,Black,Masters,5,7,5,Hired
+Female,55,White,Bachelors,5,7,8,Hired
+Female,37,Hispanic,Bachelors,8,7,8,Hired
+Male,24,Black,Masters,5,4,6,Hired
+Male,61,White,PhD,7,5,5,Hired
+Male,28,White,Bachelors,15,5,6,Hired
+Male,34,White,Bachelors,6,4,9,Hired
+Male,56,Hispanic,Bachelors,8,7,5,Rejected
+Female,57,White,Bachelors,0,7,3,Rejected
+Female,54,White,Bachelors,16,6,6,Rejected
+Female,56,Hispanic,Bachelors,3,2,6,Rejected
+Male,42,White,Bachelors,15,7,8,Hired
+Male,53,White,High School,3,4,3,Rejected
+Female,25,White,Masters,17,7,6,Hired
+Female,27,Black,Masters,1,8,8,Hired
+Female,25,Hispanic,Bachelors,8,6,4,Hired
+Female,28,White,Bachelors,4,6,4,Rejected
+Female,57,Hispanic,Bachelors,12,7,4,Rejected
+Female,28,White,Bachelors,3,7,9,Hired
+Male,44,Asian,Bachelors,16,5,3,Hired
+Female,42,Black,Bachelors,8,9,7,Hired
+Female,50,Other,High School,10,6,7,Rejected
+Female,22,White,Bachelors,7,5,7,Rejected
+Male,57,Black,Bachelors,4,5,4,Rejected
+Male,59,White,Bachelors,4,8,4,Rejected
+Male,42,Hispanic,Bachelors,10,3,2,Rejected
+Female,41,White,Masters,0,8,7,Hired
+Female,49,White,Masters,9,4,4,Rejected
+Male,62,White,Bachelors,13,6,7,Hired
+Male,25,Hispanic,PhD,15,5,5,Hired
+Male,47,White,Bachelors,0,6,4,Hired
+Male,49,Hispanic,High School,11,7,3,Rejected
+Male,61,Other,Bachelors,7,7,3,Rejected
+Male,29,Hispanic,Bachelors,4,7,5,Hired
+Male,44,Black,PhD,4,6,9,Hired
+Male,45,White,Masters,14,7,6,Hired
+Male,40,White,Masters,11,7,7,Hired
+Male,35,Black,Masters,0,5,9,Hired
+Female,46,Black,Masters,9,6,5,Hired
+Female,25,Black,PhD,13,7,3,Rejected
+Male,28,White,Masters,4,4,1,Hired
+Male,42,Black,Bachelors,9,6,8,Hired
+Female,24,White,Bachelors,4,7,7,Hired
+Male,62,White,PhD,10,5,7,Hired
+Male,23,Asian,PhD,7,7,5,Hired
+Female,55,Other,Masters,4,4,6,Rejected
+Female,60,White,Bachelors,7,7,2,Rejected
+Female,41,Hispanic,Masters,11,4,8,Hired
+Female,58,Asian,Bachelors,0,4,7,Rejected
+Female,23,Hispanic,Masters,2,7,1,Hired
+Female,39,White,Bachelors,7,6,8,Hired
+Female,61,White,Bachelors,5,4,5,Rejected
+Male,60,Black,Masters,8,7,4,Hired
+Male,48,Hispanic,High School,6,8,5,Rejected
+Female,26,White,PhD,0,7,4,Rejected
+Female,49,White,High School,6,4,4,Rejected
+Female,60,Black,Masters,6,5,7,Hired
+Female,37,Black,Bachelors,6,3,3,Rejected
+Male,40,White,Masters,7,4,6,Hired
+Female,55,Asian,Bachelors,5,5,4,Rejected
+Female,56,White,Bachelors,4,6,3,Rejected
+Male,51,White,Bachelors,2,3,7,Hired
+Male,50,Hispanic,High School,4,2,8,Rejected
+Male,57,White,Masters,12,4,5,Hired
+Female,33,Hispanic,High School,4,9,7,Rejected
+Male,30,Other,High School,7,5,3,Rejected
+Female,60,Asian,Bachelors,2,4,5,Rejected
+Female,37,Asian,Bachelors,0,3,6,Rejected
+Male,44,White,Masters,2,2,4,Hired
+Male,48,Other,Bachelors,5,8,5,Rejected
+Male,51,Hispanic,Bachelors,15,6,4,Hired
+Female,49,Hispanic,High School,4,6,7,Rejected
+Male,35,Hispanic,Masters,13,8,1,Hired
+Male,60,Asian,PhD,5,8,5,Hired
+Female,44,Asian,Masters,0,6,2,Rejected
+Female,36,Hispanic,PhD,8,6,5,Hired
+Female,61,Other,Bachelors,3,8,5,Rejected
+Male,40,White,High School,5,8,6,Rejected
+Male,47,Hispanic,Masters,10,6,5,Hired
+Female,52,Hispanic,Masters,0,6,7,Rejected
+Male,48,Asian,High School,0,5,4,Rejected
+Male,58,Hispanic,Masters,10,4,7,Hired
+Male,46,Black,Masters,2,5,2,Rejected
+Female,42,Hispanic,Bachelors,15,8,3,Hired
+Male,55,White,High School,8,2,7,Rejected
+Male,52,Asian,Bachelors,3,7,7,Rejected
+Male,28,Hispanic,PhD,5,5,5,Hired
+Female,55,White,Bachelors,16,7,7,Rejected
+Female,28,Black,Masters,4,8,4,Hired
+Male,34,White,Bachelors,8,3,5,Hired
+Male,61,Black,High School,0,5,5,Rejected
+Female,58,White,High School,3,4,5,Rejected
+Male,25,White,High School,4,6,3,Rejected
+Female,50,Black,Bachelors,10,3,4,Rejected
+Female,51,Black,High School,9,3,7,Rejected
+Female,51,Black,PhD,13,9,5,Hired
+Male,43,Hispanic,Masters,5,6,4,Hired
+Male,32,White,Bachelors,1,4,3,Hired
+Male,57,Hispanic,Masters,2,5,3,Hired
+Male,52,White,Bachelors,9,3,6,Rejected
+Female,56,Hispanic,Bachelors,3,3,5,Rejected
+Male,60,Black,Bachelors,8,4,6,Rejected
+Male,60,Hispanic,Bachelors,0,6,9,Hired
+Female,62,Hispanic,Masters,4,4,5,Rejected
+Male,35,Hispanic,Bachelors,0,4,4,Hired
+Male,44,Other,Bachelors,2,4,8,Rejected
+Male,57,Other,High School,0,3,7,Rejected
+Male,49,Hispanic,Bachelors,4,7,4,Hired
+Female,52,White,Bachelors,9,4,4,Rejected
+Female,30,White,High School,14,6,3,Rejected
+Female,27,White,Masters,13,2,4,Rejected
+Female,51,Black,Bachelors,2,6,7,Rejected
+Male,37,Hispanic,Bachelors,12,4,6,Hired
+Male,45,White,Bachelors,5,4,5,Rejected
+Female,39,Black,High School,8,5,2,Rejected
+Female,26,Hispanic,Bachelors,0,4,8,Rejected
+Male,51,Black,Bachelors,6,3,9,Rejected
+Male,24,Hispanic,Bachelors,4,9,5,Hired
+Male,58,White,PhD,9,3,5,Hired
+Male,39,White,Masters,6,7,5,Hired
+Female,31,Hispanic,Bachelors,10,9,6,Hired
+Male,24,White,High School,14,9,7,Hired
+Female,46,White,Bachelors,4,4,5,Rejected
+Female,29,White,Bachelors,1,6,10,Rejected
+Male,46,Black,High School,7,5,7,Rejected
+Female,55,Hispanic,High School,13,4,8,Rejected
+Female,39,White,Bachelors,12,7,3,Hired
+Female,59,Hispanic,Bachelors,0,1,5,Rejected
+Male,26,White,High School,11,7,6,Hired
+Male,23,Black,High School,0,3,6,Rejected
+Male,29,White,Masters,0,8,3,Hired
+Male,29,Hispanic,Bachelors,0,6,3,Rejected
+Male,49,Hispanic,Masters,7,4,6,Hired
+Male,46,White,High School,10,5,3,Rejected
+Female,61,White,Masters,11,7,3,Hired
+Male,50,Hispanic,High School,12,7,5,Hired
+Female,31,Hispanic,High School,11,6,7,Rejected
+Male,22,Black,PhD,1,6,7,Hired
+Female,56,White,Bachelors,3,2,7,Rejected
+Female,43,Hispanic,Bachelors,0,2,8,Rejected
+Female,27,Hispanic,Masters,6,7,1,Rejected
+Female,41,Hispanic,Masters,3,4,8,Hired
+Female,30,White,High School,10,5,3,Rejected
+Female,53,Black,Masters,0,8,6,Rejected
+Female,24,White,Bachelors,3,3,9,Rejected
+Male,59,White,High School,6,3,10,Rejected
+Female,37,Hispanic,High School,7,6,4,Rejected
+Male,32,Hispanic,High School,8,5,3,Rejected
+Male,34,White,Masters,14,5,3,Hired
+Male,30,White,PhD,7,6,6,Hired
+Male,48,White,Bachelors,8,7,5,Hired
+Female,62,Black,Masters,12,6,7,Hired
+Male,59,Asian,Bachelors,10,2,5,Rejected
+Female,55,Black,Bachelors,10,8,3,Rejected
+Female,27,Black,Masters,6,6,6,Hired
+Male,28,Black,Masters,12,5,3,Hired
+Male,25,White,Masters,1,1,4,Hired
+Female,24,White,Bachelors,7,7,2,Rejected
+Male,28,Hispanic,PhD,10,9,5,Hired
+Female,50,Black,Bachelors,9,8,4,Hired
+Male,28,White,Bachelors,10,10,8,Hired
+Male,49,White,PhD,2,6,8,Hired
+Female,39,White,High School,6,5,8,Hired
+Male,32,Hispanic,Bachelors,6,7,7,Rejected
+Female,58,Other,Masters,15,8,1,Hired
+Female,51,White,Masters,6,4,4,Hired
+Female,59,Asian,PhD,11,4,10,Hired
+Female,54,White,Bachelors,0,6,6,Rejected
+Male,57,Hispanic,Masters,4,6,5,Hired
+Female,23,Black,Bachelors,4,2,5,Rejected
+Male,30,Asian,Bachelors,8,4,3,Hired
+Female,26,White,Masters,2,5,6,Rejected
+Female,58,Hispanic,Masters,16,8,5,Hired
+Female,45,Asian,High School,2,8,5,Rejected
+Male,26,Black,Masters,9,7,3,Hired
+Female,59,Asian,Masters,7,2,4,Hired
+Male,49,White,High School,3,7,4,Rejected
+Female,56,Asian,Bachelors,1,8,4,Rejected
+Female,34,Asian,Bachelors,16,8,4,Hired
+Male,39,White,High School,8,7,6,Hired
+Male,56,Asian,Bachelors,0,7,7,Hired
+Male,36,Hispanic,Bachelors,3,8,4,Rejected
+Male,55,Hispanic,Bachelors,6,7,6,Rejected
+Male,52,White,Bachelors,8,5,4,Hired
+Female,32,Hispanic,Bachelors,16,5,4,Rejected
+Male,37,White,PhD,2,5,5,Hired
+Female,42,Other,High School,0,7,5,Rejected
+Male,53,Hispanic,PhD,9,5,8,Hired
+Male,40,Black,Bachelors,20,4,4,Hired
+Male,50,White,High School,5,6,5,Rejected
+Male,61,Hispanic,Bachelors,8,6,4,Rejected
+Male,39,White,High School,11,3,10,Rejected
+Male,53,White,Masters,17,4,5,Hired
+Female,45,White,High School,4,7,3,Rejected
+Male,50,Hispanic,Bachelors,4,6,5,Rejected
+Female,48,White,Bachelors,9,6,2,Rejected
+Female,26,Asian,Bachelors,6,6,4,Rejected
+Male,51,Hispanic,Masters,9,6,4,Hired
+Male,41,Hispanic,Bachelors,1,5,6,Rejected
+Male,62,Hispanic,Bachelors,0,2,3,Rejected
+Female,37,White,Masters,0,6,4,Rejected
+Male,49,Asian,Masters,0,6,7,Hired
+Male,38,White,High School,2,9,6,Hired
+Male,48,Hispanic,PhD,10,6,5,Hired
+Male,62,White,High School,7,3,8,Rejected
+Female,41,White,Masters,2,7,5,Hired
+Male,40,White,Bachelors,1,9,6,Hired
+Male,34,Hispanic,Bachelors,2,1,7,Rejected
+Female,29,White,PhD,8,6,7,Hired
+Female,30,Hispanic,Masters,0,4,4,Hired
+Male,29,White,Masters,9,7,6,Hired
+Male,29,White,Masters,7,5,8,Hired
+Male,25,Black,PhD,11,6,6,Hired
+Male,60,White,PhD,8,7,9,Hired
+Female,59,White,Bachelors,0,5,6,Rejected
+Male,59,Hispanic,Bachelors,4,1,7,Rejected
+Male,28,Asian,PhD,10,4,5,Hired
+Female,28,White,Bachelors,4,6,6,Hired
+Female,29,Black,Bachelors,2,6,5,Hired
+Male,53,White,Bachelors,3,4,8,Rejected
+Male,40,Other,Bachelors,13,2,7,Rejected
+Male,22,Other,Bachelors,11,7,5,Hired
+Male,47,Hispanic,PhD,6,1,6,Hired
+Male,34,Black,PhD,13,8,5,Hired
+Female,59,Black,Masters,10,1,4,Rejected
+Female,53,Black,High School,4,6,4,Rejected
+Female,23,White,High School,13,7,7,Rejected
+Female,31,White,Masters,7,3,3,Rejected
+Male,40,Hispanic,Bachelors,6,7,7,Hired
+Female,24,Other,Masters,11,7,7,Hired
+Male,33,Black,Masters,4,8,4,Hired
+Female,53,Hispanic,Bachelors,0,6,3,Rejected
+Male,32,Black,Bachelors,0,6,4,Rejected
+Female,42,White,Bachelors,10,7,6,Rejected
+Female,62,White,High School,4,7,4,Rejected
+Male,41,Black,PhD,10,6,5,Hired
+Male,51,Hispanic,Bachelors,1,5,8,Rejected
+Male,42,White,Bachelors,0,4,8,Hired
+Male,54,Hispanic,Masters,9,7,7,Hired
+Female,26,Hispanic,Bachelors,6,6,8,Rejected
+Male,27,Hispanic,Bachelors,3,5,3,Rejected
+Male,44,Hispanic,Masters,4,9,3,Hired
+Male,47,White,Bachelors,4,3,8,Rejected
+Male,33,Black,Bachelors,15,5,1,Hired
+Male,61,Asian,PhD,14,4,7,Hired
+Male,37,White,Masters,5,8,4,Hired
+Male,35,Hispanic,Bachelors,6,7,5,Hired
+Male,31,White,Bachelors,9,4,4,Hired
+Female,24,White,Bachelors,15,6,5,Hired
+Female,24,Other,Bachelors,16,6,8,Hired
+Female,48,Asian,Masters,10,4,8,Hired
+Male,58,Hispanic,PhD,0,5,10,Hired
+Male,27,White,High School,8,4,4,Rejected
+Female,37,Asian,Bachelors,9,6,5,Hired
+Female,25,Black,Bachelors,11,5,3,Rejected
+Female,31,White,Masters,7,5,8,Hired
+Female,25,Hispanic,Masters,7,8,4,Hired
+Male,29,Black,Bachelors,6,6,10,Hired
+Female,41,White,Masters,7,7,9,Hired
+Female,48,Hispanic,Bachelors,14,7,2,Rejected
+Female,43,Hispanic,Masters,10,2,5,Rejected
+Male,60,Hispanic,Bachelors,3,8,6,Rejected
+Male,50,Hispanic,High School,1,7,5,Rejected
+Male,55,Hispanic,Masters,5,5,4,Rejected
+Female,50,Black,Masters,6,9,7,Hired
+Male,48,White,Bachelors,0,8,5,Hired
+Male,57,Hispanic,Masters,18,3,6,Hired
+Male,47,Black,Masters,14,10,7,Hired
+Male,55,White,PhD,0,6,8,Hired
+Male,39,White,Bachelors,13,8,1,Rejected
+Male,34,White,Bachelors,9,7,5,Hired
+Female,45,Black,Masters,11,7,9,Hired
+Male,35,Hispanic,Masters,6,4,6,Hired
+Male,37,Black,Bachelors,1,4,7,Rejected
+Female,22,White,Masters,5,7,2,Hired
+Male,59,White,Bachelors,2,6,5,Rejected
+Female,49,White,High School,9,6,8,Rejected
+Female,49,White,Masters,0,3,5,Hired
+Female,42,Hispanic,Bachelors,13,5,8,Rejected
+Male,34,White,Bachelors,10,6,5,Hired
+Female,53,White,Bachelors,5,3,2,Rejected
+Female,29,White,Bachelors,4,9,5,Rejected
+Male,59,White,PhD,15,6,7,Hired
+Male,53,Hispanic,Masters,14,6,5,Hired
+Female,28,Hispanic,Bachelors,15,7,4,Rejected
+Female,60,Hispanic,Bachelors,13,6,1,Rejected
+Female,58,White,Masters,8,4,6,Rejected
+Male,60,White,Bachelors,12,10,6,Hired
+Female,32,White,Bachelors,0,2,6,Rejected
+Female,41,Asian,Masters,5,6,5,Hired
+Male,46,Black,Bachelors,0,7,7,Rejected
+Male,49,White,Bachelors,14,5,4,Hired
+Female,55,Black,Bachelors,5,8,7,Rejected
+Male,30,Hispanic,Bachelors,7,8,3,Hired
+Female,54,White,Bachelors,13,7,4,Rejected
+Male,27,Hispanic,High School,6,3,6,Rejected
+Male,48,Asian,Bachelors,2,4,4,Rejected
+Male,33,White,High School,10,5,5,Rejected
+Male,47,White,Bachelors,0,6,9,Rejected
+Female,53,White,Masters,1,3,8,Rejected
+Female,27,White,High School,7,6,9,Rejected
+Male,31,Hispanic,Bachelors,0,3,6,Rejected
+Male,52,White,High School,13,4,3,Rejected
+Male,50,Black,Bachelors,0,4,6,Rejected
+Female,49,Other,Masters,6,3,4,Rejected
+Male,53,Black,Masters,16,4,6,Hired
+Male,23,White,Bachelors,16,7,4,Hired
+Male,44,White,Bachelors,11,8,3,Hired
+Male,59,Asian,Bachelors,0,3,5,Rejected
+Male,46,Other,Masters,3,3,7,Rejected
+Female,61,White,Masters,11,7,6,Hired
+Male,48,Asian,Bachelors,7,8,7,Hired
+Male,32,White,Masters,0,5,5,Hired
+Male,57,White,Bachelors,4,7,9,Hired
+Male,31,Asian,Masters,5,5,10,Hired
+Female,29,Other,Masters,0,3,8,Hired
+Male,32,Black,Masters,9,5,5,Hired
+Male,28,White,Bachelors,8,5,7,Hired
+Female,22,White,Masters,3,7,7,Hired
+Female,45,Black,Bachelors,7,3,6,Rejected
+Male,48,Asian,PhD,0,5,8,Hired
+Female,55,Asian,High School,1,10,6,Rejected
+Female,31,Asian,High School,1,3,4,Rejected
+Male,47,Asian,Masters,12,3,5,Hired
+Female,55,Black,High School,1,7,8,Rejected
+Female,50,Hispanic,Masters,8,4,6,Hired
+Male,43,White,Masters,11,4,4,Hired
+Male,41,Black,Masters,7,6,6,Hired
+Male,41,Hispanic,PhD,8,6,4,Hired
+Male,25,Hispanic,PhD,0,6,7,Hired
+Male,59,Black,Masters,2,4,4,Rejected
+Male,58,Hispanic,Masters,3,5,4,Hired
+Female,45,Black,High School,2,6,7,Rejected
+Male,35,White,Bachelors,0,5,4,Rejected
+Male,53,Hispanic,PhD,2,1,5,Rejected
+Male,54,White,Masters,12,8,6,Hired
+Male,52,White,Bachelors,0,4,8,Hired
+Male,45,Black,High School,9,7,7,Hired
+Male,31,White,Bachelors,17,7,7,Hired
+Female,53,White,Bachelors,8,6,4,Rejected
+Male,43,Hispanic,Bachelors,5,3,6,Rejected
+Male,50,Hispanic,High School,6,5,4,Rejected
+Male,47,White,High School,4,4,5,Rejected
+Male,23,Black,Masters,5,3,7,Hired
+Male,61,Black,Masters,12,5,6,Rejected
+Male,56,White,High School,7,4,4,Rejected
+Male,56,Black,Bachelors,16,7,8,Hired
+Male,55,White,Bachelors,8,6,6,Hired
+Male,27,White,PhD,6,5,7,Hired
+Female,41,White,Bachelors,3,6,3,Hired
+Male,34,White,Bachelors,7,8,1,Hired
+Male,42,Black,Bachelors,1,6,6,Hired
+Male,59,Hispanic,Bachelors,0,4,5,Rejected
+Male,62,Black,Masters,10,7,6,Hired
+Female,57,Black,High School,0,6,4,Rejected
+Male,52,White,Bachelors,0,1,6,Rejected
+Female,40,White,Masters,3,5,5,Hired
+Male,57,Other,Masters,8,8,7,Hired
+Female,62,White,Masters,3,6,7,Rejected
+Male,60,White,PhD,14,9,5,Hired
+Male,33,White,Masters,4,2,2,Rejected
+Female,26,Black,Masters,9,4,9,Hired
+Male,60,White,Bachelors,7,2,8,Rejected
+Female,50,White,Masters,7,2,5,Rejected
+Female,62,White,Masters,7,8,4,Hired
+Female,60,White,Bachelors,9,4,7,Rejected
+Male,57,White,Masters,3,3,7,Hired
+Female,30,White,Bachelors,7,8,6,Hired
+Female,56,Black,Masters,7,5,3,Rejected
+Female,42,White,PhD,5,8,4,Hired
+Female,36,White,PhD,2,5,4,Hired
+Female,23,Other,Bachelors,2,1,7,Rejected
+Male,26,Black,High School,0,6,3,Rejected
+Male,38,White,Bachelors,16,5,7,Hired
+Male,26,Hispanic,Masters,7,3,5,Hired
+Male,24,White,Masters,3,2,9,Hired
+Male,61,Black,High School,4,3,5,Rejected
+Male,48,White,Bachelors,6,5,3,Hired
+Female,61,White,Masters,6,5,3,Rejected
+Male,22,Black,High School,7,4,3,Rejected
+Male,48,Black,Masters,8,7,7,Hired
+Female,54,Other,Masters,3,9,6,Rejected
+Male,43,White,PhD,0,5,6,Hired

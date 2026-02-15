@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Privacy & Anonymization Lab | AI Ethics Toolkit</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class", theme: {
+                extend: {
+                    colors: { "primary": "#137fec", "primary-hover": "#0f6bd1", "background-light": "#f6f7f8", "background-dark": "#101922", "surface-dark": "#182430", "surface-dark-lighter": "#212e3b" },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #101922;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2d3f50;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #137fec;
+        }
+
+        .redacted {
+            background: #ef444433;
+            text-decoration: line-through;
+        }
+
+        .anonymized {
+            background: #22c55e33;
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white">
+    <aside
+        class="w-64 flex-shrink-0 fixed h-full z-20 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
+            <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
+            <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group"
+                href="../index.html"><span class="material-icons-outlined mr-3 text-2xl">grid_view</span> Toolkit
+                Overview</a>
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
+            </div>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="word-embeddings.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">scatter_plot</span> Word
+                Embeddings</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="explainability-lab.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">visibility</span>
+                Explainability Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="bias-auditor.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">saved_search</span> Bias
+                Auditor</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="adversarial-sandbox.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">security</span> Adversarial
+                Sandbox</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="filter-bubble.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">bubble_chart</span> Filter
+                Bubble Sim</a>
+            <a class="flex items-center px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm"
+                href="privacy-lab.html"><span class="material-icons-outlined mr-3 text-xl">vpn_key</span> Privacy
+                Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="value-alignment.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">balance</span> Value
+                Alignment</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="proxy-detector.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">find_replace</span> Proxy
+                Detector</a>
+        </nav>
+        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
+            <p class="text-[10px] text-slate-400 mb-2">© 2025 <a href="https://hamedyaghoobian.com" class="text-primary hover:underline">Hamed Yaghoobian</a></p>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Version
+                    2.1.0</span><a class="hover:text-primary" href="#">Legal</a></div>
+        </div>
+    </aside>
+
+    <main class="flex-1 ml-64 p-8 overflow-y-auto h-screen">
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <div class="flex items-center mb-1">
+                    <a href="../index.html" class="text-slate-400 hover:text-primary text-sm mr-2">Toolkit</a>
+                    <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
+                    <span class="text-primary text-sm ml-2">Privacy Lab</span>
+                </div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Privacy & Anonymization Lab</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">Explore PII detection, data anonymization techniques,
+                    and differential privacy.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="themeToggle" class="sr-only peer" checked />
+                <div
+                    class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                </div>
+                <span class="ml-2 text-sm text-slate-500 dark:text-slate-400"><span
+                        class="material-icons-outlined text-sm align-middle">dark_mode</span></span>
+            </label>
+        </header>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-6">
+            <button onclick="showTab('pii')" id="tab-pii"
+                class="tab-btn px-5 py-2.5 rounded-xl bg-primary text-white font-medium text-sm transition-all">PII
+                Detection</button>
+            <button onclick="showTab('anon')" id="tab-anon"
+                class="tab-btn px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 font-medium text-sm transition-all hover:bg-slate-300">Anonymization</button>
+            <button onclick="showTab('dp')" id="tab-dp"
+                class="tab-btn px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 font-medium text-sm transition-all hover:bg-slate-300">Differential
+                Privacy</button>
+        </div>
+
+        <!-- PII Detection Tab -->
+        <div id="panel-pii" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-red-500 mr-2 align-middle">search</span> Input Text
+                    </h3>
+                    <textarea id="piiInput" rows="8"
+                        class="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 text-sm focus:ring-primary resize-none font-mono">Dear Support,
+
+My name is John Smith and I live at 123 Main Street, New York, NY 10001. 
+You can reach me at john.smith@email.com or call me at (555) 123-4567.
+My social security number is 123-45-6789 and my credit card is 4532-1234-5678-9012.
+My date of birth is 03/15/1985 and my passport number is A12345678.
+I work at Acme Corp as a Senior Engineer.
+
+Please update my account #ACM-789456.
+Thanks, John</textarea>
+                    <button onclick="detectPII()"
+                        class="w-full mt-3 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center text-sm">
+                        <span class="material-icons-outlined mr-2 text-base">radar</span> Scan for PII
+                    </button>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-orange-500 mr-2 align-middle">warning</span> Detected
+                        PII
+                    </h3>
+                    <div id="piiResults" class="space-y-3 max-h-[350px] overflow-y-auto"></div>
+                    <div id="piiSummary" class="mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20 hidden">
+                        <p id="piiSummaryText" class="text-sm text-red-500 font-medium"></p>
+                    </div>
+                </div>
+            </div>
+            <div
+                class="mt-4 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                    <span class="material-icons-outlined text-green-500 mr-2 align-middle">shield</span> Redacted Output
+                </h3>
+                <div id="redactedOutput"
+                    class="p-4 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter text-sm font-mono leading-relaxed whitespace-pre-wrap min-h-[100px]">
+                </div>
+            </div>
+        </div>
+
+        <!-- Anonymization Tab -->
+        <div id="panel-anon" class="tab-panel hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-primary mr-2 align-middle">table_chart</span> Sample
+                        Dataset
+                    </h3>
+                    <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-50 dark:bg-surface-dark-lighter text-slate-600 dark:text-slate-400">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs">Name</th>
+                                    <th class="px-3 py-2 text-left text-xs">Age</th>
+                                    <th class="px-3 py-2 text-left text-xs">ZIP</th>
+                                    <th class="px-3 py-2 text-left text-xs">Condition</th>
+                                    <th class="px-3 py-2 text-left text-xs">Income</th>
+                                </tr>
+                            </thead>
+                            <tbody id="anonOriginal" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        <div>
+                            <label class="text-xs text-slate-500 block mb-1">Technique</label>
+                            <select id="anonTechnique"
+                                class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
+                                <option value="k-anonymity">k-Anonymity</option>
+                                <option value="l-diversity">l-Diversity</option>
+                                <option value="suppression">Suppression</option>
+                                <option value="generalization">Generalization</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500 flex justify-between"><span>k value</span><span
+                                    id="kVal">3</span></label>
+                            <input type="range" id="kValue" min="2" max="10" value="3" class="w-full accent-primary"
+                                oninput="document.getElementById('kVal').textContent=this.value">
+                        </div>
+                        <button onclick="applyAnonymization()"
+                            class="w-full py-2.5 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors text-sm">
+                            <span class="material-icons-outlined mr-1 text-base align-middle">lock</span> Anonymize
+                        </button>
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-green-500 mr-2 align-middle">verified_user</span>
+                        Anonymized Result
+                    </h3>
+                    <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-50 dark:bg-surface-dark-lighter text-slate-600 dark:text-slate-400">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs">Name</th>
+                                    <th class="px-3 py-2 text-left text-xs">Age</th>
+                                    <th class="px-3 py-2 text-left text-xs">ZIP</th>
+                                    <th class="px-3 py-2 text-left text-xs">Condition</th>
+                                    <th class="px-3 py-2 text-left text-xs">Income</th>
+                                </tr>
+                            </thead>
+                            <tbody id="anonResult" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+                        </table>
+                    </div>
+                    <div id="anonMetrics" class="mt-4 space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Differential Privacy Tab -->
+        <div id="panel-dp" class="tab-panel hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-purple-500 mr-2 align-middle">tune</span> Parameters
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-slate-500 block mb-1">Query</label>
+                            <select id="dpQuery"
+                                class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
+                                <option value="average_age">Average Age</option>
+                                <option value="count_condition">Condition Count</option>
+                                <option value="average_income">Average Income</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500 flex justify-between"><span>Epsilon (ε) — Privacy
+                                    Budget</span><span id="epsilonVal">1.0</span></label>
+                            <input type="range" id="dpEpsilon" min="1" max="100" value="10"
+                                class="w-full accent-primary"
+                                oninput="document.getElementById('epsilonVal').textContent=(this.value/10).toFixed(1)">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500 flex justify-between"><span>Number of
+                                    Queries</span><span id="nQueriesVal">50</span></label>
+                            <input type="range" id="nQueries" min="10" max="200" value="50"
+                                class="w-full accent-primary"
+                                oninput="document.getElementById('nQueriesVal').textContent=this.value">
+                        </div>
+                        <button onclick="runDPExperiment()"
+                            class="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors text-sm">
+                            <span class="material-icons-outlined mr-1 text-base align-middle">play_arrow</span> Run
+                            Experiment
+                        </button>
+                    </div>
+                    <div class="mt-4 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                            <strong class="text-purple-400">Differential Privacy</strong> adds calibrated noise to query
+                            results.
+                            Lower ε = more privacy but less accuracy. Higher ε = less privacy but more accurate results.
+                            The Laplace mechanism adds noise from Lap(Δf/ε).
+                        </p>
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-blue-500 mr-2 align-middle">bar_chart</span> Query
+                        Results Distribution
+                    </h3>
+                    <div id="dpChart" class="h-[300px]"></div>
+                    <div id="dpStats" class="mt-4 grid grid-cols-2 gap-3"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Theme
+        const themeToggle = document.getElementById('themeToggle');
+        function setTheme(dark) { document.documentElement.classList.toggle('dark', dark); localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); }
+        if (localStorage.getItem('ethicsToolkitTheme') === 'light') { setTheme(false); themeToggle.checked = false; }
+        themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => { b.className = 'tab-btn px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 font-medium text-sm transition-all hover:bg-slate-300'; });
+            document.getElementById(`panel-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).className = 'tab-btn px-5 py-2.5 rounded-xl bg-primary text-white font-medium text-sm transition-all';
+        }
+
+        // ==================== PII DETECTION (Context-Aware) ====================
+        const PII_PATTERNS = [
+            { type: 'Email', pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, risk: 'High', icon: 'email', category: 'Contact' },
+            { type: 'Phone', pattern: /\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, risk: 'High', icon: 'phone', category: 'Contact' },
+            { type: 'SSN', pattern: /\b\d{3}-\d{2}-\d{4}\b/g, risk: 'Critical', icon: 'badge', category: 'Government ID' },
+            { type: 'Credit Card', pattern: /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g, risk: 'Critical', icon: 'credit_card', category: 'Financial' },
+            { type: 'Date of Birth', pattern: /\b\d{2}\/\d{2}\/\d{4}\b/g, risk: 'Medium', icon: 'cake', category: 'Demographic' },
+            { type: 'Address', pattern: /\d+\s+[\w\s]+(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Way|Boulevard|Blvd)\b[,\s]*(?:[A-Z][a-z]+[,\s]*)*\b[A-Z]{2}\b\s*\d{5}/g, risk: 'High', icon: 'place', category: 'Contact' },
+            { type: 'Passport', pattern: /\b[A-Z]\d{8}\b/g, risk: 'Critical', icon: 'flight', category: 'Government ID' },
+            { type: 'Account Number', pattern: /#[A-Z]{2,4}-\d{4,}/g, risk: 'Medium', icon: 'account_circle', category: 'Financial' },
+            { type: 'Person Name', pattern: /\b(?:John|Jane|Smith|Johnson|Williams|Brown|Jones|Garcia|Miller|Davis)\s+(?:Smith|Johnson|Williams|Brown|Jones|Garcia|Miller|Davis|Wilson|Moore)\b/g, risk: 'Medium', icon: 'person', category: 'Identity' },
+        ];
+
+        // Context-aware: detect additional PII by contextual clues
+        const CONTEXT_PATTERNS = [
+            { type: 'Medical ID', pattern: /\b(?:patient|medical|health)\s*(?:id|number|#|record)\s*[:\s]*[A-Z0-9-]{4,}/gi, risk: 'Critical', icon: 'local_hospital', category: 'Medical' },
+            { type: 'IP Address', pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g, risk: 'Medium', icon: 'wifi', category: 'Digital' },
+            { type: 'Biometric', pattern: /\b(?:fingerprint|retina|iris|face\s*id|biometric)\s*(?:scan|data|template|hash)\b/gi, risk: 'Critical', icon: 'fingerprint', category: 'Biometric' },
+            { type: 'Genetic Data', pattern: /\b(?:DNA|genome|genotype|genetic\s*test|23andMe|ancestry)\b/gi, risk: 'Critical', icon: 'biotech', category: 'Genetic' },
+            { type: 'Bank Account', pattern: /\b(?:account|routing)\s*(?:#|number|no\.?)?\s*[:\s]?\d{6,17}\b/gi, risk: 'Critical', icon: 'account_balance', category: 'Financial' },
+        ];
+
+        function detectPII() {
+            const text = document.getElementById('piiInput').value;
+            const findings = [];
+
+            [...PII_PATTERNS, ...CONTEXT_PATTERNS].forEach(({ type, pattern, risk, icon, category }) => {
+                const matches = text.matchAll(new RegExp(pattern));
+                for (const match of matches) {
+                    findings.push({ type, value: match[0], start: match.index, end: match.index + match[0].length, risk, icon, category });
+                }
+            });
+
+            // Deduplicate overlapping findings
+            findings.sort((a, b) => a.start - b.start);
+            const deduped = [];
+            for (const f of findings) {
+                const prev = deduped[deduped.length - 1];
+                if (!prev || f.start >= prev.end) deduped.push(f);
+                else if (f.end - f.start > prev.end - prev.start) { deduped.pop(); deduped.push(f); }
+            }
+
+            // Privacy Risk Score (NIST-inspired)
+            const riskWeights = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+            const totalRisk = deduped.reduce((s, f) => s + riskWeights[f.risk], 0);
+            const maxRisk = deduped.length * 4;
+            const riskScore = maxRisk > 0 ? Math.round((totalRisk / maxRisk) * 100) : 0;
+            const riskLabel = riskScore > 75 ? 'Critical' : riskScore > 50 ? 'High' : riskScore > 25 ? 'Medium' : 'Low';
+            const riskColor = riskScore > 75 ? 'text-red-500' : riskScore > 50 ? 'text-orange-500' : riskScore > 25 ? 'text-yellow-500' : 'text-green-500';
+
+            // Group by category
+            const categories = {};
+            deduped.forEach(f => { if (!categories[f.category]) categories[f.category] = []; categories[f.category].push(f); });
+
+            // Results
+            const resultsDiv = document.getElementById('piiResults');
+            const riskColors = { Critical: 'bg-red-500/20 text-red-500 border-red-500/30', High: 'bg-orange-500/20 text-orange-500 border-orange-500/30', Medium: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' };
+
+            let html = `<div class="p-3 rounded-lg bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 mb-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-400">Privacy Risk Score</span>
+                    <span class="text-lg font-bold ${riskColor}">${riskScore}/100 (${riskLabel})</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 mt-2">
+                    <div class="h-full rounded-full transition-all" style="width:${riskScore}%; background: ${riskScore > 75 ? '#ef4444' : riskScore > 50 ? '#f97316' : riskScore > 25 ? '#eab308' : '#22c55e'}"></div>
+                </div>
+            </div>`;
+
+            Object.entries(categories).forEach(([cat, items]) => {
+                html += `<div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 mt-3">${cat} (${items.length})</div>`;
+                items.forEach(f => {
+                    html += `<div class="flex items-center gap-3 p-3 rounded-lg border ${riskColors[f.risk]}">
+                    <span class="material-icons-outlined text-lg">${f.icon}</span>
+                    <div class="flex-1">
+                        <p class="text-xs font-bold">${f.type}</p>
+                        <p class="text-xs opacity-80 font-mono">${f.value}</p>
+                    </div>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full border ${riskColors[f.risk]}">${f.risk}</span>
+                </div>`;
+                });
+            });
+            resultsDiv.innerHTML = html;
+
+            // Summary
+            const summaryDiv = document.getElementById('piiSummary');
+            summaryDiv.classList.remove('hidden');
+            document.getElementById('piiSummaryText').textContent = `⚠️ Found ${deduped.length} PII items across ${Object.keys(categories).length} categories: ${deduped.filter(f => f.risk === 'Critical').length} Critical, ${deduped.filter(f => f.risk === 'High').length} High, ${deduped.filter(f => f.risk === 'Medium').length} Medium risk.`;
+
+            // Redacted output
+            let redacted = text;
+            const sortedFindings = [...deduped].sort((a, b) => b.start - a.start);
+            sortedFindings.forEach(f => {
+                const replacement = `[${f.type.toUpperCase()}_REDACTED]`;
+                redacted = redacted.substring(0, f.start) + replacement + redacted.substring(f.end);
+            });
+            document.getElementById('redactedOutput').innerHTML = redacted.replace(/\[([A-Z_]+)\]/g, '<span class="anonymized font-bold">[$1]</span>');
+        }
+
+        // ==================== ANONYMIZATION (Verified k-Anonymity) ====================
+        const SAMPLE_DATA = [
+            { Name: 'Alice Johnson', Age: 28, ZIP: '10001', Condition: 'Diabetes', Income: 65000 },
+            { Name: 'Bob Smith', Age: 29, ZIP: '10002', Condition: 'Flu', Income: 72000 },
+            { Name: 'Carol Williams', Age: 31, ZIP: '10001', Condition: 'Diabetes', Income: 58000 },
+            { Name: 'David Brown', Age: 55, ZIP: '10003', Condition: 'Heart Disease', Income: 95000 },
+            { Name: 'Eve Davis', Age: 52, ZIP: '10003', Condition: 'Cancer', Income: 88000 },
+            { Name: 'Frank Miller', Age: 54, ZIP: '10004', Condition: 'Heart Disease', Income: 91000 },
+            { Name: 'Grace Wilson', Age: 42, ZIP: '10005', Condition: 'Flu', Income: 76000 },
+            { Name: 'Henry Moore', Age: 44, ZIP: '10005', Condition: 'Allergy', Income: 82000 },
+            { Name: 'Iris Taylor', Age: 38, ZIP: '10001', Condition: 'Flu', Income: 69000 },
+            { Name: 'Jack Anderson', Age: 62, ZIP: '10002', Condition: 'Cancer', Income: 105000 },
+        ];
+
+        function renderOriginalData() {
+            document.getElementById('anonOriginal').innerHTML = SAMPLE_DATA.map(r =>
+                `<tr class="hover:bg-slate-50 dark:hover:bg-surface-dark-lighter"><td class="px-3 py-2 text-xs">${r.Name}</td><td class="px-3 py-2 text-xs">${r.Age}</td><td class="px-3 py-2 text-xs">${r.ZIP}</td><td class="px-3 py-2 text-xs">${r.Condition}</td><td class="px-3 py-2 text-xs">$${r.Income.toLocaleString()}</td></tr>`
+            ).join('');
+        }
+
+        function computeEquivalenceClasses(data) {
+            // Group by quasi-identifiers (Age, ZIP)
+            const groups = {};
+            data.forEach(r => {
+                const key = `${r.Age}|${r.ZIP}`;
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(r);
+            });
+            return groups;
+        }
+
+        function verifyKAnonymity(data, k) {
+            const groups = computeEquivalenceClasses(data);
+            const sizes = Object.values(groups).map(g => g.length);
+            const minSize = Math.min(...sizes);
+            const satisfied = minSize >= k;
+            return { satisfied, minSize, numGroups: Object.keys(groups).length, groups, sizes };
+        }
+
+        function verifyLDiversity(data, l) {
+            const groups = computeEquivalenceClasses(data);
+            let satisfied = true;
+            const groupStats = [];
+            Object.entries(groups).forEach(([key, members]) => {
+                const conditions = new Set(members.map(m => m.Condition));
+                const diverse = conditions.size >= l;
+                if (!diverse) satisfied = false;
+                groupStats.push({ key, size: members.length, diversity: conditions.size, conditions: [...conditions] });
+            });
+            return { satisfied, groupStats };
+        }
+
+        function applyAnonymization() {
+            const technique = document.getElementById('anonTechnique').value;
+            const k = parseInt(document.getElementById('kValue').value);
+            let result = JSON.parse(JSON.stringify(SAMPLE_DATA));
+
+            if (technique === 'k-anonymity' || technique === 'generalization') {
+                result.forEach(r => {
+                    r.Name = '***';
+                    r.Age = `${Math.floor(r.Age / 10) * 10}-${Math.floor(r.Age / 10) * 10 + 9}`;
+                    r.ZIP = r.ZIP.substring(0, 3) + '**';
+                    r.Income = `$${Math.floor(r.Income / 10000) * 10}k-$${(Math.floor(r.Income / 10000) + 1) * 10}k`;
+                });
+            } else if (technique === 'l-diversity') {
+                result.forEach(r => {
+                    r.Name = '***';
+                    r.Age = `${Math.floor(r.Age / 5) * 5}-${Math.floor(r.Age / 5) * 5 + 4}`;
+                    r.ZIP = r.ZIP.substring(0, 4) + '*';
+                    r.Income = `~$${Math.round(r.Income / 5000) * 5}k`;
+                });
+            } else if (technique === 'suppression') {
+                result.forEach(r => {
+                    r.Name = '[SUPPRESSED]';
+                    r.ZIP = '[SUPPRESSED]';
+                    r.Income = '[SUPPRESSED]';
+                });
+            }
+
+            document.getElementById('anonResult').innerHTML = result.map(r =>
+                `<tr class="hover:bg-slate-50 dark:hover:bg-surface-dark-lighter"><td class="px-3 py-2 text-xs ${r.Name === '***' || r.Name === '[SUPPRESSED]' ? 'text-green-500 font-bold' : ''}">${r.Name}</td><td class="px-3 py-2 text-xs">${r.Age}</td><td class="px-3 py-2 text-xs">${r.ZIP}</td><td class="px-3 py-2 text-xs">${r.Condition}</td><td class="px-3 py-2 text-xs">${r.Income}</td></tr>`
+            ).join('');
+
+            // Verify k-anonymity on the anonymized data
+            const kResult = verifyKAnonymity(result, k);
+            const lResult = verifyLDiversity(result, 2);
+            const infoLoss = technique === 'suppression' ? 85 : technique === 'k-anonymity' ? 45 : technique === 'generalization' ? 45 : 30;
+
+            let metricsHTML = `
+            <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
+                <span class="text-sm text-slate-600 dark:text-slate-400">Information Loss</span>
+                <span class="font-bold text-sm ${infoLoss > 50 ? 'text-red-500' : 'text-green-500'}">${infoLoss}%</span>
+            </div>
+            <div class="flex justify-between items-center p-3 rounded-lg ${kResult.satisfied ? 'bg-green-500/10 border border-green-500/20' : 'bg-red-500/10 border border-red-500/20'}">
+                <span class="text-sm text-slate-600 dark:text-slate-400">k-Anonymity (k=${k})</span>
+                <span class="font-bold text-sm ${kResult.satisfied ? 'text-green-500' : 'text-red-500'}">${kResult.satisfied ? '✓ Satisfied' : '✗ Failed'} (min group: ${kResult.minSize})</span>
+            </div>
+            <div class="flex justify-between items-center p-3 rounded-lg ${lResult.satisfied ? 'bg-green-500/10 border border-green-500/20' : 'bg-yellow-500/10 border border-yellow-500/20'}">
+                <span class="text-sm text-slate-600 dark:text-slate-400">l-Diversity (l=2)</span>
+                <span class="font-bold text-sm ${lResult.satisfied ? 'text-green-500' : 'text-yellow-500'}">${lResult.satisfied ? '✓ Satisfied' : '✗ Some groups lack diversity'}</span>
+            </div>
+            <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
+                <span class="text-sm text-slate-600 dark:text-slate-400">Equivalence Classes</span>
+                <span class="font-bold text-sm text-primary">${kResult.numGroups} groups</span>
+            </div>
+            <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
+                <span class="text-sm text-slate-600 dark:text-slate-400">Re-identification Risk</span>
+                <span class="font-bold text-sm ${kResult.minSize >= 3 ? 'text-green-500' : 'text-yellow-500'}">${kResult.minSize >= 3 ? 'Low' : kResult.minSize >= 2 ? 'Medium' : 'High'} (1/${kResult.minSize})</span>
+            </div>`;
+
+            // Show equivalence class breakdown
+            metricsHTML += `<div class="mt-2 p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
+                <p class="text-xs font-bold text-slate-500 mb-2">Equivalence Class Sizes</p>
+                <div class="flex flex-wrap gap-1">
+                    ${kResult.sizes.map(s => `<span class="px-2 py-0.5 text-xs rounded-full ${s >= k ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">${s}</span>`).join('')}
+                </div>
+            </div>`;
+
+            document.getElementById('anonMetrics').innerHTML = metricsHTML;
+        }
+
+        // ==================== DIFFERENTIAL PRIVACY (with Composition) ====================
+        let totalEpsilonSpent = 0;
+
+        function laplaceSample(scale) {
+            const u = Math.random() - 0.5;
+            return -scale * Math.sign(u) * Math.log(1 - 2 * Math.abs(u));
+        }
+
+        function gaussianSample(sigma) {
+            // Box-Muller transform
+            const u1 = Math.random(), u2 = Math.random();
+            return sigma * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        }
+
+        function runDPExperiment() {
+            const epsilon = parseInt(document.getElementById('dpEpsilon').value) / 10;
+            const nQueries = parseInt(document.getElementById('nQueries').value);
+            const queryType = document.getElementById('dpQuery').value;
+
+            let trueAnswer, sensitivity;
+            if (queryType === 'average_age') {
+                trueAnswer = SAMPLE_DATA.reduce((s, r) => s + r.Age, 0) / SAMPLE_DATA.length;
+                sensitivity = 90 / SAMPLE_DATA.length;
+            } else if (queryType === 'count_condition') {
+                trueAnswer = SAMPLE_DATA.filter(r => r.Condition === 'Diabetes').length;
+                sensitivity = 1;
+            } else {
+                trueAnswer = SAMPLE_DATA.reduce((s, r) => s + r.Income, 0) / SAMPLE_DATA.length;
+                sensitivity = 200000 / SAMPLE_DATA.length;
+            }
+
+            // Both Laplace and Gaussian results
+            const laplaceResults = [], gaussianResults = [];
+            const delta = 1e-5;
+            const sigma = (sensitivity / epsilon) * Math.sqrt(2 * Math.log(1.25 / delta));
+
+            for (let i = 0; i < nQueries; i++) {
+                laplaceResults.push(trueAnswer + laplaceSample(sensitivity / epsilon));
+                gaussianResults.push(trueAnswer + gaussianSample(sigma));
+            }
+
+            // Composition theorem tracking
+            totalEpsilonSpent += epsilon;
+            const seqComposition = totalEpsilonSpent;
+            const advComposition = Math.sqrt(2 * Math.ceil(totalEpsilonSpent / epsilon) * Math.log(1 / delta)) * epsilon + Math.ceil(totalEpsilonSpent / epsilon) * epsilon * (Math.exp(epsilon) - 1);
+
+            const isDark = document.documentElement.classList.contains('dark');
+            Plotly.newPlot('dpChart', [{
+                type: 'histogram', x: laplaceResults, name: 'Laplace',
+                marker: { color: '#8b5cf680' }, nbinsx: 30, opacity: 0.7
+            }, {
+                type: 'histogram', x: gaussianResults, name: 'Gaussian',
+                marker: { color: '#3b82f680' }, nbinsx: 30, opacity: 0.7
+            }, {
+                type: 'scatter', x: [trueAnswer, trueAnswer], y: [0, nQueries / 5],
+                mode: 'lines', line: { color: '#ef4444', width: 3, dash: 'dash' }, name: 'True Value'
+            }], {
+                margin: { t: 10, l: 40, r: 10, b: 40 },
+                paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+                barmode: 'overlay',
+                xaxis: { title: 'Query Result', color: isDark ? '#94a3b8' : '#475569', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
+                yaxis: { title: 'Frequency', color: isDark ? '#94a3b8' : '#475569', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
+                legend: { font: { color: isDark ? '#94a3b8' : '#475569', size: 10 }, bgcolor: 'transparent' },
+                font: { family: 'Space Grotesk' }
+            }, { responsive: true, displayModeBar: false });
+
+            const lapMean = laplaceResults.reduce((s, v) => s + v, 0) / nQueries;
+            const lapStd = Math.sqrt(laplaceResults.reduce((s, v) => s + (v - lapMean) ** 2, 0) / nQueries);
+            const gauMean = gaussianResults.reduce((s, v) => s + v, 0) / nQueries;
+            const gauStd = Math.sqrt(gaussianResults.reduce((s, v) => s + (v - gauMean) ** 2, 0) / nQueries);
+
+            document.getElementById('dpStats').innerHTML = `
+            <div class="p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter text-center">
+                <p class="text-xs text-slate-500 mb-1">True Value</p>
+                <p class="text-lg font-bold text-primary">${trueAnswer.toFixed(1)}</p>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter text-center">
+                <p class="text-xs text-slate-500 mb-1">Laplace Mean (σ=${lapStd.toFixed(1)})</p>
+                <p class="text-lg font-bold text-purple-500">${lapMean.toFixed(1)}</p>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter text-center">
+                <p class="text-xs text-slate-500 mb-1">Gaussian Mean (σ=${gauStd.toFixed(1)})</p>
+                <p class="text-lg font-bold text-blue-500">${gauMean.toFixed(1)}</p>
+            </div>
+            <div class="p-3 rounded-lg bg-gradient-to-r from-purple-500/10 to-red-500/10 border border-purple-500/20 text-center">
+                <p class="text-xs text-slate-500 mb-1">Privacy Budget Spent</p>
+                <p class="text-lg font-bold text-red-500">ε = ${seqComposition.toFixed(1)}</p>
+                <p class="text-xs text-slate-400 mt-1">Sequential composition<br>Advanced: ε ≈ ${Math.min(advComposition, seqComposition).toFixed(1)}</p>
+            </div>
+        `;
+        }
+
+        renderOriginalData();
+    </script>
+</body>
+
+</html>

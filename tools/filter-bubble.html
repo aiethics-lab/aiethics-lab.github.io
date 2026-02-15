@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Filter Bubble Simulator | AI Ethics Toolkit</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class", theme: {
+                extend: {
+                    colors: { "primary": "#137fec", "primary-hover": "#0f6bd1", "background-light": "#f6f7f8", "background-dark": "#101922", "surface-dark": "#182430", "surface-dark-lighter": "#212e3b" },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #101922;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2d3f50;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #137fec;
+        }
+
+        .feed-card {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white">
+    <aside
+        class="w-64 flex-shrink-0 fixed h-full z-20 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
+            <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
+            <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group"
+                href="../index.html"><span class="material-icons-outlined mr-3 text-2xl">grid_view</span> Toolkit
+                Overview</a>
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
+            </div>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="word-embeddings.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">scatter_plot</span> Word
+                Embeddings</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="explainability-lab.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">visibility</span>
+                Explainability Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="bias-auditor.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">saved_search</span> Bias
+                Auditor</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="adversarial-sandbox.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">security</span> Adversarial
+                Sandbox</a>
+            <a class="flex items-center px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm"
+                href="filter-bubble.html"><span class="material-icons-outlined mr-3 text-xl">bubble_chart</span> Filter
+                Bubble Sim</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="privacy-lab.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">vpn_key</span> Privacy Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="value-alignment.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">balance</span> Value
+                Alignment</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="proxy-detector.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">find_replace</span> Proxy
+                Detector</a>
+        </nav>
+        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
+            <p class="text-[10px] text-slate-400 mb-2">© 2025 <a href="https://hamedyaghoobian.com" class="text-primary hover:underline">Hamed Yaghoobian</a></p>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Version
+                    2.1.0</span><a class="hover:text-primary" href="#">Legal</a></div>
+        </div>
+    </aside>
+
+    <main class="flex-1 ml-64 p-8 overflow-y-auto h-screen">
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <div class="flex items-center mb-1">
+                    <a href="../index.html" class="text-slate-400 hover:text-primary text-sm mr-2">Toolkit</a>
+                    <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
+                    <span class="text-primary text-sm ml-2">Filter Bubble Sim</span>
+                </div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Filter Bubble Simulator</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">Watch how recommendation algorithms create echo
+                    chambers step by step.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="themeToggle" class="sr-only peer" checked />
+                <div
+                    class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                </div>
+                <span class="ml-2 text-sm text-slate-500 dark:text-slate-400"><span
+                        class="material-icons-outlined text-sm align-middle">dark_mode</span></span>
+            </label>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Controls -->
+            <div class="space-y-4">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Algorithm Parameters</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-slate-500 flex justify-between"><span>Engagement
+                                    Weight</span><span id="engVal">0.7</span></label>
+                            <input type="range" id="engagementWeight" min="0" max="100" value="70"
+                                class="w-full accent-primary"
+                                oninput="document.getElementById('engVal').textContent=(this.value/100).toFixed(1)">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500 flex justify-between"><span>Diversity
+                                    Factor</span><span id="divVal">0.3</span></label>
+                            <input type="range" id="diversityFactor" min="0" max="100" value="30"
+                                class="w-full accent-primary"
+                                oninput="document.getElementById('divVal').textContent=(this.value/100).toFixed(1)">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500 flex justify-between"><span>Homophily</span><span
+                                    id="homVal">0.5</span></label>
+                            <input type="range" id="homophily" min="0" max="100" value="50"
+                                class="w-full accent-primary"
+                                oninput="document.getElementById('homVal').textContent=(this.value/100).toFixed(1)">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500 mb-1 block">Algorithm Mode</label>
+                            <select id="algoMode"
+                                class="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark-lighter text-slate-700 dark:text-slate-300 px-3 py-2">
+                                <option value="engagement">🔥 Engagement-Optimized</option>
+                                <option value="diversity">🌈 Diversity-Aware</option>
+                                <option value="chronological">📅 Chronological</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">User Profile</h3>
+                    <div class="space-y-2" id="userProfile"></div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="runStep()"
+                        class="flex-1 py-2.5 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors text-sm flex items-center justify-center">
+                        <span class="material-icons-outlined mr-1 text-base">skip_next</span> Run Step
+                    </button>
+                    <button onclick="autoRun()" id="autoBtn"
+                        class="px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm flex items-center justify-center">
+                        <span class="material-icons-outlined text-base">play_arrow</span>
+                    </button>
+                    <button onclick="resetSimulation()"
+                        class="px-3 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-medium rounded-lg transition-colors text-sm flex items-center justify-center">
+                        <span class="material-icons-outlined text-base">refresh</span>
+                    </button>
+                </div>
+                <button onclick="breakBubble()"
+                    class="w-full py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-medium rounded-lg transition-all text-sm flex items-center justify-center">
+                    <span class="material-icons-outlined mr-1 text-base">diversity_3</span> Break the Bubble
+                </button>
+
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Step: <span
+                            id="stepNum">0</span></h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">Diversity Score</span>
+                            <span id="diversityScore" class="font-bold text-green-500">1.00</span>
+                        </div>
+                        <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+                            <div id="diversityBar" class="h-full rounded-full bg-green-500 transition-all"
+                                style="width:100%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">Echo Chamber</span>
+                            <span id="echoLevel" class="font-bold text-green-500">None</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feed -->
+            <div class="lg:col-span-2">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-primary mr-2 align-middle">dynamic_feed</span> Your
+                        Feed
+                    </h3>
+                    <div id="feedContainer" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- Diversity Over Time -->
+            <div class="space-y-4">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Diversity Metrics Over
+                        Time</h3>
+                    <div id="diversityChart" class="h-[200px]"></div>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Topic Distribution</h3>
+                    <div id="topicChart" class="h-[200px]"></div>
+                </div>
+                <div class="bg-gradient-to-br from-teal-500/10 to-blue-500/10 border border-teal-500/20 rounded-xl p-5">
+                    <h4 class="text-sm font-semibold text-teal-400 mb-2 flex items-center">
+                        <span class="material-icons-outlined text-base mr-1">school</span> Learning Point
+                    </h4>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        Filter bubbles occur when recommendation algorithms over-optimize for user engagement,
+                        progressively narrowing content diversity. Try the <strong>Engagement-Optimized</strong> mode
+                        with high engagement weight to see a strong echo chamber form. Switch to
+                        <strong>Diversity-Aware</strong> or click <strong>Break the Bubble</strong> to see how
+                        algorithmic interventions can restore content diversity. The chart tracks 3 diversity metrics:
+                        <strong>Shannon entropy</strong>, <strong>Simpson index</strong>, and
+                        <strong>Gini coefficient</strong>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Theme
+        const themeToggle = document.getElementById('themeToggle');
+        function setTheme(dark) { document.documentElement.classList.toggle('dark', dark); localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); }
+        if (localStorage.getItem('ethicsToolkitTheme') === 'light') { setTheme(false); themeToggle.checked = false; }
+        themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
+
+        // Content Pool
+        const TOPICS = {
+            politics_left: { label: 'Progressive Politics', color: '#3b82f6', icon: 'campaign' },
+            politics_right: { label: 'Conservative Politics', color: '#ef4444', icon: 'flag' },
+            tech: { label: 'Technology', color: '#8b5cf6', icon: 'computer' },
+            science: { label: 'Science', color: '#22c55e', icon: 'science' },
+            sports: { label: 'Sports', color: '#f59e0b', icon: 'sports_soccer' },
+            entertainment: { label: 'Entertainment', color: '#ec4899', icon: 'movie' },
+            health: { label: 'Health & Wellness', color: '#14b8a6', icon: 'favorite' },
+            business: { label: 'Business', color: '#6366f1', icon: 'trending_up' }
+        };
+
+        const ARTICLES = [
+            { topic: 'politics_left', title: 'New Climate Policy Gains Momentum', summary: 'Progressive lawmakers push for ambitious environmental targets.', ts: 1 },
+            { topic: 'politics_left', title: 'Universal Healthcare Bill Introduced', summary: 'Bipartisan support grows for expanded coverage.', ts: 2 },
+            { topic: 'politics_left', title: 'Worker Rights Reform Package Advances', summary: 'Labor unions celebrate minimum wage increase.', ts: 5 },
+            { topic: 'politics_left', title: 'Social Justice Movement Reaches New Heights', summary: 'Nationwide protests drive policy change.', ts: 8 },
+            { topic: 'politics_right', title: 'Tax Reform Plan Unveiled', summary: 'Economic conservatives propose simplified tax code.', ts: 3 },
+            { topic: 'politics_right', title: 'Border Security Funding Approved', summary: 'New immigration enforcement measures take effect.', ts: 4 },
+            { topic: 'politics_right', title: 'Deregulation Spurs Small Business Growth', summary: 'Entrepreneurs cite reduced red tape as key factor.', ts: 7 },
+            { topic: 'politics_right', title: 'Traditional Values Rally Draws Thousands', summary: 'Community leaders emphasize family-first policies.', ts: 10 },
+            { topic: 'tech', title: 'AI Breakthrough in Natural Language', summary: 'New transformer model achieves human-level comprehension.', ts: 6 },
+            { topic: 'tech', title: 'Quantum Computing Milestone Reached', summary: 'Tech giant demonstrates quantum advantage.', ts: 9 },
+            { topic: 'tech', title: 'Electric Vehicle Sales Surge 40%', summary: 'Battery technology improvements drive adoption.', ts: 11 },
+            { topic: 'tech', title: 'Cybersecurity Threats Evolve with AI', summary: 'Experts warn of new attack vectors.', ts: 14 },
+            { topic: 'science', title: 'Mars Rover Discovers Organic Compounds', summary: 'Evidence of past habitability strengthens.', ts: 12 },
+            { topic: 'science', title: 'Gene Therapy Cures Rare Childhood Disease', summary: 'Clinical trial results exceed expectations.', ts: 13 },
+            { topic: 'science', title: 'Ocean Temperatures Hit Record High', summary: 'Scientists track accelerating climate changes.', ts: 15 },
+            { topic: 'science', title: 'Dark Matter Detection Experiment Yields Results', summary: 'Physicists observe anomalous signal.', ts: 18 },
+            { topic: 'sports', title: 'Championship Finals Set for Saturday', summary: 'Underdogs advance in dramatic semi-final.', ts: 16 },
+            { topic: 'sports', title: 'Olympic Committee Announces New Sports', summary: 'Esports and breaking join 2028 games.', ts: 17 },
+            { topic: 'sports', title: 'Record Transfer Fee Shakes Football World', summary: 'Star player moves in $300M deal.', ts: 19 },
+            { topic: 'entertainment', title: 'Streaming Wars Heat Up with New Platform', summary: 'Tech company enters competitive market.', ts: 20 },
+            { topic: 'entertainment', title: 'Award-Winning Director Returns with Epic', summary: 'Highly anticipated sequel breaks pre-sale records.', ts: 21 },
+            { topic: 'entertainment', title: 'Viral TikTok Trend Sparks Cultural Debate', summary: 'Millions participate in controversial challenge.', ts: 22 },
+            { topic: 'health', title: 'New Study Links Diet to Mental Health', summary: 'Mediterranean diet shows cognitive benefits.', ts: 23 },
+            { topic: 'health', title: 'Meditation App Downloads Triple', summary: 'Wellness trend drives digital health market.', ts: 24 },
+            { topic: 'health', title: 'Vaccine Development Accelerates for New Variant', summary: 'Pharmaceutical companies race to update formulations.', ts: 25 },
+            { topic: 'business', title: 'Startup Unicorn Raises $500M Series D', summary: 'AI company valuation reaches $5B.', ts: 26 },
+            { topic: 'business', title: 'Stock Market Hits All-Time High', summary: 'Tech sector leads broad market rally.', ts: 27 },
+            { topic: 'business', title: 'Remote Work Policies Become Permanent', summary: 'Major corporations abandon return-to-office plans.', ts: 28 },
+        ];
+
+        // Social Network — 5 friend personas
+        const FRIENDS = [
+            { name: 'Alex', bias: { tech: 3, science: 2, business: 1.5 }, color: '#8b5cf6' },
+            { name: 'Jordan', bias: { politics_left: 3, health: 2, science: 1 }, color: '#3b82f6' },
+            { name: 'Casey', bias: { sports: 3, entertainment: 2 }, color: '#f59e0b' },
+            { name: 'Morgan', bias: { politics_right: 3, business: 2 }, color: '#ef4444' },
+            { name: 'Riley', bias: { entertainment: 2, health: 2, tech: 1 }, color: '#ec4899' },
+        ];
+
+        // State
+        let userInterests = {};
+        let currentStep = 0;
+        let diversityHistory = [];
+        let simpsonHistory = [];
+        let giniHistory = [];
+        let currentFeed = [];
+        let autoRunInterval = null;
+
+        function initSimulation() {
+            Object.keys(TOPICS).forEach(t => { userInterests[t] = 1; });
+            currentStep = 0;
+            diversityHistory = [];
+            simpsonHistory = [];
+            giniHistory = [];
+            generateFeed();
+            renderUserProfile();
+            updateMetrics();
+            updateCharts();
+        }
+
+        function generateFeed() {
+            const mode = document.getElementById('algoMode').value;
+            const engWeight = parseInt(document.getElementById('engagementWeight').value) / 100;
+            const divFactor = parseInt(document.getElementById('diversityFactor').value) / 100;
+            const homophily = parseInt(document.getElementById('homophily').value) / 100;
+
+            const totalInterest = Object.values(userInterests).reduce((s, v) => s + v, 0);
+
+            // Social network boost: friends share articles matching their biases
+            const socialBoost = {};
+            ARTICLES.forEach((a, i) => {
+                let boost = 0;
+                FRIENDS.forEach(f => { boost += (f.bias[a.topic] || 0) * homophily * 0.1; });
+                socialBoost[i] = boost;
+            });
+
+            let scores;
+            if (mode === 'chronological') {
+                // Chronological: just reverse timestamp order with small random noise
+                scores = ARTICLES.map((a, i) => ({
+                    ...a, idx: i,
+                    score: a.ts / ARTICLES.length + Math.random() * 0.05
+                }));
+                scores.sort((a, b) => b.score - a.score);
+            } else if (mode === 'diversity') {
+                // Diversity-aware: strongly boost underrepresented topics
+                const topicCounts = {};
+                scores = ARTICLES.map((a, i) => {
+                    const interest = userInterests[a.topic] / totalInterest;
+                    const diversityBoost = (1 - interest) * 0.8;
+                    topicCounts[a.topic] = (topicCounts[a.topic] || 0);
+                    return { ...a, idx: i, score: diversityBoost + interest * 0.2 + socialBoost[i] * 0.3 + Math.random() * 0.15 };
+                });
+                scores.sort((a, b) => b.score - a.score);
+                // Ensure at least 1 article per topic in top 8
+                const seen = new Set();
+                const picked = [];
+                for (const s of scores) {
+                    if (!seen.has(s.topic) && picked.length < 8) { picked.push(s); seen.add(s.topic); }
+                }
+                for (const s of scores) {
+                    if (picked.length >= 8) break;
+                    if (!picked.includes(s)) picked.push(s);
+                }
+                currentFeed = picked;
+                renderFeed();
+                return;
+            } else {
+                // Engagement-optimized (default)
+                scores = ARTICLES.map((a, i) => {
+                    const interest = userInterests[a.topic] / totalInterest;
+                    const engScore = interest * engWeight;
+                    const divScore = (1 - interest) * divFactor;
+                    return { ...a, idx: i, score: engScore + divScore + socialBoost[i] + Math.random() * 0.1 };
+                });
+                scores.sort((a, b) => b.score - a.score);
+            }
+
+            currentFeed = scores.slice(0, 8);
+            renderFeed();
+        }
+
+        function renderFeed() {
+            const container = document.getElementById('feedContainer');
+            container.innerHTML = currentFeed.map((article, i) => {
+                const topic = TOPICS[article.topic];
+                // Check if any friend shared this article
+                const sharedBy = FRIENDS.filter(f => (f.bias[article.topic] || 0) >= 2);
+                const sharedTag = sharedBy.length > 0
+                    ? `<span class="text-xs text-slate-400 ml-2">🔗 ${sharedBy[0].name} shared</span>` : '';
+                return `<div class="feed-card p-4 rounded-xl border border-slate-200 dark:border-slate-700/60 hover:border-primary/30 transition-all cursor-pointer" onclick="engageArticle('${article.topic}', ${i})" style="animation-delay: ${i * 50}ms">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background: ${topic.color}20">
+                        <span class="material-icons-outlined" style="color: ${topic.color}">${topic.icon}</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: ${topic.color}20; color: ${topic.color}">${topic.label}</span>
+                            ${sharedTag}
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">${article.title}</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${article.summary}</p>
+                    </div>
+                    <div class="flex flex-col items-center gap-1 text-slate-400">
+                        <button class="hover:text-red-500 transition-colors"><span class="material-icons-outlined text-lg">favorite_border</span></button>
+                        <button class="hover:text-primary transition-colors"><span class="material-icons-outlined text-lg">share</span></button>
+                    </div>
+                </div>
+            </div>`;
+            }).join('');
+        }
+
+        function engageArticle(topic) {
+            userInterests[topic] = (userInterests[topic] || 1) + 0.5;
+            renderUserProfile();
+        }
+
+        function breakBubble() {
+            // Inject cross-cutting content: boost all underrepresented topics
+            const total = Object.values(userInterests).reduce((s, v) => s + v, 0);
+            const avg = total / Object.keys(TOPICS).length;
+            Object.keys(userInterests).forEach(t => {
+                if (userInterests[t] < avg) userInterests[t] = avg * 1.2;
+            });
+            currentStep++;
+            generateFeed();
+            renderUserProfile();
+            updateMetrics();
+            updateCharts();
+        }
+
+        function runStep() {
+            // Simulate: user "engages" with top 2-3 articles
+            const topArticles = currentFeed.slice(0, 2 + Math.floor(Math.random() * 2));
+            topArticles.forEach(a => {
+                userInterests[a.topic] = (userInterests[a.topic] || 1) + 0.3;
+            });
+
+            currentStep++;
+            generateFeed();
+            renderUserProfile();
+            updateMetrics();
+            updateCharts();
+        }
+
+        function autoRun() {
+            if (autoRunInterval) {
+                clearInterval(autoRunInterval);
+                autoRunInterval = null;
+                document.getElementById('autoBtn').innerHTML = '<span class="material-icons-outlined text-base">play_arrow</span>';
+                document.getElementById('autoBtn').className = 'px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm flex items-center justify-center';
+            } else {
+                autoRunInterval = setInterval(() => {
+                    if (currentStep >= 50) { clearInterval(autoRunInterval); autoRunInterval = null; return; }
+                    runStep();
+                }, 800);
+                document.getElementById('autoBtn').innerHTML = '<span class="material-icons-outlined text-base">pause</span>';
+                document.getElementById('autoBtn').className = 'px-3 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors text-sm flex items-center justify-center';
+            }
+        }
+
+        function resetSimulation() {
+            if (autoRunInterval) { clearInterval(autoRunInterval); autoRunInterval = null; }
+            document.getElementById('autoBtn').innerHTML = '<span class="material-icons-outlined text-base">play_arrow</span>';
+            initSimulation();
+        }
+
+        function renderUserProfile() {
+            const total = Object.values(userInterests).reduce((s, v) => s + v, 0);
+            const container = document.getElementById('userProfile');
+            container.innerHTML = Object.entries(TOPICS).map(([key, topic]) => {
+                const pct = ((userInterests[key] || 0) / total * 100).toFixed(0);
+                return `<div class="flex items-center gap-2">
+                <span class="text-xs w-16 truncate" style="color: ${topic.color}">${topic.label.split(' ')[0]}</span>
+                <div class="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                    <div class="h-full rounded-full transition-all" style="width: ${pct}%; background: ${topic.color}"></div>
+                </div>
+                <span class="text-xs text-slate-500 w-8 text-right">${pct}%</span>
+            </div>`;
+            }).join('');
+        }
+
+        function updateMetrics() {
+            document.getElementById('stepNum').textContent = currentStep;
+            const total = Object.values(userInterests).reduce((s, v) => s + v, 0);
+            const probs = Object.values(userInterests).map(v => v / total);
+
+            // Shannon entropy
+            const entropy = -probs.reduce((s, p) => s + (p > 0 ? p * Math.log2(p) : 0), 0);
+            const maxEntropy = Math.log2(probs.length);
+            const diversity = (entropy / maxEntropy).toFixed(3);
+
+            // Simpson diversity index: 1 - sum(p^2)
+            const simpson = (1 - probs.reduce((s, p) => s + p * p, 0)).toFixed(3);
+
+            // Gini coefficient
+            const sorted = [...probs].sort((a, b) => a - b);
+            const n = sorted.length;
+            let giniSum = 0;
+            sorted.forEach((p, i) => { giniSum += (2 * (i + 1) - n - 1) * p; });
+            const gini = (giniSum / (n * (probs.reduce((s, p) => s + p, 0) / n) * n)).toFixed(3);
+
+            diversityHistory.push(parseFloat(diversity));
+            simpsonHistory.push(parseFloat(simpson));
+            giniHistory.push(parseFloat(gini));
+
+            document.getElementById('diversityScore').textContent = diversity;
+            document.getElementById('diversityBar').style.width = `${diversity * 100}%`;
+
+            const echoLabel = diversity > 0.85 ? 'None' : diversity > 0.7 ? 'Mild' : diversity > 0.5 ? 'Moderate' : 'Strong';
+            const echoColor = diversity > 0.85 ? 'text-green-500' : diversity > 0.7 ? 'text-yellow-500' : diversity > 0.5 ? 'text-orange-500' : 'text-red-500';
+            const barColor = diversity > 0.85 ? 'bg-green-500' : diversity > 0.7 ? 'bg-yellow-500' : diversity > 0.5 ? 'bg-orange-500' : 'bg-red-500';
+            document.getElementById('echoLevel').textContent = echoLabel;
+            document.getElementById('echoLevel').className = `font-bold ${echoColor}`;
+            document.getElementById('diversityScore').className = `font-bold ${echoColor}`;
+            document.getElementById('diversityBar').className = `h-full rounded-full ${barColor} transition-all`;
+        }
+
+        function updateCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const layout = { margin: { t: 10, l: 30, r: 10, b: 30 }, paper_bgcolor: 'transparent', plot_bgcolor: 'transparent', font: { family: 'Space Grotesk', size: 10 } };
+
+            Plotly.newPlot('diversityChart', [
+                { y: diversityHistory, name: 'Shannon', type: 'scatter', mode: 'lines', line: { color: '#137fec', width: 2 } },
+                { y: simpsonHistory, name: 'Simpson', type: 'scatter', mode: 'lines', line: { color: '#22c55e', width: 2, dash: 'dot' } },
+                { y: giniHistory, name: 'Gini', type: 'scatter', mode: 'lines', line: { color: '#ef4444', width: 2, dash: 'dash' } }
+            ], {
+                ...layout,
+                xaxis: { title: 'Step', color: isDark ? '#64748b' : '#94a3b8', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
+                yaxis: { range: [0, 1], color: isDark ? '#64748b' : '#94a3b8', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
+                legend: { x: 0, y: 1, font: { size: 9, color: isDark ? '#94a3b8' : '#475569' }, bgcolor: 'transparent' },
+                showlegend: true
+            }, { responsive: true, displayModeBar: false });
+
+            const topicCounts = {};
+            currentFeed.forEach(a => { topicCounts[a.topic] = (topicCounts[a.topic] || 0) + 1; });
+
+            Plotly.newPlot('topicChart', [{
+                type: 'pie',
+                labels: Object.keys(topicCounts).map(k => TOPICS[k].label),
+                values: Object.values(topicCounts),
+                hole: 0.5,
+                marker: { colors: Object.keys(topicCounts).map(k => TOPICS[k].color) },
+                textfont: { size: 9 },
+                textposition: 'inside'
+            }], {
+                ...layout,
+                margin: { t: 5, l: 5, r: 5, b: 5 },
+                showlegend: false
+            }, { responsive: true, displayModeBar: false });
+        }
+
+        initSimulation();
+    </script>
+</body>
+
+</html>

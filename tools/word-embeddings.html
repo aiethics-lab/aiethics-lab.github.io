@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Word Embeddings Workbench | AI Ethics Toolkit</title>
+    <meta name="description"
+        content="Explore word embeddings, perform vector arithmetic, and detect gender bias in word vector spaces." />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-hover": "#0f6bd1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#182430",
+                        "surface-dark-lighter": "#212e3b",
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #101922;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2d3f50;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #137fec;
+        }
+
+        .modal-log::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-log::-webkit-scrollbar-track {
+            background: rgba(19, 127, 236, 0.05);
+            border-radius: 4px;
+        }
+
+        .modal-log::-webkit-scrollbar-thumb {
+            background: rgba(19, 127, 236, 0.3);
+            border-radius: 4px;
+        }
+
+        .modal-log::-webkit-scrollbar-thumb:hover {
+            background: rgba(19, 127, 236, 0.5);
+        }
+
+        .scanlines {
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0.15));
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white">
+    <!-- Sidebar -->
+    <aside
+        class="w-64 flex-shrink-0 fixed h-full z-20 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
+            <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
+            <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group"
+                href="../index.html">
+                <span
+                    class="material-icons-outlined mr-3 text-2xl group-hover:scale-110 transition-transform">grid_view</span>
+                Toolkit Overview
+            </a>
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
+            </div>
+            <a class="flex items-center px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium group text-sm"
+                href="word-embeddings.html">
+                <span class="material-icons-outlined mr-3 text-xl">scatter_plot</span>
+                Word Embeddings
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm"
+                href="explainability-lab.html">
+                <span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">visibility</span>
+                Explainability Lab
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm"
+                href="bias-auditor.html">
+                <span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">saved_search</span>
+                Bias Auditor
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm"
+                href="adversarial-sandbox.html">
+                <span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">security</span>
+                Adversarial Sandbox
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm"
+                href="filter-bubble.html">
+                <span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">bubble_chart</span>
+                Filter Bubble Sim
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm"
+                href="privacy-lab.html">
+                <span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">vpn_key</span>
+                Privacy Lab
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm"
+                href="value-alignment.html">
+                <span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">balance</span>
+                Value Alignment
+            </a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm"
+                href="proxy-detector.html">
+                <span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">find_replace</span>
+                Proxy Detector
+            </a>
+        </nav>
+        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
+            <p class="text-[10px] text-slate-400 mb-2">© 2025 <a href="https://hamedyaghoobian.com" class="text-primary hover:underline" target="_blank">Hamed Yaghoobian</a></p>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>Version 2.1.0</span>
+                <a class="hover:text-primary transition-colors" href="#">Legal</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-8 overflow-y-auto h-screen">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <div class="flex items-center mb-1">
+                    <a href="../index.html"
+                        class="text-slate-400 hover:text-primary transition-colors text-sm mr-2">Toolkit</a>
+                    <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
+                    <span class="text-primary text-sm ml-2">Word Embeddings</span>
+                </div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Word Embeddings Workbench</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">Explore vector arithmetic, semantic relationships,
+                    and bias in word embeddings.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="themeToggle" class="sr-only peer" checked />
+                    <div
+                        class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                    </div>
+                    <span class="ml-2 text-sm text-slate-500 dark:text-slate-400">
+                        <span class="material-icons-outlined text-sm align-middle">dark_mode</span>
+                    </span>
+                </label>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-slate-200 dark:border-slate-700 mb-6">
+            <button id="tab-arithmetic" onclick="switchTab('arithmetic')"
+                class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-primary text-primary transition-colors">
+                <span class="material-icons-outlined text-base align-middle mr-1">calculate</span> Vector Arithmetic
+            </button>
+            <button id="tab-explore" onclick="switchTab('explore')"
+                class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
+                <span class="material-icons-outlined text-base align-middle mr-1">scatter_plot</span> 3D Explorer
+            </button>
+            <button id="tab-bias" onclick="switchTab('bias')"
+                class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
+                <span class="material-icons-outlined text-base align-middle mr-1">warning</span> Bias Detection
+            </button>
+        </div>
+
+        <!-- Tab: Vector Arithmetic -->
+        <div id="panel-arithmetic" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-primary mr-2 align-middle">functions</span>
+                        Word Vector Arithmetic
+                    </h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Enter words to explore semantic
+                        relationships through vector operations. E.g., King − Man + Woman ≈ Queen</p>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2">
+                            <input id="word1" type="text" value="king"
+                                class="flex-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 text-sm focus:ring-primary focus:border-primary"
+                                placeholder="Word 1" />
+                            <span class="text-xl font-bold text-slate-400">−</span>
+                            <input id="word2" type="text" value="man"
+                                class="flex-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 text-sm focus:ring-primary focus:border-primary"
+                                placeholder="Word 2" />
+                            <span class="text-xl font-bold text-slate-400">+</span>
+                            <input id="word3" type="text" value="woman"
+                                class="flex-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 text-sm focus:ring-primary focus:border-primary"
+                                placeholder="Word 3" />
+                        </div>
+                        <button id="computeBtn" onclick="computeArithmetic()"
+                            class="w-full py-2.5 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors flex items-center justify-center">
+                            <span class="material-icons-outlined mr-2">play_arrow</span> Compute
+                        </button>
+                    </div>
+
+                    <div id="arithmeticResults" class="mt-6 hidden">
+                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Nearest Neighbors</h4>
+                        <div id="resultsList" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-primary mr-2 align-middle">info</span>
+                        How It Works
+                    </h3>
+                    <div class="space-y-4 text-sm text-slate-600 dark:text-slate-400">
+                        <div class="flex items-start">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0 mr-3 mt-0.5">
+                                <span class="text-blue-500 font-bold text-xs">1</span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-slate-800 dark:text-slate-200">Vector Representation</p>
+                                <p>Each word is mapped to a high-dimensional vector that captures its semantic meaning.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0 mr-3 mt-0.5">
+                                <span class="text-blue-500 font-bold text-xs">2</span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-slate-800 dark:text-slate-200">Arithmetic Operations</p>
+                                <p>Subtracting and adding vectors reveals semantic relationships (e.g., royalty,
+                                    gender).</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0 mr-3 mt-0.5">
+                                <span class="text-blue-500 font-bold text-xs">3</span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-slate-800 dark:text-slate-200">Nearest Neighbor Search</p>
+                                <p>We find words whose vectors are closest (by cosine similarity) to the result vector.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="cosineViz"
+                        class="mt-6 p-4 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
+                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Cosine Similarity</h4>
+                        <div id="cosineChart" class="h-48"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preset Examples -->
+            <div
+                class="mt-6 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                    <span class="material-icons-outlined text-primary mr-1 align-middle text-base">lightbulb</span>
+                    Try These Examples
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setExample('king','man','woman')"
+                        class="px-3 py-1.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors">king
+                        − man + woman</button>
+                    <button onclick="setExample('paris','france','germany')"
+                        class="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors">paris
+                        − france + germany</button>
+                    <button onclick="setExample('walking','walked','swam')"
+                        class="px-3 py-1.5 rounded-full text-xs font-medium bg-teal-500/10 text-teal-500 hover:bg-teal-500/20 transition-colors">walking
+                        − walked + swam</button>
+                    <button onclick="setExample('doctor','man','woman')"
+                        class="px-3 py-1.5 rounded-full text-xs font-medium bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 transition-colors">doctor
+                        − man + woman</button>
+                    <button onclick="setExample('japan','sushi','pizza')"
+                        class="px-3 py-1.5 rounded-full text-xs font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors">japan
+                        − sushi + pizza</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: 3D Explorer -->
+        <div id="panel-explore" class="tab-panel hidden">
+            <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">3D Word Vector Space</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">PCA projection of word vectors into 3D
+                            space. Hover over points to see words.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <select id="wordCategory" onchange="update3DPlot()"
+                            class="px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 focus:ring-primary focus:border-primary">
+                            <option value="royalty">Royalty & Gender</option>
+                            <option value="professions">Professions</option>
+                            <option value="countries">Countries & Capitals</option>
+                            <option value="animals">Animals</option>
+                            <option value="emotions">Emotions</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="plot3d" class="w-full h-[500px] rounded-lg"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Bias Detection -->
+        <div id="panel-bias" class="tab-panel hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div
+                    class="lg:col-span-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                        <span class="material-icons-outlined text-orange-500 mr-2 align-middle">warning</span>
+                        Gender Bias in Profession Embeddings
+                    </h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Cosine distance between profession words
+                        and gender-associated terms. Higher values (toward "he") indicate male bias; lower values
+                        (toward "she") indicate female bias.</p>
+                    <div id="biasChart" class="w-full h-[400px]"></div>
+                </div>
+
+                <div class="space-y-6">
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                        <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Configuration</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Gender Axis</label>
+                                <select id="biasAxis" onchange="renderBiasChart()"
+                                    class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 focus:ring-primary focus:border-primary">
+                                    <option value="he-she">he ↔ she</option>
+                                    <option value="man-woman">man ↔ woman</option>
+                                    <option value="male-female">male ↔ female</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Professions to
+                                    Show</label>
+                                <select id="profCount" onchange="renderBiasChart()"
+                                    class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 focus:ring-primary focus:border-primary">
+                                    <option value="10">Top 10</option>
+                                    <option value="20" selected>Top 20</option>
+                                    <option value="30">Top 30</option>
+                                </select>
+                            </div>
+                            <button onclick="runDebiasing()"
+                                class="w-full py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center">
+                                <span class="material-icons-outlined text-base mr-1">auto_fix_high</span> Run Debiasing
+                                Demo
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                        <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Bias Summary</h3>
+                        <div id="biasSummary" class="space-y-3">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500 dark:text-slate-400">Most Male-Biased</span>
+                                <span id="maleBiased" class="font-medium text-blue-500">—</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500 dark:text-slate-400">Most Female-Biased</span>
+                                <span id="femaleBiased" class="font-medium text-pink-500">—</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500 dark:text-slate-400">Most Neutral</span>
+                                <span id="neutralWord" class="font-medium text-green-500">—</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500 dark:text-slate-400">Mean Bias Score</span>
+                                <span id="meanBias" class="font-medium text-slate-700 dark:text-slate-300">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WEAT Score Panel -->
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                        <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center">
+                            <span class="material-icons-outlined text-purple-500 text-base mr-1">science</span>
+                            WEAT Score (Caliskan 2017)
+                        </h3>
+                        <div id="weatResults" class="space-y-2">
+                            <p class="text-xs text-slate-400">Click "Run Debiasing Demo" to compute WEAT scores.</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-5">
+                        <h4 class="text-sm font-semibold text-orange-400 mb-2 flex items-center">
+                            <span class="material-icons-outlined text-base mr-1">school</span>
+                            Learning Point
+                        </h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                            The <strong>WEAT</strong> (Word Embedding Association Test) by Caliskan et al. (2017)
+                            quantifies bias using an effect size (d) analogous to the IAT.
+                            <strong>Hard Debiasing</strong> (Bolukbasi et al., 2016) projects embeddings onto the
+                            gender subspace and removes the component along the bias direction.
+                            Click "Run Debiasing Demo" to see before/after WEAT scores and how the bias chart changes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- GloVe Loading Modal -->
+    <div id="loadingModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-[#101922]/90 backdrop-blur-sm"></div>
+        <div
+            class="relative w-full max-w-2xl bg-[#1a232e] border border-primary/30 rounded-xl shadow-[0_0_50px_-12px_rgba(19,127,236,0.25)] overflow-hidden flex flex-col">
+            <div class="absolute inset-0 scanlines opacity-10 pointer-events-none z-10"></div>
+            <!-- Modal Header -->
+            <div
+                class="relative z-20 px-6 py-5 border-b border-primary/20 bg-[#101922] flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 rounded bg-primary/20 border border-primary/30">
+                        <span class="material-icons-outlined text-primary text-xl">memory</span>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-white tracking-tight">Loading GloVe Embeddings</h2>
+                        <p class="text-xs text-primary/80 font-medium uppercase tracking-wider">Real Pre-trained Vectors
+                            • 50 Dimensions</p>
+                    </div>
+                </div>
+                <div id="statusBadge"
+                    class="px-3 py-1 rounded-full bg-primary/10 border border-primary/30 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                    <span class="text-xs font-mono text-primary">LOADING</span>
+                </div>
+            </div>
+            <!-- Modal Body -->
+            <div class="relative z-20 p-6 space-y-6">
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Loading <span class="text-white font-medium">GloVe 6B</span> pre-trained word vectors (50d, ~5,000
+                    words).
+                    <span class="text-white">All computation is client-side.</span> No data is sent to any server.
+                </p>
+                <!-- Technical Specs -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="rounded-lg bg-[#101922] border border-slate-800 p-3">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Model</div>
+                        <div class="text-sm font-mono text-primary font-medium">GloVe 6B</div>
+                    </div>
+                    <div class="rounded-lg bg-[#101922] border border-slate-800 p-3">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Dimension</div>
+                        <div class="text-sm font-mono text-white">50d</div>
+                    </div>
+                    <div class="rounded-lg bg-[#101922] border border-slate-800 p-3">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Vocabulary</div>
+                        <div class="text-sm font-mono text-white">~5,000</div>
+                    </div>
+                    <div class="rounded-lg bg-[#101922] border border-slate-800 p-3">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">File Size</div>
+                        <div class="text-sm font-mono text-white">~2.1 MB</div>
+                    </div>
+                </div>
+                <!-- Progress Bar -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-medium uppercase tracking-wider mb-1">
+                        <span class="text-slate-300">Loading Progress</span>
+                        <span id="progressPercent" class="text-primary font-mono">0%</span>
+                    </div>
+                    <div class="h-4 w-full bg-[#101922] rounded-full overflow-hidden border border-slate-700 relative">
+                        <div class="absolute inset-0 w-full h-full z-0 opacity-20"
+                            style="background: repeating-linear-gradient(45deg, transparent, transparent 10px, #137fec 10px, #137fec 20px);">
+                        </div>
+                        <div id="progressBar"
+                            class="h-full bg-gradient-to-r from-primary/80 to-primary w-[0%] relative z-10 shadow-[0_0_15px_rgba(19,127,236,0.6)] transition-all duration-300 flex items-center justify-end pr-2">
+                            <div class="w-1 h-full bg-white/30 animate-pulse"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Terminal Log -->
+                <div id="terminalLog"
+                    class="modal-log rounded-lg bg-black/40 border border-slate-800 p-3 font-mono text-xs h-32 overflow-y-auto shadow-inner relative">
+                    <div class="absolute top-2 right-3 text-[10px] text-slate-600 uppercase">System Log</div>
+                    <div id="logContent" class="space-y-1 text-slate-400"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== THEME ====================
+        const themeToggle = document.getElementById('themeToggle');
+        function setTheme(dark) {
+            document.documentElement.classList.toggle('dark', dark);
+            document.documentElement.classList.toggle('light', !dark);
+            localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light');
+        }
+        const savedTheme = localStorage.getItem('ethicsToolkitTheme');
+        if (savedTheme === 'light') { setTheme(false); themeToggle.checked = false; }
+        themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
+
+        // ==================== TABS ====================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('border-primary', 'text-primary');
+                b.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+            });
+            document.getElementById(`panel-${tab}`).classList.remove('hidden');
+            const btn = document.getElementById(`tab-${tab}`);
+            btn.classList.add('border-primary', 'text-primary');
+            btn.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+            if (tab === 'explore') update3DPlot();
+            if (tab === 'bias') renderBiasChart();
+        }
+
+        // ==================== REAL GloVe WORD EMBEDDINGS ====================
+        // Pre-trained GloVe 6B 50d vectors loaded from JSON (Stanford NLP)
+        const EMBEDDING_DIM = 50;
+        let embeddings = {};
+        let vocabSize = 0;
+        let isLoaded = false;
+
+        // Word groups for demos (now using real GloVe vectors)
+        const SEMANTIC_GROUPS = {
+            royalty_m: ['king', 'prince', 'lord', 'duke', 'emperor', 'sir'],
+            royalty_f: ['queen', 'princess', 'lady', 'duchess', 'empress', 'madam'],
+            male: ['man', 'he', 'his', 'him', 'boy', 'father', 'son', 'brother', 'husband', 'male', 'uncle', 'grandfather'],
+            female: ['woman', 'she', 'her', 'hers', 'girl', 'mother', 'daughter', 'sister', 'wife', 'female', 'aunt', 'grandmother'],
+            professions: ['doctor', 'nurse', 'engineer', 'teacher', 'programmer', 'scientist', 'lawyer', 'pilot', 'mechanic', 'secretary', 'professor', 'surgeon', 'accountant', 'architect', 'carpenter', 'chef', 'dentist', 'electrician', 'firefighter', 'journalist', 'librarian', 'manager', 'musician', 'painter', 'pharmacist', 'plumber', 'police', 'receptionist', 'soldier', 'veterinarian'],
+            countries: ['france', 'germany', 'japan', 'italy', 'spain', 'china', 'russia', 'brazil', 'india', 'canada'],
+            capitals: ['paris', 'berlin', 'tokyo', 'rome', 'madrid', 'beijing', 'moscow'],
+            animals: ['cat', 'dog', 'horse', 'bird', 'fish', 'lion', 'tiger', 'bear', 'wolf', 'eagle', 'snake', 'rabbit'],
+            emotions: ['happy', 'sad', 'angry', 'afraid', 'surprised', 'calm', 'excited', 'anxious', 'proud'],
+        };
+
+        // ==================== LOADING MODAL ====================
+        const modal = document.getElementById('loadingModal');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+        const logContent = document.getElementById('logContent');
+        const statusBadge = document.getElementById('statusBadge');
+
+        function logMessage(msg, color = 'text-slate-400') {
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const div = document.createElement('div');
+            div.className = 'flex gap-2';
+            div.innerHTML = `<span class="text-slate-600">[${time}]</span><span class="${color}">${msg}</span>`;
+            logContent.appendChild(div);
+            logContent.parentElement.scrollTop = logContent.parentElement.scrollHeight;
+        }
+
+        function setProgress(pct) {
+            progressBar.style.width = pct + '%';
+            progressPercent.textContent = Math.round(pct) + '%';
+        }
+
+        async function loadGloVeEmbeddings() {
+            logMessage('Initializing embedding loader...');
+            setProgress(5);
+            await sleep(300);
+
+            logMessage('<span class="text-green-400">Worker Ready.</span>', '');
+            setProgress(10);
+            await sleep(200);
+
+            logMessage('Fetching: <span class="text-primary">../data/glove-50d-5k.json</span>', '');
+            setProgress(15);
+
+            try {
+                const response = await fetch('../data/glove-50d-5k.json');
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+                const contentLength = response.headers.get('content-length');
+                const totalBytes = contentLength ? parseInt(contentLength) : 2200000; // ~2.1MB estimate
+
+                logMessage(`Stream started. Total size: ${(totalBytes / 1024 / 1024).toFixed(1)} MB`);
+                setProgress(20);
+
+                // Stream the response for progress tracking
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let receivedBytes = 0;
+                let chunks = [];
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    receivedBytes += value.length;
+                    const pct = 20 + (receivedBytes / totalBytes) * 50; // 20% to 70%
+                    setProgress(Math.min(pct, 70));
+                    const mbDone = (receivedBytes / 1024 / 1024).toFixed(1);
+                    logMessage(`Received ${mbDone} MB...`, 'text-slate-500');
+                }
+
+                logMessage('<span class="text-green-400">Download complete.</span>', '');
+                setProgress(75);
+
+                // Combine chunks and parse JSON
+                logMessage('Parsing JSON payload...');
+                const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+                const combined = new Uint8Array(totalLength);
+                let offset = 0;
+                for (const chunk of chunks) {
+                    combined.set(chunk, offset);
+                    offset += chunk.length;
+                }
+                const jsonText = decoder.decode(combined);
+                setProgress(85);
+
+                logMessage('Hydrating tensor map...');
+                const rawData = JSON.parse(jsonText);
+                setProgress(90);
+
+                // Convert to Float32Arrays for performance
+                let wordCount = 0;
+                for (const [word, vec] of Object.entries(rawData)) {
+                    embeddings[word] = new Float32Array(vec);
+                    wordCount++;
+                }
+                vocabSize = wordCount;
+                isLoaded = true;
+                setProgress(100);
+
+                logMessage(`<span class="text-green-400">✓ Loaded ${vocabSize.toLocaleString()} word vectors (${EMBEDDING_DIM}d)</span>`, '');
+                logMessage('<span class="text-green-400">✓ Model ready. All calculations use real GloVe embeddings.</span>', '');
+
+                // Update status badge
+                statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-400"></span><span class="text-xs font-mono text-green-400">READY</span>';
+
+                await sleep(800);
+
+                // Hide modal
+                modal.style.opacity = '0';
+                modal.style.transition = 'opacity 0.5s';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    // Run initial computation
+                    computeArithmetic();
+                }, 500);
+
+            } catch (err) {
+                logMessage(`<span class="text-red-400">✗ Error: ${err.message}</span>`, '');
+                statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span><span class="text-xs font-mono text-red-400">ERROR</span>';
+                logMessage('<span class="text-yellow-400">Tip: Make sure you\'re running a local server (e.g., python3 -m http.server)</span>', '');
+            }
+        }
+
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        // ==================== VECTOR MATH ====================
+        function cosineSimilarity(a, b) {
+            let dot = 0, na = 0, nb = 0;
+            for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
+            return dot / (Math.sqrt(na) * Math.sqrt(nb));
+        }
+
+        function vecAdd(a, b) { return a.map((v, i) => v + b[i]); }
+        function vecSub(a, b) { return a.map((v, i) => v - b[i]); }
+
+        function getEmbedding(word) {
+            word = word.toLowerCase().trim();
+            return embeddings[word] || null;
+        }
+
+        function findNearest(vec, exclude = [], topK = 5) {
+            const results = [];
+            Object.keys(embeddings).forEach(word => {
+                if (exclude.includes(word)) return;
+                const sim = cosineSimilarity(vec, embeddings[word]);
+                results.push({ word, similarity: sim });
+            });
+            results.sort((a, b) => b.similarity - a.similarity);
+            return results.slice(0, topK);
+        }
+
+        // ==================== VECTOR ARITHMETIC ====================
+        function setExample(w1, w2, w3) {
+            document.getElementById('word1').value = w1;
+            document.getElementById('word2').value = w2;
+            document.getElementById('word3').value = w3;
+            computeArithmetic();
+        }
+
+        function computeArithmetic() {
+            if (!isLoaded) return;
+
+            const w1 = document.getElementById('word1').value.toLowerCase().trim();
+            const w2 = document.getElementById('word2').value.toLowerCase().trim();
+            const w3 = document.getElementById('word3').value.toLowerCase().trim();
+
+            if (!w1 || !w2 || !w3) return;
+
+            const v1 = getEmbedding(w1);
+            const v2 = getEmbedding(w2);
+            const v3 = getEmbedding(w3);
+
+            // Check if words are in vocabulary
+            const missing = [];
+            if (!v1) missing.push(w1);
+            if (!v2) missing.push(w2);
+            if (!v3) missing.push(w3);
+
+            const container = document.getElementById('arithmeticResults');
+            const list = document.getElementById('resultsList');
+            container.classList.remove('hidden');
+
+            if (missing.length > 0) {
+                list.innerHTML = `
+                    <div class="py-3 px-4 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm">
+                        <span class="material-icons-outlined text-base align-middle mr-1">warning</span>
+                        Word(s) not in GloVe vocabulary: <strong>${missing.join(', ')}</strong>
+                        <p class="text-xs text-slate-400 mt-1">The vocabulary contains ~5,000 common English words from GloVe 6B. Try simpler/more common words.</p>
+                    </div>`;
+                return;
+            }
+
+            const result = vecAdd(vecSub(Array.from(v1), Array.from(v2)), Array.from(v3));
+            const nearest = findNearest(result, [w1, w2, w3], 5);
+
+            list.innerHTML = nearest.map((r, i) => `
+            <div class="flex items-center justify-between py-2 px-3 rounded-lg ${i === 0 ? 'bg-primary/10 border border-primary/20' : 'bg-slate-50 dark:bg-surface-dark-lighter'}">
+                <div class="flex items-center">
+                    <span class="w-6 h-6 flex items-center justify-center rounded-full ${i === 0 ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'} text-xs font-bold mr-3">${i + 1}</span>
+                    <span class="font-medium ${i === 0 ? 'text-primary' : 'text-slate-800 dark:text-slate-200'}">${r.word}</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-24 h-2 rounded-full bg-slate-200 dark:bg-slate-700 mr-2 overflow-hidden">
+                        <div class="h-full rounded-full ${i === 0 ? 'bg-primary' : 'bg-slate-400'}" style="width: ${Math.max(0, r.similarity * 100).toFixed(0)}%"></div>
+                    </div>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 w-12 text-right">${r.similarity.toFixed(3)}</span>
+                </div>
+            </div>
+        `).join('');
+
+            // Cosine similarity chart
+            renderCosineChart(nearest);
+        }
+
+        function renderCosineChart(nearest) {
+            const isDark = document.documentElement.classList.contains('dark');
+            Plotly.newPlot('cosineChart', [{
+                type: 'bar',
+                x: nearest.map(r => r.word),
+                y: nearest.map(r => r.similarity),
+                marker: {
+                    color: nearest.map((_, i) => i === 0 ? '#137fec' : '#64748b'),
+                    borderRadius: 4
+                }
+            }], {
+                margin: { t: 10, l: 40, r: 10, b: 30 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                xaxis: { color: isDark ? '#94a3b8' : '#475569', tickfont: { size: 10 } },
+                yaxis: { color: isDark ? '#94a3b8' : '#475569', tickfont: { size: 10 }, range: [0, 1] },
+                font: { family: 'Space Grotesk' }
+            }, { responsive: true, displayModeBar: false });
+        }
+
+        // ==================== 3D EXPLORER ====================
+        function simplePCA(data, dims = 3) {
+            const n = data.length;
+            const d = data[0].length;
+            const mean = new Array(d).fill(0);
+            data.forEach(v => v.forEach((val, i) => mean[i] += val));
+            mean.forEach((_, i) => mean[i] /= n);
+            const centered = data.map(v => v.map((val, i) => val - mean[i]));
+
+            const components = [];
+            let residual = centered.map(v => [...v]);
+
+            for (let comp = 0; comp < dims; comp++) {
+                let vec = new Array(d).fill(0).map(() => Math.random() - 0.5);
+                for (let iter = 0; iter < 50; iter++) {
+                    let newVec = new Array(d).fill(0);
+                    residual.forEach(row => {
+                        let dot = 0;
+                        for (let i = 0; i < d; i++) dot += row[i] * vec[i];
+                        for (let i = 0; i < d; i++) newVec[i] += dot * row[i];
+                    });
+                    let norm = Math.sqrt(newVec.reduce((s, v) => s + v * v, 0));
+                    vec = newVec.map(v => v / norm);
+                }
+                components.push(vec);
+                residual = residual.map(row => {
+                    let dot = 0;
+                    for (let i = 0; i < d; i++) dot += row[i] * vec[i];
+                    return row.map((v, i) => v - dot * vec[i]);
+                });
+            }
+
+            return centered.map(row => components.map(comp => {
+                let dot = 0;
+                for (let i = 0; i < d; i++) dot += row[i] * comp[i];
+                return dot;
+            }));
+        }
+
+        function update3DPlot() {
+            if (!isLoaded) return;
+            const category = document.getElementById('wordCategory').value;
+            let wordGroups;
+
+            switch (category) {
+                case 'royalty':
+                    wordGroups = {
+                        'Male Royalty': SEMANTIC_GROUPS.royalty_m,
+                        'Female Royalty': SEMANTIC_GROUPS.royalty_f,
+                        'Male Terms': SEMANTIC_GROUPS.male.slice(0, 6),
+                        'Female Terms': SEMANTIC_GROUPS.female.slice(0, 6)
+                    };
+                    break;
+                case 'professions':
+                    wordGroups = { 'Professions': SEMANTIC_GROUPS.professions, 'Male': ['he', 'man', 'male'], 'Female': ['she', 'woman', 'female'] };
+                    break;
+                case 'countries':
+                    wordGroups = { 'Countries': SEMANTIC_GROUPS.countries, 'Capitals': SEMANTIC_GROUPS.capitals };
+                    break;
+                case 'animals':
+                    wordGroups = { 'Animals': SEMANTIC_GROUPS.animals };
+                    break;
+                case 'emotions':
+                    wordGroups = { 'Emotions': SEMANTIC_GROUPS.emotions };
+                    break;
+            }
+
+            const allWords = [];
+            const groupLabels = [];
+            Object.entries(wordGroups).forEach(([label, words]) => {
+                words.forEach(w => {
+                    if (getEmbedding(w)) { allWords.push(w); groupLabels.push(label); }
+                });
+            });
+
+            const vecs = allWords.map(w => Array.from(getEmbedding(w)));
+            const projected = simplePCA(vecs, 3);
+
+            const colors = ['#137fec', '#ec4899', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4'];
+            const groups = [...new Set(groupLabels)];
+            const isDark = document.documentElement.classList.contains('dark');
+
+            const traces = groups.map((group, gi) => {
+                const indices = groupLabels.map((l, i) => l === group ? i : -1).filter(i => i >= 0);
+                return {
+                    type: 'scatter3d',
+                    mode: 'markers+text',
+                    name: group,
+                    x: indices.map(i => projected[i][0]),
+                    y: indices.map(i => projected[i][1]),
+                    z: indices.map(i => projected[i][2]),
+                    text: indices.map(i => allWords[i]),
+                    textposition: 'top center',
+                    textfont: { size: 10, color: isDark ? '#e2e8f0' : '#1e293b', family: 'Space Grotesk' },
+                    marker: { size: 6, color: colors[gi % colors.length], opacity: 0.9 }
+                };
+            });
+
+            Plotly.newPlot('plot3d', traces, {
+                margin: { t: 20, l: 0, r: 0, b: 0 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                scene: {
+                    xaxis: { showgrid: true, gridcolor: isDark ? '#1e293b' : '#e2e8f0', zerolinecolor: isDark ? '#334155' : '#cbd5e1', color: isDark ? '#64748b' : '#475569' },
+                    yaxis: { showgrid: true, gridcolor: isDark ? '#1e293b' : '#e2e8f0', zerolinecolor: isDark ? '#334155' : '#cbd5e1', color: isDark ? '#64748b' : '#475569' },
+                    zaxis: { showgrid: true, gridcolor: isDark ? '#1e293b' : '#e2e8f0', zerolinecolor: isDark ? '#334155' : '#cbd5e1', color: isDark ? '#64748b' : '#475569' },
+                    bgcolor: 'transparent',
+                },
+                legend: { font: { color: isDark ? '#94a3b8' : '#475569', family: 'Space Grotesk' } },
+                font: { family: 'Space Grotesk' }
+            }, { responsive: true, displayModeBar: false });
+        }
+
+        // ==================== BIAS DETECTION ====================
+        let debiasedEmbeddings = null; // store debiased embeddings
+        let useDebiased = false;
+
+        function getActiveEmbedding(word) {
+            if (useDebiased && debiasedEmbeddings && debiasedEmbeddings[word]) return debiasedEmbeddings[word];
+            return getEmbedding(word);
+        }
+
+        function computeBiasScore(profession, genderPair) {
+            const [maleWord, femaleWord] = genderPair;
+            const profVec = getActiveEmbedding(profession);
+            const maleVec = getActiveEmbedding(maleWord);
+            const femaleVec = getActiveEmbedding(femaleWord);
+            if (!profVec || !maleVec || !femaleVec) return 0;
+            return cosineSimilarity(profVec, maleVec) - cosineSimilarity(profVec, femaleVec);
+        }
+
+        // WEAT: Word Embedding Association Test (Caliskan et al., 2017)
+        function computeWEAT() {
+            // Target sets: male/female names; Attribute sets: career/family words
+            const targetX = ['john', 'paul', 'mike', 'kevin', 'steve', 'greg', 'jeff', 'bill'];
+            const targetY = ['amy', 'joan', 'lisa', 'sarah', 'diana', 'kate', 'ann', 'donna'];
+            const attrA = ['executive', 'management', 'professional', 'corporation', 'salary', 'office', 'business', 'career'];
+            const attrB = ['home', 'parents', 'children', 'family', 'cousins', 'marriage', 'wedding', 'relatives'];
+
+            function s(w, A, B) {
+                const wVec = getActiveEmbedding(w);
+                if (!wVec) return 0;
+                const meanA = A.filter(a => getActiveEmbedding(a)).reduce((sum, a) => sum + cosineSimilarity(wVec, getActiveEmbedding(a)), 0) / A.length;
+                const meanB = B.filter(b => getActiveEmbedding(b)).reduce((sum, b) => sum + cosineSimilarity(wVec, getActiveEmbedding(b)), 0) / B.length;
+                return meanA - meanB;
+            }
+
+            const sX = targetX.filter(w => getActiveEmbedding(w)).map(w => s(w, attrA, attrB));
+            const sY = targetY.filter(w => getActiveEmbedding(w)).map(w => s(w, attrA, attrB));
+
+            const meanX = sX.reduce((a, b) => a + b, 0) / sX.length;
+            const meanY = sY.reduce((a, b) => a + b, 0) / sY.length;
+            const allS = [...sX, ...sY];
+            const meanAll = allS.reduce((a, b) => a + b, 0) / allS.length;
+            const stdAll = Math.sqrt(allS.reduce((s, v) => s + (v - meanAll) ** 2, 0) / allS.length);
+
+            const effectSize = stdAll > 0 ? (meanX - meanY) / stdAll : 0;
+
+            // Permutation test for p-value (1000 permutations)
+            const combined = [...targetX.filter(w => getActiveEmbedding(w)), ...targetY.filter(w => getActiveEmbedding(w))];
+            const observedDiff = meanX - meanY;
+            let count = 0;
+            for (let i = 0; i < 1000; i++) {
+                const shuffled = [...combined].sort(() => Math.random() - 0.5);
+                const halfN = Math.floor(shuffled.length / 2);
+                const permX = shuffled.slice(0, halfN).map(w => s(w, attrA, attrB));
+                const permY = shuffled.slice(halfN).map(w => s(w, attrA, attrB));
+                const permDiff = permX.reduce((a, b) => a + b, 0) / permX.length - permY.reduce((a, b) => a + b, 0) / permY.length;
+                if (Math.abs(permDiff) >= Math.abs(observedDiff)) count++;
+            }
+            const pValue = count / 1000;
+
+            return { effectSize, pValue, meanX, meanY };
+        }
+
+        // Hard Debiasing (Bolukbasi et al., 2016)
+        function hardDebias() {
+            const genderPairs = [['he', 'she'], ['man', 'woman'], ['male', 'female'], ['boy', 'girl'], ['king', 'queen'], ['brother', 'sister'], ['son', 'daughter'], ['father', 'mother']];
+
+            // Compute gender direction via PCA of gender pair differences
+            const diffs = [];
+            genderPairs.forEach(([m, f]) => {
+                const mv = getEmbedding(m), fv = getEmbedding(f);
+                if (mv && fv) {
+                    const diff = Array.from(mv).map((v, i) => v - fv[i]);
+                    diffs.push(diff);
+                }
+            });
+
+            // Mean of differences = approximate gender direction
+            const d = diffs[0].length;
+            const genderDir = new Array(d).fill(0);
+            diffs.forEach(diff => diff.forEach((v, i) => genderDir[i] += v));
+            const norm = Math.sqrt(genderDir.reduce((s, v) => s + v * v, 0));
+            genderDir.forEach((_, i) => genderDir[i] /= norm);
+
+            // Project out gender direction from all embeddings
+            debiasedEmbeddings = {};
+            const words = SEMANTIC_GROUPS.professions;
+            // Also include all words needed for WEAT
+            const allNeeded = [...words, 'john', 'paul', 'mike', 'kevin', 'steve', 'greg', 'jeff', 'bill',
+                'amy', 'joan', 'lisa', 'sarah', 'diana', 'kate', 'ann', 'donna',
+                'executive', 'management', 'professional', 'corporation', 'salary', 'office', 'business', 'career',
+                'home', 'parents', 'children', 'family', 'cousins', 'marriage', 'wedding', 'relatives',
+                'he', 'she', 'man', 'woman', 'male', 'female'];
+
+            new Set(allNeeded).forEach(w => {
+                const emb = getEmbedding(w);
+                if (emb) {
+                    const vec = Array.from(emb);
+                    const proj = vec.reduce((s, v, i) => s + v * genderDir[i], 0);
+                    debiasedEmbeddings[w] = new Float32Array(vec.map((v, i) => v - proj * genderDir[i]));
+                }
+            });
+
+            return genderDir;
+        }
+
+        function runDebiasing() {
+            if (!isLoaded) return;
+
+            // First compute WEAT with original embeddings
+            useDebiased = false;
+            const beforeWEAT = computeWEAT();
+
+            // Run hard debiasing
+            hardDebias();
+
+            // Compute WEAT with debiased embeddings
+            useDebiased = true;
+            const afterWEAT = computeWEAT();
+
+            // Display WEAT results
+            const dColor = v => Math.abs(v) > 1.0 ? 'text-red-500' : Math.abs(v) > 0.5 ? 'text-orange-500' : 'text-green-500';
+            document.getElementById('weatResults').innerHTML = `
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Career/Family × Male/Female Names</div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Before d</span>
+                    <span class="font-bold ${dColor(beforeWEAT.effectSize)}">${beforeWEAT.effectSize.toFixed(3)}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">After d</span>
+                    <span class="font-bold ${dColor(afterWEAT.effectSize)}">${afterWEAT.effectSize.toFixed(3)}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">p-value (before)</span>
+                    <span class="font-bold ${beforeWEAT.pValue < 0.05 ? 'text-red-500' : 'text-green-500'}">${beforeWEAT.pValue.toFixed(3)}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Reduction</span>
+                    <span class="font-bold text-green-500">${Math.abs(beforeWEAT.effectSize) > 0 ? ((1 - Math.abs(afterWEAT.effectSize) / Math.abs(beforeWEAT.effectSize)) * 100).toFixed(0) : 0}%</span>
+                </div>
+                <div class="mt-2 p-2 rounded bg-green-500/10 border border-green-500/20">
+                    <p class="text-xs text-green-400">✓ Debiased embeddings active. Bias chart updated.</p>
+                </div>
+            `;
+
+            // Re-render bias chart with debiased embeddings
+            renderBiasChart();
+        }
+
+        function renderBiasChart() {
+            if (!isLoaded) return;
+            const axisMap = {
+                'he-she': ['he', 'she'],
+                'man-woman': ['man', 'woman'],
+                'male-female': ['male', 'female']
+            };
+            const axis = document.getElementById('biasAxis').value;
+            const count = parseInt(document.getElementById('profCount').value);
+            const pair = axisMap[axis];
+
+            const scores = SEMANTIC_GROUPS.professions
+                .filter(p => getActiveEmbedding(p))
+                .map(p => ({ word: p, score: computeBiasScore(p, pair) }));
+            scores.sort((a, b) => b.score - a.score);
+            const selected = [
+                ...scores.slice(0, Math.ceil(count / 2)),
+                ...scores.slice(-Math.floor(count / 2))
+            ];
+            selected.sort((a, b) => a.score - b.score);
+
+            const isDark = document.documentElement.classList.contains('dark');
+
+            Plotly.newPlot('biasChart', [{
+                type: 'bar',
+                y: selected.map(s => s.word),
+                x: selected.map(s => s.score),
+                orientation: 'h',
+                marker: {
+                    color: selected.map(s => s.score > 0 ? '#3b82f6' : '#ec4899')
+                },
+                hovertemplate: '%{y}: %{x:.3f}<extra></extra>'
+            }], {
+                margin: { t: 10, l: 100, r: 30, b: 50 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                xaxis: {
+                    title: `← ${pair[1]} bias    |    ${pair[0]} bias →` + (useDebiased ? ' [DEBIASED]' : ''),
+                    color: isDark ? '#94a3b8' : '#475569',
+                    gridcolor: isDark ? '#1e293b' : '#e2e8f0',
+                    zerolinecolor: isDark ? '#475569' : '#94a3b8',
+                    zeroline: true,
+                    titlefont: { size: 11 }
+                },
+                yaxis: { color: isDark ? '#94a3b8' : '#475569', tickfont: { size: 11 } },
+                font: { family: 'Space Grotesk' }
+            }, { responsive: true, displayModeBar: false });
+
+            // Update summary
+            const allScores = SEMANTIC_GROUPS.professions
+                .filter(p => getActiveEmbedding(p))
+                .map(p => ({ word: p, score: computeBiasScore(p, pair) }));
+            allScores.sort((a, b) => b.score - a.score);
+            document.getElementById('maleBiased').textContent = allScores[0].word;
+            document.getElementById('femaleBiased').textContent = allScores[allScores.length - 1].word;
+            const neutralIdx = allScores.reduce((best, s, i) => Math.abs(s.score) < Math.abs(allScores[best].score) ? i : best, 0);
+            document.getElementById('neutralWord').textContent = allScores[neutralIdx].word;
+            document.getElementById('meanBias').textContent = (allScores.reduce((s, v) => s + v.score, 0) / allScores.length).toFixed(4);
+        }
+
+        // ==================== INIT ====================
+        loadGloVeEmbeddings();
+    </script>
+</body>
+
+</html>

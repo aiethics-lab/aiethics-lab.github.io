@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Model Explainability Lab | AI Ethics Toolkit</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class", theme: {
+                extend: {
+                    colors: { "primary": "#137fec", "primary-hover": "#0f6bd1", "background-light": "#f6f7f8", "background-dark": "#101922", "surface-dark": "#182430", "surface-dark-lighter": "#212e3b" },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] },
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #101922;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2d3f50;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #137fec;
+        }
+
+        .word-highlight {
+            display: inline-block;
+            padding: 1px 4px;
+            border-radius: 4px;
+            margin: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .word-highlight:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white">
+    <aside
+        class="w-64 flex-shrink-0 fixed h-full z-20 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
+            <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
+            <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group"
+                href="../index.html"><span class="material-icons-outlined mr-3 text-2xl">grid_view</span> Toolkit
+                Overview</a>
+            <div class="pt-4 pb-2 px-3">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
+            </div>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="word-embeddings.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">scatter_plot</span> Word
+                Embeddings</a>
+            <a class="flex items-center px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm"
+                href="explainability-lab.html"><span class="material-icons-outlined mr-3 text-xl">visibility</span>
+                Explainability Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="bias-auditor.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">saved_search</span> Bias
+                Auditor</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="adversarial-sandbox.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">security</span> Adversarial
+                Sandbox</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="filter-bubble.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">bubble_chart</span> Filter
+                Bubble Sim</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="privacy-lab.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">vpn_key</span> Privacy Lab</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="value-alignment.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">balance</span> Value
+                Alignment</a>
+            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
+                href="proxy-detector.html"><span
+                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">find_replace</span> Proxy
+                Detector</a>
+        </nav>
+        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
+            <p class="text-[10px] text-slate-400 mb-2">© 2025 <a href="https://hamedyaghoobian.com" class="text-primary hover:underline">Hamed Yaghoobian</a></p>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Version
+                    2.1.0</span><a class="hover:text-primary" href="#">Legal</a></div>
+        </div>
+    </aside>
+
+    <main class="flex-1 ml-64 p-8 overflow-y-auto h-screen">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <div class="flex items-center mb-1">
+                    <a href="../index.html" class="text-slate-400 hover:text-primary text-sm mr-2">Toolkit</a>
+                    <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
+                    <span class="text-primary text-sm ml-2">Explainability Lab</span>
+                </div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Model Explainability Lab</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">Use SHAP and LIME to understand how models make
+                    predictions.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="themeToggle" class="sr-only peer" checked />
+                <div
+                    class="w-11 h-6 bg-slate-300 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                </div>
+                <span class="ml-2 text-sm text-slate-500 dark:text-slate-400"><span
+                        class="material-icons-outlined text-sm align-middle">dark_mode</span></span>
+            </label>
+        </header>
+
+        <!-- Model Selection -->
+        <div class="flex gap-3 mb-6 flex-wrap">
+            <button onclick="selectModel('sentiment')" id="model-sentiment"
+                class="model-btn px-5 py-3 rounded-xl border-2 border-primary bg-primary/10 text-primary font-medium text-sm flex items-center transition-all">
+                <span class="material-icons-outlined mr-2">chat</span> Sentiment Analysis
+            </button>
+            <button onclick="selectModel('loan')" id="model-loan"
+                class="model-btn px-5 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium text-sm flex items-center hover:border-primary transition-all">
+                <span class="material-icons-outlined mr-2">account_balance</span> Loan Approval
+            </button>
+            <button onclick="selectModel('health')" id="model-health"
+                class="model-btn px-5 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium text-sm flex items-center hover:border-primary transition-all">
+                <span class="material-icons-outlined mr-2">favorite</span> Health Risk
+            </button>
+            <button onclick="selectModel('compas')" id="model-compas"
+                class="model-btn px-5 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium text-sm flex items-center hover:border-primary transition-all">
+                <span class="material-icons-outlined mr-2">gavel</span> Recidivism (COMPAS)
+            </button>
+        </div>
+
+        <!-- Sentiment Panel -->
+        <div id="panel-sentiment" class="model-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-primary mr-2 align-middle">edit_note</span> Input Text
+                    </h3>
+                    <textarea id="sentimentInput" rows="4"
+                        class="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 text-sm focus:ring-primary focus:border-primary resize-none"
+                        placeholder="Enter text to analyze sentiment...">The movie was absolutely wonderful and I loved every moment of it, though the ending was a bit disappointing.</textarea>
+                    <button onclick="analyzeSentiment()"
+                        class="w-full mt-3 py-2.5 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors flex items-center justify-center">
+                        <span class="material-icons-outlined mr-2">play_arrow</span> Analyze
+                    </button>
+                    <div id="predictionResult"
+                        class="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Prediction</span>
+                            <span id="predLabel" class="px-3 py-1 rounded-full text-xs font-bold"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500">Negative</span>
+                            <div class="flex-1 h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                                <div id="predBar" class="h-full rounded-full transition-all duration-500"></div>
+                            </div>
+                            <span class="text-xs text-slate-500">Positive</span>
+                        </div>
+                        <p id="predConf" class="text-xs text-slate-500 mt-1 text-center"></p>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">LIME Explanation</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Word colors show contribution: <span
+                                class="text-green-500 font-medium">green = positive</span>, <span
+                                class="text-red-500 font-medium">red = negative</span></p>
+                        <div id="limeOutput"
+                            class="p-4 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 text-sm leading-relaxed min-h-[60px]">
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-purple-500 mr-2 align-middle">bar_chart</span> SHAP
+                        Feature Importance
+                    </h3>
+                    <div id="shapChart" class="h-[300px]"></div>
+                    <!-- Aspect-Based Analysis -->
+                    <div class="mt-4 border-t border-slate-200 dark:border-slate-700 pt-4">
+                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                            <span class="material-icons-outlined text-sm mr-1 align-middle">category</span> Aspect-Based
+                            Sentiment
+                        </h4>
+                        <div id="aspectResults" class="grid grid-cols-2 gap-2"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Counterfactual Explanations -->
+            <div
+                class="mt-4 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3">
+                    <span class="material-icons-outlined text-orange-500 mr-2 align-middle">compare_arrows</span>
+                    Counterfactual Explanations
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">What minimal changes would flip the
+                    prediction?</p>
+                <div id="counterfactualResults" class="space-y-2"></div>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400 self-center mr-2">Try:</span>
+                <button
+                    onclick="setSentimentExample('I absolutely love this product! It works perfectly and exceeded my expectations.')"
+                    class="px-3 py-1 rounded-full text-xs bg-green-500/10 text-green-500 hover:bg-green-500/20 transition-colors">Very
+                    Positive</button>
+                <button
+                    onclick="setSentimentExample('The service was terrible. I waited 2 hours and nobody helped me. Worst experience ever.')"
+                    class="px-3 py-1 rounded-full text-xs bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors">Very
+                    Negative</button>
+                <button
+                    onclick="setSentimentExample('The food was okay. Nothing special but not bad either. Average restaurant.')"
+                    class="px-3 py-1 rounded-full text-xs bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 transition-colors">Neutral
+                    / Mixed</button>
+                <button
+                    onclick="setSentimentExample('The acting was absolutely brilliant and the cinematography was stunning, but the plot was predictable and the dialogue felt forced and unnatural.')"
+                    class="px-3 py-1 rounded-full text-xs bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors">Multi-Aspect</button>
+                <button
+                    onclick="setSentimentExample('Not bad at all! I wouldn\'t say it was the worst thing I\'ve seen. It definitely wasn\'t terrible.')"
+                    class="px-3 py-1 rounded-full text-xs bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors">Negation
+                    Test</button>
+            </div>
+        </div>
+
+        <!-- Loan Panel -->
+        <div id="panel-loan" class="model-panel hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-primary mr-2 align-middle">tune</span> Applicant
+                        Features
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-xs text-slate-500 block mb-1">Income ($)</label><input type="range"
+                                id="loan-income" min="20000" max="150000" value="60000" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent='$'+Number(this.value).toLocaleString()"><span
+                                class="text-xs text-slate-500">$60,000</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Credit Score</label><input type="range"
+                                id="loan-credit" min="300" max="850" value="680" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">680</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Debt-to-Income</label><input type="range"
+                                id="loan-dti" min="0" max="100" value="35" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value+'%'"><span
+                                class="text-xs text-slate-500">35%</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Employment (yrs)</label><input
+                                type="range" id="loan-emp" min="0" max="30" value="5" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">5</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Loan Amount ($)</label><input type="range"
+                                id="loan-amount" min="5000" max="500000" value="50000" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent='$'+Number(this.value).toLocaleString()"><span
+                                class="text-xs text-slate-500">$50,000</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Age</label><input type="range"
+                                id="loan-age" min="18" max="75" value="35" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">35</span></div>
+                    </div>
+                    <button onclick="analyzeLoan()"
+                        class="w-full mt-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors flex items-center justify-center">
+                        <span class="material-icons-outlined mr-2">play_arrow</span> Predict
+                    </button>
+                    <div id="loanResult"
+                        class="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 hidden">
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-purple-500 mr-2 align-middle">waterfall_chart</span>
+                        SHAP Waterfall
+                    </h3>
+                    <div id="loanShapChart" class="h-[400px]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Panel -->
+        <div id="panel-health" class="model-panel hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-primary mr-2 align-middle">tune</span> Patient
+                        Features
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-xs text-slate-500 block mb-1">Age</label><input type="range"
+                                id="health-age" min="18" max="90" value="45" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">45</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">BMI</label><input type="range"
+                                id="health-bmi" min="15" max="45" value="26" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">26</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Blood Pressure</label><input type="range"
+                                id="health-bp" min="80" max="200" value="125" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">125</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Cholesterol</label><input type="range"
+                                id="health-chol" min="100" max="350" value="210" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">210</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Exercise (hrs/wk)</label><input
+                                type="range" id="health-exercise" min="0" max="20" value="3"
+                                class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">3</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Smoker</label><select id="health-smoker"
+                                class="w-full px-2 py-1 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select></div>
+                    </div>
+                    <button onclick="analyzeHealth()"
+                        class="w-full mt-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors flex items-center justify-center">
+                        <span class="material-icons-outlined mr-2">play_arrow</span> Predict Risk
+                    </button>
+                    <div id="healthResult"
+                        class="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 hidden">
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        <span class="material-icons-outlined text-purple-500 mr-2 align-middle">waterfall_chart</span>
+                        SHAP Feature Importance
+                    </h3>
+                    <div id="healthShapChart" class="h-[400px]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPAS Panel -->
+        <div id="panel-compas" class="model-panel hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                        <span class="material-icons-outlined text-red-500 mr-2 align-middle">gavel</span> Defendant
+                        Profile
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-4">Based on ProPublica's COMPAS analysis. Demonstrates how ML
+                        explainability reveals racial bias.</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-xs text-slate-500 block mb-1">Age</label><input type="range"
+                                id="compas-age" min="18" max="70" value="30" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">30</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Prior Offenses</label><input type="range"
+                                id="compas-priors" min="0" max="20" value="2" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">2</span></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Charge Severity</label><select
+                                id="compas-charge"
+                                class="w-full px-2 py-1 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
+                                <option value="0">Misdemeanor</option>
+                                <option value="1" selected>Felony</option>
+                            </select></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Gender</label><select id="compas-gender"
+                                class="w-full px-2 py-1 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
+                                <option value="0">Female</option>
+                                <option value="1" selected>Male</option>
+                            </select></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Race</label><select id="compas-race"
+                                class="w-full px-2 py-1 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
+                                <option value="white">White</option>
+                                <option value="black" selected>Black</option>
+                                <option value="hispanic">Hispanic</option>
+                                <option value="other">Other</option>
+                            </select></div>
+                        <div><label class="text-xs text-slate-500 block mb-1">Juvenile Felonies</label><input
+                                type="range" id="compas-juv" min="0" max="5" value="0" class="w-full accent-primary"
+                                oninput="this.nextElementSibling.textContent=this.value"><span
+                                class="text-xs text-slate-500">0</span></div>
+                    </div>
+                    <button onclick="analyzeCompas()"
+                        class="w-full mt-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center">
+                        <span class="material-icons-outlined mr-2">play_arrow</span> Predict Risk Score
+                    </button>
+                    <div id="compasResult"
+                        class="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 hidden">
+                    </div>
+                    <!-- Bias Alert -->
+                    <div id="compasBiasAlert" class="mt-3 hidden">
+                        <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+                            <h4 class="text-sm font-bold text-red-500 flex items-center mb-2">
+                                <span class="material-icons-outlined mr-1 text-base">warning</span> Racial Bias Detected
+                            </h4>
+                            <p id="compasBiasText" class="text-xs text-slate-600 dark:text-slate-400"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                            <span
+                                class="material-icons-outlined text-purple-500 mr-2 align-middle">waterfall_chart</span>
+                            SHAP: Why This Score?
+                        </h3>
+                        <div id="compasShapChart" class="h-[250px]"></div>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">
+                            <span
+                                class="material-icons-outlined text-orange-500 mr-2 align-middle text-base">compare_arrows</span>
+                            Fairness Comparison: Same Profile, Different Race
+                        </h3>
+                        <div id="compasFairnessChart" class="h-[200px]"></div>
+                    </div>
+                    <div
+                        class="bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-xl p-5">
+                        <h4 class="text-sm font-semibold text-red-400 mb-2 flex items-center">
+                            <span class="material-icons-outlined text-base mr-1">school</span> Why This Matters
+                        </h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                            ProPublica's 2016 investigation found that COMPAS was biased against Black defendants — they
+                            were
+                            nearly twice as likely to be falsely flagged as high risk compared to White defendants.
+                            Explainability tools like SHAP help reveal when <strong>race acts as a hidden
+                                driver</strong>
+                            of predictions, even when the model claims to be "fair."
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ==================== THEME ====================
+        const themeToggle = document.getElementById('themeToggle');
+        function setTheme(dark) { document.documentElement.classList.toggle('dark', dark); document.documentElement.classList.toggle('light', !dark); localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); }
+        const savedTheme = localStorage.getItem('ethicsToolkitTheme');
+        if (savedTheme === 'light') { setTheme(false); themeToggle.checked = false; }
+        themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
+        const isDarkMode = () => document.documentElement.classList.contains('dark');
+
+        // ==================== MODEL SELECTION ====================
+        function selectModel(model) {
+            document.querySelectorAll('.model-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.model-btn').forEach(b => {
+                b.classList.remove('border-primary', 'bg-primary/10', 'text-primary');
+                b.classList.add('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-400');
+            });
+            document.getElementById(`panel-${model}`).classList.remove('hidden');
+            const btn = document.getElementById(`model-${model}`);
+            btn.classList.add('border-primary', 'bg-primary/10', 'text-primary');
+            btn.classList.remove('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-400');
+        }
+
+        // ==================== PLOTLY SHARED LAYOUT ====================
+        function plotLayout(extra = {}) {
+            const d = isDarkMode();
+            return Object.assign({
+                paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+                font: { family: 'Space Grotesk', color: d ? '#94a3b8' : '#475569' },
+                xaxis: { color: d ? '#94a3b8' : '#475569', gridcolor: d ? '#1e293b' : '#e2e8f0', zeroline: true, zerolinecolor: d ? '#475569' : '#94a3b8' },
+                yaxis: { color: d ? '#94a3b8' : '#475569' },
+            }, extra);
+        }
+
+        // ==================== SENTIMENT MODEL v2 (Enhanced TF-IDF + Bigrams + Aspects) ====================
+        let sentimentModel = null;
+        let modelLoaded = false;
+
+        async function loadSentimentModel() {
+            try {
+                const res = await fetch('../data/sentiment-model-v2.json');
+                sentimentModel = await res.json();
+                modelLoaded = true;
+                console.log(`Sentiment model v2 loaded: ${sentimentModel.feature_count} features (${Object.keys(sentimentModel.weights).length} unigrams + ${Object.keys(sentimentModel.bigrams || {}).length} bigrams)`);
+            } catch (e) {
+                console.warn('v2 model not found, trying v1:', e);
+                try {
+                    const res = await fetch('../data/sentiment-model.json');
+                    sentimentModel = await res.json();
+                    if (!sentimentModel.bigrams) sentimentModel.bigrams = {};
+                    if (!sentimentModel.contrastive) sentimentModel.contrastive = ['but', 'however', 'although'];
+                    if (!sentimentModel.aspects) sentimentModel.aspects = {};
+                    modelLoaded = true;
+                } catch (e2) {
+                    console.error('All models failed, using inline fallback:', e2);
+                    sentimentModel = {
+                        weights: { good: 1.2, great: 1.8, love: 1.9, wonderful: 2.4, amazing: 2.1, excellent: 2.3, bad: -1.3, terrible: -2.2, horrible: -2.3, awful: -2.1, boring: -1.6, disappointing: -1.7, worst: -2.5, hate: -2.0, waste: -1.5 },
+                        bigrams: { 'well done': 1.6, 'waste time': -2.0, 'must see': 1.8, 'fell asleep': -1.8, 'highly recommend': 2.0 },
+                        intensifiers: { very: 1.4, extremely: 1.7, absolutely: 1.6, really: 1.3, incredibly: 1.5 },
+                        negators: ["not", "no", "never", "n't", "don't", "doesn't", "didn't", "wasn't", "weren't", "can't", "couldn't", "hardly", "barely"],
+                        contrastive: ['but', 'however', 'although', 'though', 'yet', 'unfortunately'],
+                        aspects: {},
+                        idf: {},
+                        intercept: 0.0
+                    };
+                    modelLoaded = true;
+                }
+            }
+        }
+
+        // Core scoring engine — returns detailed breakdown for reuse in counterfactuals
+        function scoreSentiment(text) {
+            const weights = sentimentModel.weights;
+            const bigrams = sentimentModel.bigrams || {};
+            const intensifiers = sentimentModel.intensifiers || {};
+            const negatorSet = new Set(sentimentModel.negators || []);
+            const contrastiveSet = new Set(sentimentModel.contrastive || []);
+            const idfMap = sentimentModel.idf || {};
+            const aspects = sentimentModel.aspects || {};
+
+            const words = text.toLowerCase().replace(/[^\w\s']/g, '').split(/\s+/).filter(Boolean);
+
+            // Term frequency
+            const tf = {};
+            words.forEach(w => { tf[w] = (tf[w] || 0) + 1; });
+            const maxTF = Math.max(1, ...Object.values(tf));
+
+            // Detect bigrams
+            const bigramHits = [];
+            for (let i = 0; i < words.length - 1; i++) {
+                const bg = words[i] + ' ' + words[i + 1];
+                if (bigrams[bg] !== undefined) {
+                    bigramHits.push({ index: i, bigram: bg, score: bigrams[bg] });
+                }
+            }
+            const bigramIndices = new Set();
+            bigramHits.forEach(b => { bigramIndices.add(b.index); bigramIndices.add(b.index + 1); });
+
+            // Contrastive segmentation — words after 'but' get 1.5x weight
+            let contrastiveActive = false;
+            let contrastiveMultiplier = 1.0;
+
+            const wordScores = [];
+            let totalScore = sentimentModel.intercept || 0;
+            let negated = false;
+            let intensifyMultiplier = 1.0;
+            const aspectScores = {}; // aspect -> { total, count, words }
+
+            words.forEach((word, i) => {
+                // Contrastive conjunction shifts weighting
+                if (contrastiveSet.has(word)) {
+                    contrastiveActive = true;
+                    contrastiveMultiplier = 1.5; // post-contrastive clause gets more weight
+                    negated = false;
+                    intensifyMultiplier = 1.0;
+                    wordScores.push({ word, score: 0, role: 'contrastive' });
+                    return;
+                }
+
+                if (negatorSet.has(word)) {
+                    negated = true;
+                    wordScores.push({ word, score: 0, role: 'negator' });
+                    return;
+                }
+
+                if (intensifiers[word] !== undefined) {
+                    intensifyMultiplier = intensifiers[word];
+                    wordScores.push({ word, score: 0, role: 'intensifier' });
+                    return;
+                }
+
+                let score = 0;
+                let source = 'unigram';
+
+                // Check if part of a scored bigram
+                if (bigramIndices.has(i)) {
+                    const hit = bigramHits.find(b => b.index === i);
+                    if (hit) {
+                        const idf = idfMap[hit.bigram] || 4.0;
+                        score = hit.score * (idf / 3);
+                        source = 'bigram';
+                    }
+                } else if (weights[word] !== undefined) {
+                    const termFreq = 0.5 + 0.5 * (tf[word] / maxTF);
+                    const idf = idfMap[word] || 1.0;
+                    score = weights[word] * termFreq * (idf / 2);
+                }
+
+                if (negated && score !== 0) {
+                    score = -score * 0.8;
+                    negated = false;
+                }
+                if (intensifyMultiplier !== 1.0 && score !== 0) {
+                    score *= intensifyMultiplier;
+                    intensifyMultiplier = 1.0;
+                }
+                score *= contrastiveMultiplier;
+
+                // Aspect tracking
+                for (const [aspect, keywords] of Object.entries(aspects)) {
+                    if (keywords.includes(word)) {
+                        if (!aspectScores[aspect]) aspectScores[aspect] = { total: 0, count: 0, words: [] };
+                        aspectScores[aspect].words.push(word);
+                    }
+                }
+                // Assign score to nearest aspect
+                if (score !== 0) {
+                    for (const [aspect, keywords] of Object.entries(aspects)) {
+                        if (keywords.includes(word)) {
+                            if (!aspectScores[aspect]) aspectScores[aspect] = { total: 0, count: 0, words: [] };
+                            aspectScores[aspect].total += score;
+                            aspectScores[aspect].count++;
+                        }
+                    }
+                }
+
+                totalScore += score;
+                wordScores.push({ word, score, role: score > 0 ? 'positive' : score < 0 ? 'negative' : 'neutral', source });
+            });
+
+            // Add bigram scores for display
+            bigramHits.forEach(b => {
+                const idf = idfMap[b.bigram] || 4.0;
+                let s = b.score * (idf / 3) * contrastiveMultiplier;
+                wordScores.push({ word: b.bigram, score: s, role: s > 0 ? 'positive' : 'negative', source: 'bigram_display' });
+            });
+
+            const sigmoid = x => 1 / (1 + Math.exp(-x));
+            const prob = sigmoid(totalScore);
+
+            return { wordScores, totalScore, prob, aspectScores, words };
+        }
+
+        function analyzeSentiment() {
+            if (!modelLoaded || !sentimentModel) return;
+            const text = document.getElementById('sentimentInput').value;
+            if (!text.trim()) return;
+
+            const { wordScores, totalScore, prob, aspectScores, words } = scoreSentiment(text);
+            const label = prob >= 0.5 ? 'Positive' : 'Negative';
+            const confidence = Math.abs(prob - 0.5) * 2;
+
+            // Prediction display
+            const resultDiv = document.getElementById('predictionResult');
+            resultDiv.classList.remove('hidden');
+            document.getElementById('predLabel').textContent = label;
+            document.getElementById('predLabel').className = `px-3 py-1 rounded-full text-xs font-bold ${prob >= 0.5 ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`;
+            document.getElementById('predBar').style.width = `${(prob * 100).toFixed(0)}%`;
+            document.getElementById('predBar').className = `h-full rounded-full transition-all duration-500 ${prob >= 0.5 ? 'bg-green-500' : 'bg-red-500'}`;
+            document.getElementById('predConf').textContent = `Confidence: ${(confidence * 100).toFixed(1)}% | Raw: ${totalScore.toFixed(3)} → σ(${prob.toFixed(3)}) | Features: ${sentimentModel.feature_count || Object.keys(sentimentModel.weights).length}`;
+
+            // LIME highlights
+            const limeDiv = document.getElementById('limeOutput');
+            const originalWords = text.split(/(\s+)/);
+            const scoredTokens = wordScores.filter(w => w.source !== 'bigram_display');
+            const maxAbsScore = Math.max(0.01, ...scoredTokens.map(w => Math.abs(w.score)));
+            limeDiv.innerHTML = originalWords.map(token => {
+                const clean = token.toLowerCase().replace(/[^\w']/g, '');
+                const ws = scoredTokens.find(w => w.word === clean);
+                if (!ws || ws.score === 0) {
+                    if (ws && ws.role === 'negator') return `<span class="word-highlight" style="background: rgba(168, 85, 247, 0.3)" title="Negator: flips next word sentiment">🚫 ${token}</span>`;
+                    if (ws && ws.role === 'intensifier') return `<span class="word-highlight" style="background: rgba(59, 130, 246, 0.3)" title="Intensifier: amplifies next word">⚡ ${token}</span>`;
+                    if (ws && ws.role === 'contrastive') return `<span class="word-highlight" style="background: rgba(245, 158, 11, 0.4)" title="Contrastive: shifts emphasis to following clause">⚖️ ${token}</span>`;
+                    return `<span>${token}</span>`;
+                }
+                const normalizedIntensity = Math.min(Math.abs(ws.score) / maxAbsScore, 1);
+                const color = ws.score > 0
+                    ? `rgba(34, 197, 94, ${0.15 + normalizedIntensity * 0.7})`
+                    : `rgba(239, 68, 68, ${0.15 + normalizedIntensity * 0.7})`;
+                return `<span class="word-highlight" style="background: ${color}" title="${ws.word}: ${ws.score.toFixed(3)} (${ws.source})">${token}</span>`;
+            }).join('');
+
+            // SHAP chart — include bigrams
+            const allScored = wordScores.filter(w => w.score !== 0 && w.source !== 'bigram_display');
+            const uniqueScored = [];
+            const seen = new Set();
+            allScored.forEach(w => { if (!seen.has(w.word)) { seen.add(w.word); uniqueScored.push(w); } });
+            const significantWords = uniqueScored.sort((a, b) => Math.abs(b.score) - Math.abs(a.score)).slice(0, 15);
+
+            Plotly.newPlot('shapChart', [{
+                type: 'bar',
+                y: significantWords.map(w => w.word),
+                x: significantWords.map(w => w.score),
+                orientation: 'h',
+                marker: { color: significantWords.map(w => w.score > 0 ? '#22c55e' : '#ef4444') },
+                text: significantWords.map(w => w.source === 'bigram' ? '(bigram)' : ''),
+                hovertemplate: '%{y}: %{x:.3f}<extra></extra>'
+            }], plotLayout({
+                margin: { t: 10, l: 100, r: 20, b: 40 },
+                xaxis: { title: 'SHAP Value (TF-IDF weighted)', color: isDarkMode() ? '#94a3b8' : '#475569', gridcolor: isDarkMode() ? '#1e293b' : '#e2e8f0', zeroline: true, zerolinecolor: isDarkMode() ? '#475569' : '#94a3b8' },
+                yaxis: { color: isDarkMode() ? '#94a3b8' : '#475569', autorange: 'reversed' },
+            }), { responsive: true, displayModeBar: false });
+
+            // Aspect-Based Sentiment
+            renderAspects(aspectScores);
+
+            // Counterfactual Explanations
+            generateCounterfactuals(text, wordScores, prob);
+        }
+
+        function renderAspects(aspectScores) {
+            const div = document.getElementById('aspectResults');
+            const activeAspects = Object.entries(aspectScores).filter(([, v]) => v.count > 0);
+            if (activeAspects.length === 0) {
+                div.innerHTML = '<p class="text-xs text-slate-500 col-span-2 py-2">No aspect-specific sentiments detected. Try a review that mentions acting, story, visuals, pacing, etc.</p>';
+                return;
+            }
+            div.innerHTML = activeAspects.map(([aspect, data]) => {
+                const avgScore = data.total / Math.max(1, data.count);
+                const isPos = avgScore > 0;
+                const intensity = Math.min(Math.abs(avgScore) * 50, 100);
+                return `<div class="p-2 rounded-lg border ${isPos ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-semibold capitalize text-slate-700 dark:text-slate-300">${aspect}</span>
+                        <span class="text-xs font-bold ${isPos ? 'text-green-500' : 'text-red-500'}">${isPos ? '+' : ''}${avgScore.toFixed(2)}</span>
+                    </div>
+                    <div class="mt-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                        <div class="h-full rounded-full ${isPos ? 'bg-green-500' : 'bg-red-500'}" style="width: ${intensity}%"></div>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">${data.words.join(', ')}</p>
+                </div>`;
+            }).join('');
+        }
+
+        function generateCounterfactuals(text, wordScores, originalProb) {
+            const div = document.getElementById('counterfactualResults');
+            const label = originalProb >= 0.5 ? 'Positive' : 'Negative';
+            const scoredWords = wordScores.filter(w => w.score !== 0 && w.source !== 'bigram_display')
+                .sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
+
+            if (scoredWords.length === 0) {
+                div.innerHTML = '<p class="text-xs text-slate-500">No significant features to create counterfactuals.</p>';
+                return;
+            }
+
+            const counterfactuals = [];
+            // Try removing each influential word
+            for (const ws of scoredWords.slice(0, 5)) {
+                const regex = new RegExp('\\b' + ws.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+                const modified = text.replace(regex, '___').trim();
+                const { prob: newProb } = scoreSentiment(modified);
+                const newLabel = newProb >= 0.5 ? 'Positive' : 'Negative';
+                const flipped = newLabel !== label;
+                const delta = newProb - originalProb;
+                counterfactuals.push({ word: ws.word, newProb, flipped, delta, original: ws.score });
+            }
+
+            div.innerHTML = counterfactuals.map(cf => {
+                const icon = cf.flipped ? '🔄' : '→';
+                const flipBadge = cf.flipped
+                    ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-orange-500/20 text-orange-500">FLIPS to ${cf.newProb >= 0.5 ? 'Positive' : 'Negative'}</span>`
+                    : `<span class="text-xs text-slate-500">stays ${cf.newProb >= 0.5 ? 'Positive' : 'Negative'} (${(cf.newProb * 100).toFixed(0)}%)</span>`;
+                return `<div class="flex items-center justify-between p-2.5 rounded-lg border ${cf.flipped ? 'border-orange-500/40 bg-orange-500/5' : 'border-slate-200 dark:border-slate-700'} text-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">${icon}</span>
+                        <span class="text-xs text-slate-700 dark:text-slate-300">Remove "<strong class="${cf.original > 0 ? 'text-green-500' : 'text-red-500'}">${cf.word}</strong>"</span>
+                    </div>
+                    ${flipBadge}
+                </div>`;
+            }).join('');
+        }
+
+        function setSentimentExample(text) {
+            document.getElementById('sentimentInput').value = text;
+            analyzeSentiment();
+        }
+
+        // ==================== LOAN MODEL (Enhanced with Interactions) ====================
+        function analyzeLoan() {
+            const income = parseInt(document.getElementById('loan-income').value);
+            const credit = parseInt(document.getElementById('loan-credit').value);
+            const dti = parseInt(document.getElementById('loan-dti').value);
+            const emp = parseInt(document.getElementById('loan-emp').value);
+            const amount = parseInt(document.getElementById('loan-amount').value);
+            const age = parseInt(document.getElementById('loan-age').value);
+
+            // Realistic logistic regression with learned coefficients (UCI Adult-inspired)
+            const features = {
+                'Credit Score': { value: credit, weight: 0.38, baseline: 680, scale: 200, shap: 0 },
+                'Income': { value: income, weight: 0.28, baseline: 60000, scale: 50000, shap: 0 },
+                'Debt-to-Income': { value: dti, weight: -0.22, baseline: 35, scale: 30, shap: 0 },
+                'Employment': { value: emp, weight: 0.12, baseline: 5, scale: 10, shap: 0 },
+                'Loan Amount': { value: amount, weight: -0.10, baseline: 50000, scale: 100000, shap: 0 },
+                'Age': { value: age, weight: 0.03, baseline: 35, scale: 20, shap: 0 }
+            };
+
+            // Feature interactions (non-linear)
+            const loanToIncome = amount / Math.max(income, 1);
+            const creditDtiInteraction = ((credit - 300) / 550) * (1 - dti / 100);
+            features['Loan/Income Ratio'] = { value: loanToIncome, weight: -0.15, baseline: 0.83, scale: 1.5, shap: 0 };
+            features['Credit×Low-DTI'] = { value: creditDtiInteraction, weight: 0.10, baseline: 0.43, scale: 0.5, shap: 0 };
+
+            let logit = 0;
+            Object.values(features).forEach(f => {
+                f.shap = f.weight * (f.value - f.baseline) / f.scale;
+                logit += f.shap;
+            });
+
+            const prob = 1 / (1 + Math.exp(-logit - 0.3));
+            const approved = prob >= 0.5;
+
+            document.getElementById('loanResult').classList.remove('hidden');
+            document.getElementById('loanResult').innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Decision</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${approved ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">${approved ? 'Approved' : 'Denied'}</span>
+                </div>
+                <p class="text-xs text-slate-500">Approval probability: ${(prob * 100).toFixed(1)}% | Model: Logistic Regression (8 features incl. interactions)</p>`;
+
+            const sorted = Object.entries(features).sort((a, b) => Math.abs(b[1].shap) - Math.abs(a[1].shap));
+
+            Plotly.newPlot('loanShapChart', [{
+                type: 'waterfall', orientation: 'h',
+                y: ['Base Rate', ...sorted.map(([k]) => k), 'Final'],
+                x: [0.3, ...sorted.map(([, v]) => v.shap), 0],
+                connector: { line: { color: isDarkMode() ? '#475569' : '#94a3b8' } },
+                measure: ['absolute', ...sorted.map(() => 'relative'), 'total'],
+                decreasing: { marker: { color: '#ef4444' } },
+                increasing: { marker: { color: '#22c55e' } },
+                totals: { marker: { color: prob >= 0.5 ? '#22c55e' : '#ef4444' } }
+            }], plotLayout({ margin: { t: 10, l: 120, r: 30, b: 40 }, xaxis: { title: 'SHAP Value' } }), { responsive: true, displayModeBar: false });
+        }
+
+        // ==================== HEALTH MODEL (Enhanced with Interactions) ====================
+        function analyzeHealth() {
+            const age = parseInt(document.getElementById('health-age').value);
+            const bmi = parseInt(document.getElementById('health-bmi').value);
+            const bp = parseInt(document.getElementById('health-bp').value);
+            const chol = parseInt(document.getElementById('health-chol').value);
+            const exercise = parseInt(document.getElementById('health-exercise').value);
+            const smoker = parseInt(document.getElementById('health-smoker').value);
+
+            const features = {
+                'Age': { value: age, weight: 0.25, baseline: 45, scale: 20, shap: 0 },
+                'BMI': { value: bmi, weight: 0.20, baseline: 25, scale: 10, shap: 0 },
+                'Blood Pressure': { value: bp, weight: 0.22, baseline: 120, scale: 40, shap: 0 },
+                'Cholesterol': { value: chol, weight: 0.15, baseline: 200, scale: 80, shap: 0 },
+                'Exercise': { value: exercise, weight: -0.18, baseline: 5, scale: 8, shap: 0 },
+                'Smoker': { value: smoker, weight: 0.28, baseline: 0, scale: 1, shap: 0 }
+            };
+
+            // Non-linear interactions
+            const bmiAge = ((bmi - 18) / 27) * ((age - 18) / 72);
+            const smokerBP = smoker * ((bp - 80) / 120);
+            const exerciseProtection = exercise > 0 ? -0.12 * Math.log(exercise + 1) / Math.log(21) : 0;
+            features['BMI × Age'] = { value: bmiAge, weight: 0.15, baseline: 0.15, scale: 0.5, shap: 0 };
+            features['Smoker × BP'] = { value: smokerBP, weight: 0.18, baseline: 0.0, scale: 1.0, shap: 0 };
+            features['Exercise Protection'] = { value: exerciseProtection, weight: 1.0, baseline: -0.06, scale: 0.2, shap: 0 };
+
+            let logit = -0.8;
+            Object.values(features).forEach(f => {
+                f.shap = f.weight * (f.value - f.baseline) / f.scale;
+                logit += f.shap;
+            });
+
+            const prob = 1 / (1 + Math.exp(-logit));
+            const risk = prob >= 0.6 ? 'High' : prob >= 0.35 ? 'Moderate' : 'Low';
+            const riskColor = risk === 'High' ? 'red' : risk === 'Moderate' ? 'yellow' : 'green';
+
+            document.getElementById('healthResult').classList.remove('hidden');
+            document.getElementById('healthResult').innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Risk Level</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-${riskColor}-500/20 text-${riskColor}-500">${risk} Risk</span>
+                </div>
+                <p class="text-xs text-slate-500">Risk probability: ${(prob * 100).toFixed(1)}% | Model: Logistic Regression with feature interactions (9 features)</p>`;
+
+            const sorted = Object.entries(features).sort((a, b) => Math.abs(b[1].shap) - Math.abs(a[1].shap));
+
+            Plotly.newPlot('healthShapChart', [{
+                type: 'bar',
+                y: sorted.map(([k]) => k),
+                x: sorted.map(([, v]) => v.shap),
+                orientation: 'h',
+                marker: { color: sorted.map(([, v]) => v.shap > 0 ? '#ef4444' : '#22c55e') },
+                hovertemplate: '%{y}: %{x:.3f}<extra></extra>'
+            }], plotLayout({
+                margin: { t: 10, l: 120, r: 20, b: 40 },
+                xaxis: { title: 'Contribution to Risk' }
+            }), { responsive: true, displayModeBar: false });
+        }
+
+        // ==================== COMPAS RECIDIVISM MODEL ====================
+        function compasScore(age, priors, charge, gender, race, juv) {
+            // Coefficients inspired by ProPublica's analysis of COMPAS
+            const raceWeights = { black: 0.67, hispanic: 0.21, white: 0.0, other: 0.10 };
+            const features = {
+                'Age': { value: age, weight: -0.035, baseline: 35, scale: 1, shap: 0 },
+                'Prior Offenses': { value: priors, weight: 0.18, baseline: 0, scale: 1, shap: 0 },
+                'Charge Severity': { value: parseInt(charge), weight: 0.42, baseline: 0, scale: 1, shap: 0 },
+                'Gender (Male)': { value: parseInt(gender), weight: 0.24, baseline: 0, scale: 1, shap: 0 },
+                'Race Factor': { value: raceWeights[race] || 0, weight: 1.0, baseline: 0, scale: 1, shap: 0 },
+                'Juvenile Felonies': { value: juv, weight: 0.30, baseline: 0, scale: 1, shap: 0 },
+            };
+
+            // Interaction: young + priors is worse
+            const youngPriors = age < 25 ? priors * 0.15 : 0;
+            features['Young × Priors'] = { value: youngPriors, weight: 1.0, baseline: 0, scale: 1, shap: 0 };
+
+            let logit = -1.5;
+            Object.values(features).forEach(f => {
+                f.shap = f.weight * (f.value - f.baseline) / f.scale;
+                logit += f.shap;
+            });
+
+            const prob = 1 / (1 + Math.exp(-logit));
+            return { features, prob, logit };
+        }
+
+        function analyzeCompas() {
+            const age = parseInt(document.getElementById('compas-age').value);
+            const priors = parseInt(document.getElementById('compas-priors').value);
+            const charge = document.getElementById('compas-charge').value;
+            const gender = document.getElementById('compas-gender').value;
+            const race = document.getElementById('compas-race').value;
+            const juv = parseInt(document.getElementById('compas-juv').value);
+
+            const { features, prob } = compasScore(age, priors, charge, gender, race, juv);
+            const riskLevel = prob >= 0.7 ? 'High' : prob >= 0.4 ? 'Medium' : 'Low';
+            const decile = Math.min(10, Math.max(1, Math.round(prob * 10)));
+            const riskColor = riskLevel === 'High' ? 'red' : riskLevel === 'Medium' ? 'yellow' : 'green';
+
+            document.getElementById('compasResult').classList.remove('hidden');
+            document.getElementById('compasResult').innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Risk Score</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-${riskColor}-500/20 text-${riskColor}-500">Decile ${decile} — ${riskLevel} Risk</span>
+                </div>
+                <div class="flex items-center gap-1 mt-2">
+                    ${Array.from({ length: 10 }, (_, i) => `<div class="flex-1 h-3 rounded ${i < decile ? (decile >= 7 ? 'bg-red-500' : decile >= 4 ? 'bg-yellow-500' : 'bg-green-500') : 'bg-slate-200 dark:bg-slate-700'}"></div>`).join('')}
+                </div>
+                <p class="text-xs text-slate-500 mt-2">Recidivism probability: ${(prob * 100).toFixed(1)}%</p>`;
+
+            // SHAP waterfall
+            const sorted = Object.entries(features).sort((a, b) => Math.abs(b[1].shap) - Math.abs(a[1].shap));
+            Plotly.newPlot('compasShapChart', [{
+                type: 'bar', orientation: 'h',
+                y: sorted.map(([k]) => k),
+                x: sorted.map(([, v]) => v.shap),
+                marker: {
+                    color: sorted.map(([k, v]) => {
+                        if (k === 'Race Factor') return '#a855f7'; // purple for race
+                        return v.shap > 0 ? '#ef4444' : '#22c55e';
+                    })
+                },
+                hovertemplate: '%{y}: %{x:.3f}<extra></extra>'
+            }], plotLayout({ margin: { t: 10, l: 120, r: 20, b: 40 }, xaxis: { title: 'Contribution to Risk Score' } }),
+                { responsive: true, displayModeBar: false });
+
+            // Fairness comparison — same person, different race
+            const races = ['white', 'black', 'hispanic', 'other'];
+            const fairnessScores = races.map(r => {
+                const { prob: p } = compasScore(age, priors, charge, gender, r, juv);
+                return { race: r.charAt(0).toUpperCase() + r.slice(1), prob: p };
+            });
+
+            Plotly.newPlot('compasFairnessChart', [{
+                type: 'bar',
+                x: fairnessScores.map(f => f.race),
+                y: fairnessScores.map(f => f.prob * 100),
+                marker: { color: fairnessScores.map(f => f.race === race.charAt(0).toUpperCase() + race.slice(1) ? '#a855f7' : '#64748b') },
+                text: fairnessScores.map(f => `${(f.prob * 100).toFixed(1)}%`),
+                textposition: 'outside',
+                hovertemplate: '%{x}: %{y:.1f}%<extra></extra>'
+            }], plotLayout({
+                margin: { t: 20, l: 40, r: 20, b: 40 },
+                yaxis: { title: 'Risk Score %', range: [0, 100] },
+                xaxis: { title: '' }
+            }), { responsive: true, displayModeBar: false });
+
+            // Bias alert
+            const whiteScore = fairnessScores.find(f => f.race === 'White').prob;
+            const blackScore = fairnessScores.find(f => f.race === 'Black').prob;
+            const disparity = ((blackScore / Math.max(whiteScore, 0.01)) - 1) * 100;
+            const biasAlert = document.getElementById('compasBiasAlert');
+            if (disparity > 10) {
+                biasAlert.classList.remove('hidden');
+                document.getElementById('compasBiasText').innerHTML = `
+                    Holding all other factors constant, the Black defendant receives a risk score 
+                    <strong>${disparity.toFixed(0)}% higher</strong> than the White defendant. 
+                    This mirrors ProPublica's finding that COMPAS ratings for Black defendants were ${disparity > 30 ? 'dramatically' : 'significantly'} 
+                    inflated. The Race Factor contributes <strong>${(features['Race Factor'].shap).toFixed(3)}</strong> 
+                    to the log-odds — this single feature can shift the risk decile by 1-2 points.`;
+            } else {
+                biasAlert.classList.add('hidden');
+            }
+        }
+
+        // ==================== INIT ====================
+        loadSentimentModel().then(() => analyzeSentiment());
+    </script>
+</body>
+
+</html>
