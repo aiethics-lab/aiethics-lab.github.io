@@ -7,7 +7,7 @@ env.backends.onnx.wasm.numThreads = 1;
 let generator = null;
 let stoppingCriteria = new InterruptableStoppingCriteria();
 
-const MODEL_ID = "LiquidAI/LFM2.5-1.2B-Thinking-ONNX";
+const MODEL_ID = "postgrammar/LFM2.5-1.2B-Thinking-ONNX";
 const DTYPE = "q4";
 
 // Simple state tracking
