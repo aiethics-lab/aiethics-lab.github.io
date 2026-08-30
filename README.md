@@ -84,6 +84,7 @@ them is part of the lesson:
 | Small | 5,061 words | 50d | 1.0 MB | on page open |
 | Large | 20,013 words | 100d | 7.6 MB | on demand |
 | Full | 50,000 words | 300d | 57 MB | on demand, with a confirmation |
+| Max | 80,000 words | 300d | 92 MB | on demand, with a confirmation |
 
 The small model is ready immediately so nobody waits to start working. The others
 are fetched when a student asks for them, all loaded tiers stay live, and
@@ -98,14 +99,22 @@ einstein - scientist + painter
   Small  not in vocabulary
   Large  picasso, painters, painting
   Full   picasso, painters, expressionist
+  Max    picasso, painters, expressionist   <- same vectors as Full
 
 paris - france + japan
   Small  tokyo, shanghai      <- wrong country on the second neighbour
   Large  tokyo, osaka
 ```
 
-And
-Caliskan's WEAT 6 cannot run at all on the small tier: seven of its eight female
+Full and Max hold the same 300d vectors and differ only in vocabulary size, so
+they agree on any word both contain. The extra 30,000 words buy coverage, not
+quality — which is the point of having both.
+
+When a word is missing, the tool names the tier you are actually on, says how
+many words it holds, checks the larger vocabularies (fetching only their word
+lists, not their vectors) and offers to load the smallest model that has it.
+
+And Caliskan's WEAT 6 cannot run at all on the small tier: seven of its eight female
 target names fall outside a 5,000-word frequency cut while all eight male names
 survive. The tool reports the test as unavailable and names the missing words,
 rather than quietly running it on whatever is present — which is what an earlier

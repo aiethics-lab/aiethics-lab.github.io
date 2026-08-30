@@ -15,6 +15,7 @@ of a larger model is something a student can measure rather than be told:
     glove-small.bin     5,000 words x 50d    ~1 MB
     glove-large.bin    20,000 words x 100d   ~7.6 MB
     glove-xl.bin       50,000 words x 300d  ~57 MB
+    glove-max.bin      80,000 words x 300d  ~92 MB
 
 The binary layout for each is vocab_size * dim float32, little-endian and
 row-major, paired with a JSON vocabulary in row order. Loading is a fetch plus
@@ -55,6 +56,11 @@ TIERS = [
     # learned something about the cost of the models they read about. It stays
     # under GitHub's 100 MB per-file limit.
     {"dim": 300, "vocab": 50000, "suffix": "xl", "extended": True},
+    # Same 300 dimensions as the Full tier, but 80,000 words instead of 50,000.
+    # Only the vocabulary grows, which isolates coverage from capacity: this is
+    # the tier that finally contains names like "einstein". 91.6 MiB keeps it
+    # under GitHub's 100 MB per-file limit with room to spare.
+    {"dim": 300, "vocab": 80000, "suffix": "max", "extended": True},
 ]
 
 # Pinned into EVERY tier: without these the basic demos cannot run at all.

@@ -20,6 +20,13 @@
       "count": 50000,
       "mb": 57.22,
       "extendedVocabulary": true
+    },
+    {
+      "tier": "max",
+      "dim": 300,
+      "count": 80000,
+      "mb": 91.55,
+      "extendedVocabulary": true
     }
   ]
 }

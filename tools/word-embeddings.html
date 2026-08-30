@@ -483,7 +483,11 @@
             large: { label: 'Large', file: 'large', dim: 100, words: '20k', bytes: 7.6 },
             // 300d is the GloVe size people actually deploy. It is a big
             // download on purpose: waiting for it is the point.
-            xl: { label: 'Full', file: 'xl', dim: 300, words: '50k', bytes: 57, confirm: true }
+            xl: { label: 'Full', file: 'xl', dim: 300, words: '50k', bytes: 57, confirm: true },
+            // Same 300 dimensions as Full, four times the vocabulary of Large.
+            // Only coverage changes here, which separates "the model cannot
+            // represent this well" from "the model has never seen this word".
+            max: { label: 'Max', file: 'max', dim: 300, words: '80k', bytes: 92, confirm: true }
         };
 
         // A loaded tier is { dim, vocab, index, matrix, debiased }.
@@ -606,6 +610,55 @@
             }
         }
 
+        // When a word is missing, say which model does have it. Only the
+        // vocabulary JSON is fetched here, never the vectors, so the check
+        // costs well under a megabyte even for the largest tier.
+        const vocabOnlyCache = {};
+        async function tierVocabulary(name) {
+            if (loaded[name]) return loaded[name].index;
+            if (vocabOnlyCache[name]) return vocabOnlyCache[name];
+            const meta = await fetch(`../data/glove-${TIERS[name].file}.json`).then(r => r.json());
+            vocabOnlyCache[name] = new Map(meta.words.map((w, i) => [w, i]));
+            return vocabOnlyCache[name];
+        }
+
+        async function suggestLargerTier(missing) {
+            const box = document.getElementById('oovSuggestion');
+            if (!box) return;
+            const order = Object.keys(TIERS);
+            const bigger = order.slice(order.indexOf(activeTier) + 1);
+
+            for (const name of bigger) {
+                try {
+                    const index = await tierVocabulary(name);
+                    const stillMissing = missing.filter(w => !index.has(w));
+                    if (stillMissing.length === 0) {
+                        box.innerHTML = `
+                            <p class="text-xs text-slate-300">
+                                ${missing.length > 1 ? 'All of those are' : `“${missing[0]}” is`} in the
+                                <strong>${TIERS[name].label}</strong> model (${TIERS[name].words} words, ${TIERS[name].dim}d).</p>
+                            <button type="button" data-load="${name}"
+                                class="mt-2 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition-colors">
+                                Load ${TIERS[name].label} (${TIERS[name].bytes} MB) and retry</button>`;
+                        box.querySelector('button').addEventListener('click', async (e) => {
+                            const btn = e.currentTarget;
+                            btn.disabled = true;
+                            btn.textContent = `Loading ${TIERS[name].label}…`;
+                            await fetchTier(name, (got, total) => {
+                                btn.textContent = `${(got / 1048576).toFixed(1)} / ${(total / 1048576).toFixed(0)} MB`;
+                            });
+                            useTier(name);
+                            computeArithmetic();
+                        });
+                        return;
+                    }
+                } catch (e) { /* try the next tier */ }
+            }
+            box.innerHTML = `<p class="text-xs text-slate-400">Not present in any of the bundled models either —
+                GloVe 6B is lowercase-only and has no entry for rare words, proper nouns outside the top 80,000, or
+                misspellings.</p>`;
+        }
+
         // ==================== MODEL TIER BAR ====================
         function renderTierBar() {
             const bar = document.getElementById('tierBar');
@@ -633,10 +686,12 @@
                     : ''}
                 </div>
                 <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">
-                    1 MB, 7.6 MB, 57 MB — the same algorithm at three scales. The small one answers instantly; the full
-                    one is the 300-dimension GloVe people actually deploy, and it makes you wait. Run the same query
-                    through each: what a model cannot represent is as much a design choice as what it can, and that
-                    choice is usually made on cost.</p>`;
+                    1 MB to 92 MB — the same algorithm at four scales. The small one answers instantly; the largest
+                    holds 80,000 words at 300 dimensions and makes you wait for it. Full and Max share the same
+                    dimensionality and differ only in vocabulary, which separates two different failures: a model that
+                    represents a word badly, and a model that has never seen it. Run the same query through each — what
+                    a model cannot represent is as much a design choice as what it can, and that choice is usually made
+                    on cost.</p>`;
 
             bar.querySelectorAll('.tier-btn').forEach(b => {
                 b.addEventListener('click', () => switchTier(b.dataset.tier, b));
@@ -755,7 +810,11 @@
                     <br><br>
                     Effect sizes are not directly comparable across dimensions: WEAT is standardised within a model, so
                     a smaller <em>d</em> at 300d does not mean the larger model is less biased. Compare each model
-                    against itself, before and after debiasing.</p>`;
+                    against itself, before and after debiasing.
+                    <br><br>
+                    Full and Max hold the same 300-dimension vectors and differ only in how many words they keep, so
+                    for any word both contain they return identical answers. Identical rows are the expected result,
+                    not a fault — the extra 30,000 words buy coverage, not quality.</p>`;
             ToolkitSession?.record('embeddings.compare', { query: `${w1}-${w2}+${w3}` });
         }
 
@@ -841,9 +900,12 @@
                 list.innerHTML = `
                     <div class="py-3 px-4 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm">
                         <span class="material-icons-outlined text-base align-middle mr-1" aria-hidden="true">warning</span>
-                        Word(s) not in GloVe vocabulary: <strong>${missing.join(', ')}</strong>
-                        <p class="text-xs text-slate-400 mt-1">The vocabulary holds the 20,000 most frequent words in GloVe 6B, plus the terms the labs need. Try a more common word, or check the spelling.</p>
+                        Not in the <strong>${TIERS[activeTier].label}</strong> model: <strong>${missing.join(', ')}</strong>
+                        <p class="text-xs text-slate-400 mt-1">This model holds ${vocabSize.toLocaleString()} words —
+                            the most frequent in GloVe 6B, plus the terms the labs need. Checking the larger models…</p>
+                        <div id="oovSuggestion" class="mt-2"></div>
                     </div>`;
+                suggestLargerTier(missing);
                 return;
             }
 
