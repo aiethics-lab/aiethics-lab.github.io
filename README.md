@@ -76,9 +76,17 @@ Each dataset carries both a **decision** column and a **ground-truth** column.
 Error-rate fairness metrics need both; where ground truth is missing the auditor
 reports those metrics as unavailable rather than as passing.
 
-The word embeddings tool uses a 5,050-word subset of GloVe 6B 50d, regenerated
-with [`data/generate_glove_subset.py`](data/generate_glove_subset.py) (downloads
-~862 MB from Stanford NLP the first time).
+The word embeddings tool uses a 20,013-word subset of GloVe 6B at 100 dimensions,
+stored as a binary Float32 matrix (`glove-100d.bin`, 7.6 MB) plus a JSON
+vocabulary. Regenerate with
+[`data/generate_glove_subset.py`](data/generate_glove_subset.py), which downloads
+~862 MB from Hugging Face the first time. **The archive and the extracted text
+file are build inputs and are gitignored — delete them when you are done.**
+
+The earlier 5,000-word 50d subset was too small: seven of the eight female target
+names in Caliskan's WEAT 6 fell outside it, so the association test was running
+against a single word. The published word sets now fit, and 100d makes vector
+arithmetic work properly (`paris - france + japan` returns `tokyo`).
 
 ---
 

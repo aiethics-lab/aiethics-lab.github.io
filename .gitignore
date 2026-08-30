@@ -4,6 +4,11 @@ stitch/
 __pycache__/
 node_modules/
 
+# GloVe build inputs: 862 MB archive and the extracted text files.
+# Regenerate with data/generate_glove_subset.py; never commit these.
+data/glove.6B.zip
+data/glove.6B.*.txt
+
 # Course materials live in their own PRIVATE repo:
 # https://github.com/hamedyaghoobian/ai-data-ethics-course
 # They contain exam answer keys and must never land in this public site repo.

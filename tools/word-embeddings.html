@@ -400,7 +400,7 @@
             <!-- Modal Body -->
             <div class="relative z-20 p-6 space-y-6">
                 <p class="text-sm text-slate-400 leading-relaxed">
-                    Loading <span class="text-white font-medium">GloVe 6B</span> pre-trained word vectors (50d, ~5,000
+                    Loading <span class="text-white font-medium">GloVe 6B</span> pre-trained word vectors (100d, ~20,000
                     words).
                     <span class="text-white">All computation is client-side.</span> No data is sent to any server.
                 </p>
@@ -412,15 +412,15 @@
                     </div>
                     <div class="rounded-lg bg-[#101922] border border-slate-800 p-3">
                         <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Dimension</div>
-                        <div class="text-sm font-mono text-white">50d</div>
+                        <div class="text-sm font-mono text-white">100d</div>
                     </div>
                     <div class="rounded-lg bg-[#101922] border border-slate-800 p-3">
                         <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Vocabulary</div>
-                        <div class="text-sm font-mono text-white">~5,000</div>
+                        <div class="text-sm font-mono text-white">~20,000</div>
                     </div>
                     <div class="rounded-lg bg-[#101922] border border-slate-800 p-3">
                         <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">File Size</div>
-                        <div class="text-sm font-mono text-white">~2.1 MB</div>
+                        <div class="text-sm font-mono text-white">~7.8 MB</div>
                     </div>
                 </div>
                 <!-- Progress Bar -->
@@ -466,9 +466,18 @@
         }
 
         // ==================== REAL GloVe WORD EMBEDDINGS ====================
-        // Pre-trained GloVe 6B 50d vectors loaded from JSON (Stanford NLP)
-        const EMBEDDING_DIM = 50;
-        let embeddings = {};
+        // Pre-trained GloVe 6B 100d vectors, 20k vocabulary (Stanford NLP).
+        // Stored as a binary Float32 matrix plus a JSON vocabulary.
+        const EMBEDDING_DIM = 100;
+        const VOCAB_URL = '../data/glove-100d.json';
+        const MATRIX_URL = '../data/glove-100d.bin';
+
+        // Vectors live in one contiguous Float32Array; getEmbedding returns a
+        // subarray view rather than copying. A map of 20,000 separate typed
+        // arrays would cost far more memory and be slower to scan.
+        let matrix = null;
+        let vocab = [];
+        let vocabIndex = new Map();
         let vocabSize = 0;
         let isLoaded = false;
 
@@ -507,88 +516,77 @@
         }
 
         async function loadGloVeEmbeddings() {
-            logMessage('Fetching: <span class="text-primary">../data/glove-50d-5k.json</span>', '');
-            setProgress(10);
-
             try {
-                const response = await fetch('../data/glove-50d-5k.json');
-                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                logMessage('Fetching vocabulary…');
+                setProgress(5);
+                const vocabRes = await fetch(VOCAB_URL);
+                if (!vocabRes.ok) throw new Error(`HTTP ${vocabRes.status} on ${VOCAB_URL}`);
+                const vocabData = await vocabRes.json();
+                vocab = vocabData.words;
+                vocabSize = vocabData.count;
+                if (vocabData.dim !== EMBEDDING_DIM) {
+                    throw new Error(`Vector file is ${vocabData.dim}d but the page expects ${EMBEDDING_DIM}d`);
+                }
+                vocabIndex = new Map(vocab.map((w, i) => [w, i]));
+                logMessage(`<span class="text-green-400">✓ ${vocabSize.toLocaleString()} words</span>`, '');
+                setProgress(12);
 
-                const contentLength = response.headers.get('content-length');
-                const totalBytes = contentLength ? parseInt(contentLength) : 2200000; // ~2.1MB estimate
+                logMessage(`Fetching vectors: <span class="text-primary">${MATRIX_URL}</span>`, '');
+                const res = await fetch(MATRIX_URL);
+                if (!res.ok) throw new Error(`HTTP ${res.status} on ${MATRIX_URL}`);
 
-                logMessage(`Stream started. Total size: ${(totalBytes / 1024 / 1024).toFixed(1)} MB`);
-                setProgress(20);
+                const expectedBytes = vocabSize * EMBEDDING_DIM * 4;
+                const declared = parseInt(res.headers.get('content-length') || '0', 10);
+                const totalBytes = declared || expectedBytes;
+                logMessage(`Streaming ${(totalBytes / 1048576).toFixed(1)} MB…`);
 
-                // Stream the response for progress tracking
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let receivedBytes = 0;
-                let chunks = [];
+                const reader = res.body.getReader();
+                const buffer = new Uint8Array(expectedBytes);
+                let received = 0;
                 let lastLoggedMb = null;
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    chunks.push(value);
-                    receivedBytes += value.length;
-                    const pct = 20 + (receivedBytes / totalBytes) * 50; // 20% to 70%
-                    setProgress(Math.min(pct, 70));
-                    const mbDone = (receivedBytes / 1024 / 1024).toFixed(1);
-                    if (mbDone !== lastLoggedMb) {
-                        lastLoggedMb = mbDone;
-                        logMessage(`Received ${mbDone} MB...`, 'text-slate-500');
+                    if (received + value.length > buffer.length) {
+                        throw new Error('Vector file is larger than the vocabulary declares');
+                    }
+                    buffer.set(value, received);
+                    received += value.length;
+                    setProgress(12 + (received / totalBytes) * 78);
+                    const mb = (received / 1048576).toFixed(1);
+                    if (mb !== lastLoggedMb) {
+                        lastLoggedMb = mb;
+                        logMessage(`Received ${mb} MB…`, 'text-slate-500');
                     }
                 }
 
-                logMessage('<span class="text-green-400">Download complete.</span>', '');
-                setProgress(75);
-
-                // Combine chunks and parse JSON
-                logMessage('Parsing JSON payload...');
-                const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-                const combined = new Uint8Array(totalLength);
-                let offset = 0;
-                for (const chunk of chunks) {
-                    combined.set(chunk, offset);
-                    offset += chunk.length;
+                if (received !== expectedBytes) {
+                    throw new Error(`Expected ${expectedBytes} bytes of vectors, received ${received}`);
                 }
-                const jsonText = decoder.decode(combined);
-                setProgress(85);
 
-                logMessage('Hydrating tensor map...');
-                const rawData = JSON.parse(jsonText);
-                setProgress(90);
-
-                // Convert to Float32Arrays for performance
-                let wordCount = 0;
-                for (const [word, vec] of Object.entries(rawData)) {
-                    embeddings[word] = new Float32Array(vec);
-                    wordCount++;
-                }
-                vocabSize = wordCount;
+                // One contiguous matrix rather than 20,000 separate arrays.
+                // getEmbedding hands out subarray views into it, so lookups
+                // allocate nothing and the whole set stays cache-friendly.
+                matrix = new Float32Array(buffer.buffer, 0, vocabSize * EMBEDDING_DIM);
                 isLoaded = true;
                 setProgress(100);
 
-                logMessage(`<span class="text-green-400">✓ Loaded ${vocabSize.toLocaleString()} word vectors (${EMBEDDING_DIM}d)</span>`, '');
-                logMessage('<span class="text-green-400">✓ Model ready. All calculations use real GloVe embeddings.</span>', '');
-
-                // Update status badge
+                logMessage(`<span class="text-green-400">✓ Loaded ${vocabSize.toLocaleString()} vectors at ${EMBEDDING_DIM}d</span>`, '');
+                logMessage('<span class="text-green-400">✓ Ready. All calculations use real GloVe embeddings.</span>', '');
                 statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-400"></span><span class="text-xs font-mono text-green-400">READY</span>';
 
-                // Hide modal
                 modal.style.opacity = '0';
                 modal.style.transition = 'opacity 0.5s';
                 setTimeout(() => {
                     modal.style.display = 'none';
-                    // Run initial computation
                     computeArithmetic();
                 }, 500);
 
             } catch (err) {
                 logMessage(`<span class="text-red-400">✗ Error: ${err.message}</span>`, '');
                 statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span><span class="text-xs font-mono text-red-400">ERROR</span>';
-                logMessage('<span class="text-yellow-400">Tip: Make sure you\'re running a local server (e.g., python3 -m http.server)</span>', '');
+                logMessage('<span class="text-yellow-400">Tip: the toolkit must be served over HTTP. Run <code>python3 -m http.server</code> from the repository root.</span>', '');
             }
         }
 
@@ -601,23 +599,44 @@
             return dot / (Math.sqrt(na) * Math.sqrt(nb));
         }
 
-        function vecAdd(a, b) { return a.map((v, i) => v + b[i]); }
-        function vecSub(a, b) { return a.map((v, i) => v - b[i]); }
+        function vecAdd(a, b) { return Array.from(a, (v, i) => v + b[i]); }
+        function vecSub(a, b) { return Array.from(a, (v, i) => v - b[i]); }
 
         function getEmbedding(word) {
-            word = word.toLowerCase().trim();
-            return embeddings[word] || null;
+            if (!matrix) return null;
+            const i = vocabIndex.get(word.toLowerCase().trim());
+            if (i === undefined) return null;
+            return matrix.subarray(i * EMBEDDING_DIM, (i + 1) * EMBEDDING_DIM);
         }
 
+        // Scans the whole vocabulary. Kept as a flat loop over the shared
+        // matrix with a running top-K rather than sorting 20,000 objects.
         function findNearest(vec, exclude = [], topK = 5) {
-            const results = [];
-            Object.keys(embeddings).forEach(word => {
-                if (exclude.includes(word)) return;
-                const sim = cosineSimilarity(vec, embeddings[word]);
-                results.push({ word, similarity: sim });
-            });
-            results.sort((a, b) => b.similarity - a.similarity);
-            return results.slice(0, topK);
+            const excluded = new Set(exclude.map(w => w.toLowerCase().trim()));
+            const best = [];
+            let vecNorm = 0;
+            for (let d = 0; d < EMBEDDING_DIM; d++) vecNorm += vec[d] * vec[d];
+            vecNorm = Math.sqrt(vecNorm) || 1;
+
+            for (let i = 0; i < vocabSize; i++) {
+                if (excluded.has(vocab[i])) continue;
+                const off = i * EMBEDDING_DIM;
+                let dot = 0, norm = 0;
+                for (let d = 0; d < EMBEDDING_DIM; d++) {
+                    const v = matrix[off + d];
+                    dot += vec[d] * v;
+                    norm += v * v;
+                }
+                const sim = norm > 0 ? dot / (vecNorm * Math.sqrt(norm)) : 0;
+                if (best.length < topK) {
+                    best.push({ word: vocab[i], similarity: sim });
+                    best.sort((a, b) => b.similarity - a.similarity);
+                } else if (sim > best[topK - 1].similarity) {
+                    best[topK - 1] = { word: vocab[i], similarity: sim };
+                    best.sort((a, b) => b.similarity - a.similarity);
+                }
+            }
+            return best;
         }
 
         // ==================== VECTOR ARITHMETIC ====================
@@ -656,7 +675,7 @@
                     <div class="py-3 px-4 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm">
                         <span class="material-icons-outlined text-base align-middle mr-1" aria-hidden="true">warning</span>
                         Word(s) not in GloVe vocabulary: <strong>${missing.join(', ')}</strong>
-                        <p class="text-xs text-slate-400 mt-1">The vocabulary contains ~5,000 common English words from GloVe 6B. Try simpler/more common words.</p>
+                        <p class="text-xs text-slate-400 mt-1">The vocabulary holds the 20,000 most frequent words in GloVe 6B, plus the terms the labs need. Try a more common word, or check the spelling.</p>
                     </div>`;
                 return;
             }
@@ -835,12 +854,15 @@
         }
 
         // ==================== BIAS DETECTION ====================
-        let debiasedEmbeddings = null; // store debiased embeddings
+        let debiasedMatrix = null;     // full debiased copy of the vector space
         let useDebiased = false;
 
         function getActiveEmbedding(word) {
-            if (useDebiased && debiasedEmbeddings && debiasedEmbeddings[word]) return debiasedEmbeddings[word];
-            return getEmbedding(word);
+            const src = (useDebiased && debiasedMatrix) ? debiasedMatrix : matrix;
+            if (!src) return null;
+            const i = vocabIndex.get(String(word).toLowerCase().trim());
+            if (i === undefined) return null;
+            return src.subarray(i * EMBEDDING_DIM, (i + 1) * EMBEDDING_DIM);
         }
 
         function computeBiasScore(profession, genderPair) {
@@ -879,20 +901,20 @@
 
         // WEAT: Word Embedding Association Test (Caliskan, Bryson & Narayanan,
         // Science 2017). Targets X/Y, attributes A/B.
-        // Caliskan's WEAT 6 (male/female names x career/family). The target sets
-        // are balanced at 7 names each and every word here is present in the
-        // 5,050-word GloVe subset this tool ships - the published sets use names
-        // like "amy" and "donna" that fall outside a frequency-ranked 5k
-        // vocabulary. Regenerating the subset with the fuller REQUIRED_WORDS list
-        // in data/generate_glove_subset.py restores the originals.
-        // Names, not pronouns, are used deliberately: pronouns are
+        // Caliskan et al. (2017), WEAT 6: male/female names x career/family.
+        // These are the published word sets, unmodified. The 20,000-word
+        // vocabulary covers all of them; an earlier 5,000-word subset dropped
+        // seven of the eight female names, which left the test running against
+        // a single word without saying so.
+        //
+        // Names rather than pronouns, deliberately: pronouns are
         // gender-definitional, and measuring debiasing along an axis that the
         // debiasing step itself modifies would be circular.
         const WEAT_SETS = {
-            targetX: ['john', 'paul', 'mike', 'kevin', 'steve', 'greg', 'jeff'],
-            targetY: ['mary', 'sarah', 'elizabeth', 'maria', 'susan', 'barbara', 'sharon'],
+            targetX: ['john', 'paul', 'mike', 'kevin', 'steve', 'greg', 'jeff', 'bill'],
+            targetY: ['amy', 'joan', 'lisa', 'sarah', 'diana', 'kate', 'ann', 'donna'],
             attrA: ['executive', 'management', 'professional', 'corporation', 'salary', 'office', 'business', 'career'],
-            attrB: ['home', 'parents', 'children', 'family', 'marriage', 'wedding', 'relatives']
+            attrB: ['home', 'parents', 'children', 'family', 'cousins', 'marriage', 'wedding', 'relatives']
         };
 
         function weatVocabReport() {
@@ -1013,33 +1035,40 @@
             const genderDir = computeGenderDirection();
             if (!genderDir) return null;
 
-            debiasedEmbeddings = {};
+            // Neutralise the ENTIRE vocabulary, not a hand-listed subset. The
+            // previous version debiased about seventy words and silently fell
+            // back to original vectors for everything else, so any measurement
+            // touching another word mixed debiased and un-debiased space.
+            debiasedMatrix = new Float32Array(matrix.length);
+            for (let i = 0; i < vocabSize; i++) {
+                const off = i * EMBEDDING_DIM;
+                if (DEFINITIONAL_WORDS.has(vocab[i])) {
+                    // Gender-definitional words are handled by equalise below;
+                    // neutralising them would collapse the axis the bias metric
+                    // is measured along.
+                    for (let d = 0; d < EMBEDDING_DIM; d++) debiasedMatrix[off + d] = matrix[off + d];
+                    continue;
+                }
+                let dot = 0;
+                for (let d = 0; d < EMBEDDING_DIM; d++) dot += matrix[off + d] * genderDir[d];
+                let norm = 0;
+                for (let d = 0; d < EMBEDDING_DIM; d++) {
+                    const v = matrix[off + d] - dot * genderDir[d];
+                    debiasedMatrix[off + d] = v;
+                    norm += v * v;
+                }
+                norm = Math.sqrt(norm) || 1;
+                for (let d = 0; d < EMBEDDING_DIM; d++) debiasedMatrix[off + d] /= norm;
+            }
 
-            // Step 1 — Neutralize: project the gender component out of every
-            // word that is NOT gender-definitional.
-            const neutralTargets = new Set([
-                ...SEMANTIC_GROUPS.professions,
-                ...WEAT_SETS.targetX, ...WEAT_SETS.targetY,
-                ...WEAT_SETS.attrA, ...WEAT_SETS.attrB
-            ]);
-            neutralTargets.forEach(w => {
-                if (DEFINITIONAL_WORDS.has(w)) return;
-                const emb = getEmbedding(w);
-                if (!emb) return;
-                const v = projectOut(Array.from(emb), genderDir);
-                const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0)) || 1;
-                debiasedEmbeddings[w] = new Float32Array(v.map(x => x / norm));
-            });
-
-            // Step 2 — Equalize: make the two members of each definitional pair
-            // exactly equidistant from every neutralised word, while keeping them
-            // distinct from each other.
+            // Equalise: place each definitional pair symmetrically about the
+            // neutral hyperplane so they stay distinct from each other while
+            // being equidistant from every neutralised word.
             //
-            // Bolukbasi's formulation assumes unit-length embeddings; GloVe
-            // vectors have norms around 3-8, so the vectors are normalised first.
-            // Without that, ‖μ⊥‖² exceeds 1, the √(1 − ‖μ⊥‖²) term clamps to
-            // zero, and both members collapse onto the same point — "he" and
-            // "she" would come out identical.
+            // Bolukbasi's formulation assumes unit-length embeddings. GloVe
+            // vectors are not, so they are normalised first; otherwise
+            // ||mu_perp||^2 exceeds 1, the sqrt(1 - ||mu_perp||^2) term clamps
+            // to zero, and both members collapse onto the same point.
             const unit = v => {
                 const arr = Array.from(v);
                 const n = Math.sqrt(arr.reduce((s, x) => s + x * x, 0)) || 1;
@@ -1054,12 +1083,15 @@
                 const perpNormSq = muPerp.reduce((s, v) => s + v * v, 0);
                 const scale = Math.sqrt(Math.max(0, 1 - perpNormSq));
                 [[m, mv], [f, fv]].forEach(([word, vec]) => {
-                    const along = vec.reduce((s, v, i) => s + v * genderDir[i], 0)
-                        - mu.reduce((s, v, i) => s + v * genderDir[i], 0);
+                    const i = vocabIndex.get(word);
+                    if (i === undefined) return;
+                    const along = vec.reduce((s, v, k) => s + v * genderDir[k], 0)
+                        - mu.reduce((s, v, k) => s + v * genderDir[k], 0);
                     const sign = along >= 0 ? 1 : -1;
-                    debiasedEmbeddings[word] = new Float32Array(
-                        muPerp.map((v, i) => v + sign * scale * genderDir[i])
-                    );
+                    const off = i * EMBEDDING_DIM;
+                    for (let d = 0; d < EMBEDDING_DIM; d++) {
+                        debiasedMatrix[off + d] = muPerp[d] + sign * scale * genderDir[d];
+                    }
                 });
             });
 
@@ -1067,62 +1099,70 @@
         }
 
         // Gonen & Goldberg (NAACL 2019), "Lipstick on a Pig": projection-based
-        // debiasing removes the direct association but leaves the geometry
-        // intact, so the original male- and female-biased words remain
-        // clusterable. This measures exactly that.
-        function clusteringLeakage(useDebiasedVectors) {
-            const pair = ['he', 'she'];
-            // Take the most strongly biased professions as measured on the
-            // ORIGINAL embeddings — the labels are fixed before debiasing.
-            const wasDebiased = useDebiased;
-            useDebiased = false;
-            const scored = SEMANTIC_GROUPS.professions
-                .filter(p => getEmbedding(p))
-                .map(p => ({ word: p, score: computeBiasScore(p, pair) }))
-                .sort((a, b) => b.score - a.score);
-            useDebiased = wasDebiased;
-
-            const topN = Math.min(10, Math.floor(scored.length / 2));
-            const labelled = [
-                ...scored.slice(0, topN).map(s => ({ word: s.word, label: 'M' })),
-                ...scored.slice(-topN).map(s => ({ word: s.word, label: 'F' }))
+        // debiasing removes the direct association a metric like WEAT looks at,
+        // but leaves the geometry intact, so the originally-biased words remain
+        // clusterable afterwards.
+        //
+        // Following the paper, the test words are the most biased words in the
+        // WHOLE vocabulary rather than a curated profession list. A 20,000-word
+        // vocabulary makes that possible; the previous 5,000-word subset only
+        // supported ten words a side, which was too few for a stable number.
+        function mostBiasedWords(perSide = 100) {
+            const he = getEmbedding('he'), she = getEmbedding('she');
+            if (!he || !she) return null;
+            const scored = [];
+            for (let i = 0; i < vocabSize; i++) {
+                const v = matrix.subarray(i * EMBEDDING_DIM, (i + 1) * EMBEDDING_DIM);
+                scored.push({ word: vocab[i], score: cosineSimilarity(v, he) - cosineSimilarity(v, she) });
+            }
+            scored.sort((a, b) => b.score - a.score);
+            return [
+                ...scored.slice(0, perSide).map(x => ({ word: x.word, label: 'M' })),
+                ...scored.slice(-perSide).map(x => ({ word: x.word, label: 'F' }))
             ];
+        }
 
-            const vecOf = w => {
-                const v = (useDebiasedVectors && debiasedEmbeddings && debiasedEmbeddings[w])
-                    ? debiasedEmbeddings[w] : getEmbedding(w);
-                return v ? Array.from(v) : null;
-            };
-            const points = labelled.map(l => ({ ...l, vec: vecOf(l.word) })).filter(p => p.vec);
-            if (points.length < 4) return null;
+        function clusteringLeakage(useDebiasedVectors) {
+            // Labels are fixed on the ORIGINAL space before debiasing, then the
+            // clustering runs on whichever space is being tested.
+            const labelled = mostBiasedWords(100);
+            if (!labelled) return null;
 
-            // 2-means with a deterministic, spread-out initialisation.
+            const src = useDebiasedVectors && debiasedMatrix ? debiasedMatrix : matrix;
+            const points = labelled.map(l => {
+                const i = vocabIndex.get(l.word);
+                return i === undefined ? null
+                    : { label: l.label, vec: src.subarray(i * EMBEDDING_DIM, (i + 1) * EMBEDDING_DIM) };
+            }).filter(Boolean);
+            if (points.length < 8) return null;
+
+            // 2-means on cosine distance, seeded from the two extremes so the
+            // result is reproducible.
             const rand = makeRng(0xC0FFEE);
-            const dim = points[0].vec.length;
-            let centroids = [points[0].vec.slice(), points[points.length - 1].vec.slice()];
-            let assign = new Array(points.length).fill(0);
-            for (let iter = 0; iter < 40; iter++) {
+            let centroids = [Array.from(points[0].vec), Array.from(points[points.length - 1].vec)];
+            const assign = new Array(points.length).fill(0);
+            for (let iter = 0; iter < 50; iter++) {
                 let changed = false;
-                points.forEach((p, i) => {
-                    const d0 = 1 - cosineSimilarity(p.vec, centroids[0]);
-                    const d1 = 1 - cosineSimilarity(p.vec, centroids[1]);
-                    const a = d0 <= d1 ? 0 : 1;
+                points.forEach((pt, i) => {
+                    const a = (1 - cosineSimilarity(pt.vec, centroids[0])) <= (1 - cosineSimilarity(pt.vec, centroids[1])) ? 0 : 1;
                     if (a !== assign[i]) { assign[i] = a; changed = true; }
                 });
                 for (let c = 0; c < 2; c++) {
                     const members = points.filter((_, i) => assign[i] === c);
-                    if (!members.length) { centroids[c] = points[Math.floor(rand() * points.length)].vec.slice(); continue; }
-                    centroids[c] = new Array(dim).fill(0).map((_, d) =>
-                        members.reduce((s, m) => s + m.vec[d], 0) / members.length);
+                    if (!members.length) {
+                        centroids[c] = Array.from(points[Math.floor(rand() * points.length)].vec);
+                        continue;
+                    }
+                    centroids[c] = new Array(EMBEDDING_DIM).fill(0).map((_, d) =>
+                        members.reduce((sum, m) => sum + m.vec[d], 0) / members.length);
                 }
                 if (!changed) break;
             }
 
-            // Cluster purity against the original bias labels, taking the better
-            // of the two possible cluster-to-label matchings.
-            const agree = points.filter((p, i) => (assign[i] === 0) === (p.label === 'M')).length;
-            const accuracy = Math.max(agree, points.length - agree) / points.length;
-            return { accuracy, n: points.length };
+            // Purity against the original bias labels, taking the better of the
+            // two possible cluster-to-label matchings. 0.5 is chance.
+            const agree = points.filter((pt, i) => (assign[i] === 0) === (pt.label === 'M')).length;
+            return { accuracy: Math.max(agree, points.length - agree) / points.length, n: points.length };
         }
 
         function runDebiasing() {
@@ -1177,16 +1217,17 @@
                 ${afterCluster && afterCluster.accuracy >= 0.65 ? `
                 <div class="mt-2 p-2 rounded bg-amber-500/10 border border-amber-500/30">
                     <p class="text-xs text-amber-300 leading-relaxed"><strong>But the bias is still there.</strong>
-                    Clustering the same ${afterCluster.n} professions on the debiased vectors still recovers their
-                    original gender grouping ${(afterCluster.accuracy * 100).toFixed(0)}% of the time. Projection removes
+                    Take the ${afterCluster.n} most gender-biased words in the vocabulary, labelled on the original
+                    vectors, and cluster them on the debiased ones: their original grouping is still recovered
+                    ${(afterCluster.accuracy * 100).toFixed(0)}% of the time (50% would be chance). Projection removes
                     the direct association the metric looks at; it does not remove the geometry that encodes it.
                     This is the central finding of Gonen &amp; Goldberg (2019), “Lipstick on a Pig”.</p>
                 </div>` : `
                 <div class="mt-2 p-2 rounded bg-green-500/10 border border-green-500/20">
-                    <p class="text-xs text-green-400 leading-relaxed">Cluster purity also dropped to
-                    ${afterCluster ? (afterCluster.accuracy * 100).toFixed(0) : '—'}%, so the residual grouping is weak
-                    on this vocabulary subset. On full-size embeddings it typically stays high — see Gonen &amp;
-                    Goldberg (2019).</p>
+                    <p class="text-xs text-green-400 leading-relaxed">Cluster purity dropped to
+                    ${afterCluster ? (afterCluster.accuracy * 100).toFixed(0) : '—'}%, close to the 50% chance level, so the
+                    residual grouping is weak here. That is a stronger result than the literature usually reports —
+                    worth checking against Gonen &amp; Goldberg (2019) before trusting it.</p>
                 </div>`}
                 ${Object.keys(missing).length ? `
                 <p class="text-[10px] text-amber-400 mt-2 leading-snug">Out of vocabulary and excluded:
