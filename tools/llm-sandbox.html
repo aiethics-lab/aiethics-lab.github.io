@@ -190,10 +190,12 @@
                         </div>
 
                         <div class="mt-2">
-                            <label for="sysPromptPreset" class="sr-only">Load an example system prompt</label>
+                            <label for="sysPromptPreset"
+                                class="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Example
+                                prompt</label>
                             <select id="sysPromptPreset"
                                 class="w-full text-xs bg-slate-50 dark:bg-surface-dark-lighter border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-400 p-2">
-                                <option value="">Load an example…</option>
+                                <option value="custom">Custom prompt</option>
                                 <option value="none">No system prompt (baseline)</option>
                                 <option value="helpful">Plain helpful assistant</option>
                                 <option value="guardrail">Safety guardrail</option>
@@ -958,31 +960,37 @@
 
         applyBtn.addEventListener('click', () => applySystemPrompt());
         clearSysBtn.addEventListener('click', () => { systemPromptEl.value = ''; applySystemPrompt(); });
-        systemPromptEl.addEventListener('input', refreshSysState);
+        systemPromptEl.addEventListener('input', () => { refreshSysState(); syncPresetSelection(); });
         // Each preset knows the string it is supposed to protect, so the leak
         // check is armed without the student having to set it up by hand.
         const PRESET_CANARIES = { secret: 'CORVID-77' };
 
+        // Keep the dropdown showing what is actually in the textarea. It used to
+        // reset itself to the placeholder the moment you picked something, so
+        // there was no way to tell which example was loaded.
+        function syncPresetSelection() {
+            const current = systemPromptEl.value.trim();
+            const match = Object.keys(PRESETS).find(k => (PRESETS[k] || '').trim() === current);
+            presetSel.value = match || 'custom';
+        }
+
         presetSel.addEventListener('change', () => {
-            if (presetSel.value === '') return;
             const key = presetSel.value;
+            if (key === 'custom') return;      // nothing to load; keep what is typed
             systemPromptEl.value = PRESETS[key] ?? '';
             if (PRESET_CANARIES[key]) {
                 canaryInput.value = PRESET_CANARIES[key];
                 canaryInput.dispatchEvent(new Event('change'));
             }
-            presetSel.value = '';
             refreshSysState();
         });
-
-        updateTokenPanel();
-        thinkBudgetEl.dispatchEvent(new Event('input'));
 
         (function restoreSystemPrompt() {
             let saved = '';
             try { saved = localStorage.getItem(SYS_KEY) || ''; } catch (e) { }
             systemPromptEl.value = saved;
             activeSystemPrompt = saved;
+            syncPresetSelection();
             refreshSysState();
         })();
 
