@@ -1,6 +1,6 @@
 {
-  "name": "ai-ethics-toolkit",
-  "version": "3.0.0",
+  "name": "ai-data-ethics-toolkit",
+  "version": "3.1.0",
   "description": "Browser-based labs for an undergraduate AI and data ethics course.",
   "private": true,
   "license": "MIT",

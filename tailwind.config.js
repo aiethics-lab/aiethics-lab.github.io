@@ -1,4 +1,4 @@
-/** Tailwind build for the AI Ethics Toolkit.
+/** Tailwind build for the AI & Data Ethics Toolkit.
  *
  *  Replaces the Play CDN (cdn.tailwindcss.com), which Tailwind documents as
  *  not for production: it shipped a ~400 KB compiler to every visitor and

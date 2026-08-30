@@ -1,4 +1,4 @@
-# AI Ethics Toolkit
+# AI & Data Ethics Toolkit
 
 Nine browser-based labs for an undergraduate AI and data ethics course. Everything
 runs client-side: no server, no accounts, no data leaves the machine.
