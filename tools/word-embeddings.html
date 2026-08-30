@@ -115,6 +115,11 @@
         </header>
 
         <!-- Tab Navigation -->
+        <div id="tierBar"
+            class="mb-4 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60"></div>
+        <div id="tierCompare"
+            class="hidden mb-6 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60"></div>
+
         <div class="flex border-b border-slate-200 dark:border-slate-700 mb-6">
             <button id="tab-arithmetic" onclick="switchTab('arithmetic')"
                 class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-primary text-primary transition-colors">
@@ -388,7 +393,7 @@
                     <div>
                         <h2 class="text-xl font-bold text-white tracking-tight">Loading GloVe Embeddings</h2>
                         <p class="text-xs text-primary/80 font-medium uppercase tracking-wider">Real Pre-trained Vectors
-                            • 50 Dimensions</p>
+                            • Two model sizes</p>
                     </div>
                 </div>
                 <div id="statusBadge"
@@ -468,18 +473,75 @@
         // ==================== REAL GloVe WORD EMBEDDINGS ====================
         // Pre-trained GloVe 6B 100d vectors, 20k vocabulary (Stanford NLP).
         // Stored as a binary Float32 matrix plus a JSON vocabulary.
-        const EMBEDDING_DIM = 100;
-        const VOCAB_URL = '../data/glove-100d.json';
-        const MATRIX_URL = '../data/glove-100d.bin';
+        // Two model tiers. The small one loads in well under a second so the
+        // workbench is usable immediately; the large one is fetched on demand.
+        // Keeping both live turns model size into something a student can
+        // measure - same query, two models, visible difference - rather than a
+        // property they are told about.
+        const TIERS = {
+            small: { label: 'Small', file: 'small', dim: 50, words: '5k', bytes: 1.0 },
+            large: { label: 'Large', file: 'large', dim: 100, words: '20k', bytes: 7.6 }
+        };
 
-        // Vectors live in one contiguous Float32Array; getEmbedding returns a
-        // subarray view rather than copying. A map of 20,000 separate typed
-        // arrays would cost far more memory and be slower to scan.
-        let matrix = null;
-        let vocab = [];
-        let vocabIndex = new Map();
-        let vocabSize = 0;
+        // A loaded tier is { dim, vocab, index, matrix, debiased }.
+        const loaded = {};
+        let activeTier = 'small';
         let isLoaded = false;
+
+        // Convenience accessors for the active tier, kept as bare names because
+        // the rest of the page reads them directly.
+        let matrix = null, vocab = [], vocabIndex = new Map(), vocabSize = 0;
+        let EMBEDDING_DIM = 50;
+
+        function useTier(name) {
+            const t = loaded[name];
+            if (!t) return false;
+            activeTier = name;
+            matrix = t.matrix;
+            vocab = t.vocab;
+            vocabIndex = t.index;
+            vocabSize = t.vocab.length;
+            EMBEDDING_DIM = t.dim;
+            debiasedMatrix = t.debiased || null;
+            useDebiased = false;
+            isLoaded = true;
+            renderTierBar();
+            return true;
+        }
+
+        async function fetchTier(name, onProgress) {
+            if (loaded[name]) return loaded[name];
+            const spec = TIERS[name];
+            const meta = await fetch(`../data/glove-${spec.file}.json`).then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status} on glove-${spec.file}.json`);
+                return r.json();
+            });
+            const expected = meta.count * meta.dim * 4;
+
+            const res = await fetch(`../data/glove-${spec.file}.bin`);
+            if (!res.ok) throw new Error(`HTTP ${res.status} on glove-${spec.file}.bin`);
+            const reader = res.body.getReader();
+            const buf = new Uint8Array(expected);
+            let received = 0;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                if (received + value.length > buf.length) throw new Error('vector file longer than declared');
+                buf.set(value, received);
+                received += value.length;
+                if (onProgress) onProgress(received, expected);
+            }
+            if (received !== expected) throw new Error(`expected ${expected} bytes, got ${received}`);
+
+            loaded[name] = {
+                dim: meta.dim,
+                vocab: meta.words,
+                index: new Map(meta.words.map((w, i) => [w, i])),
+                matrix: new Float32Array(buf.buffer, 0, meta.count * meta.dim),
+                debiased: null
+            };
+            return loaded[name];
+        }
 
         // Word groups for demos (now using real GloVe vectors)
         const SEMANTIC_GROUPS = {
@@ -517,63 +579,14 @@
 
         async function loadGloVeEmbeddings() {
             try {
-                logMessage('Fetching vocabulary…');
-                setProgress(5);
-                const vocabRes = await fetch(VOCAB_URL);
-                if (!vocabRes.ok) throw new Error(`HTTP ${vocabRes.status} on ${VOCAB_URL}`);
-                const vocabData = await vocabRes.json();
-                vocab = vocabData.words;
-                vocabSize = vocabData.count;
-                if (vocabData.dim !== EMBEDDING_DIM) {
-                    throw new Error(`Vector file is ${vocabData.dim}d but the page expects ${EMBEDDING_DIM}d`);
-                }
-                vocabIndex = new Map(vocab.map((w, i) => [w, i]));
-                logMessage(`<span class="text-green-400">✓ ${vocabSize.toLocaleString()} words</span>`, '');
-                setProgress(12);
-
-                logMessage(`Fetching vectors: <span class="text-primary">${MATRIX_URL}</span>`, '');
-                const res = await fetch(MATRIX_URL);
-                if (!res.ok) throw new Error(`HTTP ${res.status} on ${MATRIX_URL}`);
-
-                const expectedBytes = vocabSize * EMBEDDING_DIM * 4;
-                const declared = parseInt(res.headers.get('content-length') || '0', 10);
-                const totalBytes = declared || expectedBytes;
-                logMessage(`Streaming ${(totalBytes / 1048576).toFixed(1)} MB…`);
-
-                const reader = res.body.getReader();
-                const buffer = new Uint8Array(expectedBytes);
-                let received = 0;
-                let lastLoggedMb = null;
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    if (received + value.length > buffer.length) {
-                        throw new Error('Vector file is larger than the vocabulary declares');
-                    }
-                    buffer.set(value, received);
-                    received += value.length;
-                    setProgress(12 + (received / totalBytes) * 78);
-                    const mb = (received / 1048576).toFixed(1);
-                    if (mb !== lastLoggedMb) {
-                        lastLoggedMb = mb;
-                        logMessage(`Received ${mb} MB…`, 'text-slate-500');
-                    }
-                }
-
-                if (received !== expectedBytes) {
-                    throw new Error(`Expected ${expectedBytes} bytes of vectors, received ${received}`);
-                }
-
-                // One contiguous matrix rather than 20,000 separate arrays.
-                // getEmbedding hands out subarray views into it, so lookups
-                // allocate nothing and the whole set stays cache-friendly.
-                matrix = new Float32Array(buffer.buffer, 0, vocabSize * EMBEDDING_DIM);
-                isLoaded = true;
+                logMessage('Fetching the small model (5k words, 50d)…');
+                setProgress(10);
+                await fetchTier('small', (got, total) => setProgress(10 + (got / total) * 85));
+                useTier('small');
                 setProgress(100);
 
-                logMessage(`<span class="text-green-400">✓ Loaded ${vocabSize.toLocaleString()} vectors at ${EMBEDDING_DIM}d</span>`, '');
-                logMessage('<span class="text-green-400">✓ Ready. All calculations use real GloVe embeddings.</span>', '');
+                logMessage(`<span class="text-green-400">✓ ${vocabSize.toLocaleString()} vectors at ${EMBEDDING_DIM}d — ready</span>`, '');
+                logMessage('<span class="text-slate-400">The larger model can be loaded from the toolbar once you are in.</span>', '');
                 statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-400"></span><span class="text-xs font-mono text-green-400">READY</span>';
 
                 modal.style.opacity = '0';
@@ -581,7 +594,7 @@
                 setTimeout(() => {
                     modal.style.display = 'none';
                     computeArithmetic();
-                }, 500);
+                }, 400);
 
             } catch (err) {
                 logMessage(`<span class="text-red-400">✗ Error: ${err.message}</span>`, '');
@@ -590,7 +603,147 @@
             }
         }
 
-        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+        // ==================== MODEL TIER BAR ====================
+        function renderTierBar() {
+            const bar = document.getElementById('tierBar');
+            if (!bar) return;
+            const chip = (name) => {
+                const t = TIERS[name];
+                const isLoadedTier = !!loaded[name];
+                const isActive = activeTier === name;
+                if (isActive) {
+                    return `<span class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold">
+                        ${t.label} · ${t.words} words · ${t.dim}d</span>`;
+                }
+                return `<button type="button" data-tier="${name}"
+                    class="tier-btn px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-xs font-medium hover:border-primary hover:text-primary transition-colors">
+                    ${isLoadedTier ? 'Switch to' : 'Load'} ${t.label} · ${t.words} · ${t.dim}d${isLoadedTier ? '' : ` (${t.bytes} MB)`}</button>`;
+            };
+            bar.innerHTML = `
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs text-slate-500 dark:text-slate-400 mr-1">Model:</span>
+                    ${Object.keys(TIERS).map(chip).join('')}
+                    ${loaded.small && loaded.large
+                    ? `<button type="button" id="compareTiersBtn"
+                            class="ml-auto px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors">
+                            Compare both models</button>`
+                    : ''}
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">
+                    The small model is 1 MB and answers instantly. The large one is 7.6 MB and holds four times the
+                    vocabulary at twice the dimensions. Run the same query through both: what a model cannot represent
+                    is as much a design choice as what it can.</p>`;
+
+            bar.querySelectorAll('.tier-btn').forEach(b => {
+                b.addEventListener('click', () => switchTier(b.dataset.tier, b));
+            });
+            document.getElementById('compareTiersBtn')?.addEventListener('click', compareTiers);
+        }
+
+        async function switchTier(name, btn) {
+            if (loaded[name]) {
+                useTier(name);
+                refreshActiveViews();
+                ToolkitSession?.record('embeddings.tier', { tier: name, cached: true });
+                return;
+            }
+            const original = btn.textContent;
+            btn.disabled = true;
+            try {
+                await fetchTier(name, (got, total) => {
+                    btn.textContent = `Loading ${TIERS[name].label}… ${(got / 1048576).toFixed(1)} MB`;
+                });
+                useTier(name);
+                refreshActiveViews();
+                ToolkitSession?.record('embeddings.tier', { tier: name, cached: false });
+            } catch (e) {
+                btn.textContent = 'Failed — retry';
+                btn.disabled = false;
+                setTimeout(() => { btn.textContent = original; renderTierBar(); }, 2500);
+            }
+        }
+
+        function refreshActiveViews() {
+            const panel = document.querySelector('.tab-panel:not(.hidden)');
+            if (!panel) return;
+            if (panel.id === 'panel-arithmetic') computeArithmetic();
+            else if (panel.id === 'panel-explore') update3DPlot();
+            else if (panel.id === 'panel-bias') renderBiasChart();
+        }
+
+        // Same query, both models, side by side. This is the point of shipping
+        // two tiers: capacity stops being an abstract claim.
+        async function compareTiers() {
+            const out = document.getElementById('tierCompare');
+            if (!out) return;
+            out.classList.remove('hidden');
+            out.innerHTML = '<p class="text-xs text-slate-400">Running both models…</p>';
+
+            const w1 = document.getElementById('word1').value.toLowerCase().trim();
+            const w2 = document.getElementById('word2').value.toLowerCase().trim();
+            const w3 = document.getElementById('word3').value.toLowerCase().trim();
+            const previous = activeTier;
+            const rows = [];
+
+            for (const name of ['small', 'large']) {
+                useTier(name);
+                const missing = [w1, w2, w3].filter(w => !getEmbedding(w));
+                let nearest = null, weat = null;
+                if (!missing.length) {
+                    const r = vecAdd(vecSub(Array.from(getEmbedding(w1)), Array.from(getEmbedding(w2))),
+                        Array.from(getEmbedding(w3)));
+                    nearest = findNearest(r, [w1, w2, w3], 3);
+                }
+                const gaps = weatVocabReport();
+                if (!Object.keys(gaps).length) weat = computeWEAT();
+                rows.push({ name, missing, nearest, weat, gaps, size: TIERS[name].bytes,
+                            words: loaded[name].vocab.length, dim: loaded[name].dim });
+            }
+            useTier(previous);
+            refreshActiveViews();
+
+            const cell = r => {
+                if (r.missing.length) {
+                    return `<span class="text-amber-500">not in vocabulary: ${r.missing.join(', ')}</span>`;
+                }
+                return r.nearest.map((n, i) =>
+                    `<span class="${i === 0 ? 'font-bold text-primary' : 'text-slate-500'}">${n.word}</span> <span class="text-slate-400 tabular-nums">${n.similarity.toFixed(3)}</span>`
+                ).join(' · ');
+            };
+            const weatCell = r => r.weat
+                ? `d = <strong class="tabular-nums">${r.weat.effectSize.toFixed(3)}</strong>, p = ${r.weat.pValue < 0.001 ? '< 0.001' : r.weat.pValue.toFixed(3)}`
+                : `<span class="text-amber-500">incomplete: ${Object.values(r.gaps).flat().length} word(s) missing</span>`;
+
+            out.innerHTML = `
+                <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                    <caption class="sr-only">The same query run through both model tiers</caption>
+                    <thead class="text-slate-400">
+                        <tr class="border-b border-slate-200 dark:border-slate-700">
+                            <th class="text-left py-2 pr-3 font-semibold">Model</th>
+                            <th class="text-left py-2 pr-3 font-semibold">Size</th>
+                            <th class="text-left py-2 pr-3 font-semibold">${w1} − ${w2} + ${w3}</th>
+                            <th class="text-left py-2 font-semibold">WEAT 6 (career/family)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-slate-600 dark:text-slate-300">
+                        ${rows.map(r => `<tr class="border-b border-slate-100 dark:border-slate-800">
+                            <td class="py-2 pr-3 font-medium">${TIERS[r.name].label}<br>
+                                <span class="text-[10px] text-slate-400">${r.words.toLocaleString()} words · ${r.dim}d</span></td>
+                            <td class="py-2 pr-3 tabular-nums">${r.size} MB</td>
+                            <td class="py-2 pr-3">${cell(r)}</td>
+                            <td class="py-2">${weatCell(r)}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
+                    Where the small model returns a worse neighbour, or cannot answer at all, that is capacity showing.
+                    Where its WEAT row reads <em>incomplete</em>, the test could not run because words the published
+                    method requires are missing from the vocabulary — a measurement that silently reports on fewer
+                    words than it claims is worse than one that refuses.</p>`;
+            ToolkitSession?.record('embeddings.compare', { query: `${w1}-${w2}+${w3}` });
+        }
 
         // ==================== VECTOR MATH ====================
         function cosineSimilarity(a, b) {
@@ -1169,6 +1322,35 @@
             if (!isLoaded) return;
 
             const missing = weatVocabReport();
+
+            // Refuse rather than quietly measure a smaller set than the method
+            // specifies. On the small model most of the female target names are
+            // absent, and that asymmetry is itself worth showing: a
+            // frequency-ranked vocabulary drops the rarer names first, and in
+            // this corpus the rarer names are disproportionately women's.
+            if (Object.keys(missing).length) {
+                const gaps = Object.entries(missing)
+                    .map(([set, words]) => `<li class="mt-1"><code>${set}</code>: ${words.join(', ')}</li>`).join('');
+                const totalMissing = Object.values(missing).flat().length;
+                document.getElementById('weatResults').innerHTML = `
+                    <div class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                        <p class="text-xs font-bold text-amber-500 mb-1">WEAT cannot run on the ${TIERS[activeTier].label} model</p>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                            ${totalMissing} of the words Caliskan's published sets require are outside this
+                            vocabulary:</p>
+                        <ul class="text-[11px] text-slate-500 dark:text-slate-400 list-disc pl-4 mt-1">${gaps}</ul>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mt-2">
+                            The test is reported as unavailable rather than run on whatever words happen to be present.
+                            Note <em>which</em> words went missing: this is a frequency-ranked vocabulary, so the rarer
+                            names drop first, and in this corpus that falls hardest on the female name set. Your
+                            vocabulary decides what you are able to measure.
+                            <strong>Load the Large model</strong> from the toolbar to run the published test.</p>
+                    </div>`;
+                const chartNote = document.getElementById('biasChartNote');
+                if (chartNote) chartNote.classList.add('hidden');
+                renderBiasChart();
+                return;
+            }
 
             useDebiased = false;
             const beforeWEAT = computeWEAT();

@@ -76,17 +76,30 @@ Each dataset carries both a **decision** column and a **ground-truth** column.
 Error-rate fairness metrics need both; where ground truth is missing the auditor
 reports those metrics as unavailable rather than as passing.
 
-The word embeddings tool uses a 20,013-word subset of GloVe 6B at 100 dimensions,
-stored as a binary Float32 matrix (`glove-100d.bin`, 7.6 MB) plus a JSON
-vocabulary. Regenerate with
+The word embeddings tool ships **two model tiers**, and the difference between
+them is part of the lesson:
+
+| Tier | Vocabulary | Dimensions | Size | Loads |
+| --- | --- | --- | --- | --- |
+| Small | 5,061 words | 50d | 1.0 MB | on page open |
+| Large | 20,013 words | 100d | 7.6 MB | on demand |
+
+The small model is ready immediately so nobody waits to start working. The large
+one is fetched when a student asks for it, and both stay live so the same query
+can be run through each. **Compare both models** puts them side by side.
+
+The gap is real, not decorative. `paris - france + japan` returns
+`tokyo, shanghai` on the small model and `tokyo, osaka` on the large one. And
+Caliskan's WEAT 6 cannot run at all on the small tier: seven of its eight female
+target names fall outside a 5,000-word frequency cut while all eight male names
+survive. The tool reports the test as unavailable and names the missing words,
+rather than quietly running it on whatever is present — which is what an earlier
+version of this toolkit did without saying so.
+
+Regenerate both tiers with
 [`data/generate_glove_subset.py`](data/generate_glove_subset.py), which downloads
 ~862 MB from Hugging Face the first time. **The archive and the extracted text
-file are build inputs and are gitignored — delete them when you are done.**
-
-The earlier 5,000-word 50d subset was too small: seven of the eight female target
-names in Caliskan's WEAT 6 fell outside it, so the association test was running
-against a single word. The published word sets now fit, and 100d makes vector
-arithmetic work properly (`paris - france + japan` returns `tokyo`).
+files are build inputs and are gitignored — delete them when you are done.**
 
 ---
 

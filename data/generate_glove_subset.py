@@ -9,13 +9,15 @@ single word. Numbers written as decimal text also cost roughly nine bytes each
 to store four bytes of information, and JSON.parse of a multi-megabyte string
 blocks the main thread.
 
-The binary layout is:
+Two tiers are produced so the workbench is usable immediately and so the cost
+of a larger model is something a student can measure rather than be told:
 
-    glove-100d.bin    vocab_size * 100 float32, little-endian, row-major
-    glove-100d.json   { dim, count, words: [...] }  vocabulary in row order
+    glove-small.bin    5,000 words x 50d    ~1 MB
+    glove-large.bin    20,000 words x 100d  ~7.6 MB
 
-At 20,000 words that is 8 MB of vectors, fetched once and then cached. Loading
-is a fetch plus a Float32Array view, with no parsing step.
+The binary layout for each is vocab_size * dim float32, little-endian and
+row-major, paired with a JSON vocabulary in row order. Loading is a fetch plus
+a Float32Array view, with no parsing step.
 
 Downloads GloVe 6B from Hugging Face if the source file is not already present.
 The 862 MB archive and the extracted text file are build inputs, not artefacts:
@@ -33,18 +35,24 @@ import zipfile
 
 GLOVE_URL = "https://huggingface.co/stanfordnlp/glove/resolve/main/glove.6B.zip"
 GLOVE_ZIP = "glove.6B.zip"
-DIM = 100
-GLOVE_TXT = f"glove.6B.{DIM}d.txt"
-OUT_BIN = f"glove-{DIM}d.bin"
-OUT_VOCAB = f"glove-{DIM}d.json"
 
-# Words beyond the frequency cut that the toolkit needs regardless. Anything
-# listed here is kept even if it is rarer than the cut-off, because a demo that
-# silently drops half its word set produces a degenerate result rather than an
-# error.
-VOCAB_SIZE = 20000
+# Two tiers, so the workbench is usable the moment the page opens and the cost
+# of a bigger model becomes something a student can feel rather than be told.
+# The small tier loads in well under a second; the large one is fetched on
+# demand, and the two can then be compared directly in the tool.
+TIERS = [
+    # The small tier pins only CORE_WORDS. It is otherwise a straight frequency
+    # cut, so it has the coverage gaps a 5,000-word vocabulary really has -
+    # including most of the female names in Caliskan's WEAT 6. That is the
+    # point: the tool reports the test as incomplete instead of quietly running
+    # it on whatever words happen to be present, which is what the old
+    # single-tier build did without saying so.
+    {"dim": 50,  "vocab": 5000,  "suffix": "small", "extended": False},
+    {"dim": 100, "vocab": 20000, "suffix": "large", "extended": True},
+]
 
-REQUIRED_WORDS = {
+# Pinned into EVERY tier: without these the basic demos cannot run at all.
+CORE_WORDS = {
     # Vector arithmetic demos
     'king', 'queen', 'man', 'woman', 'prince', 'princess',
     'boy', 'girl', 'father', 'mother', 'son', 'daughter',
@@ -66,21 +74,6 @@ REQUIRED_WORDS = {
     'musician', 'painter', 'pharmacist', 'plumber', 'police',
     'receptionist', 'soldier', 'veterinarian', 'nanny', 'midwife',
     'hairdresser', 'janitor', 'therapist', 'economist', 'physicist',
-    # WEAT target and attribute sets (Caliskan et al. 2017, tests 6-8)
-    'amy', 'joan', 'lisa', 'sarah', 'diana', 'kate', 'ann', 'donna',
-    'mary', 'elizabeth', 'maria', 'susan', 'barbara', 'sharon', 'nancy',
-    'karen', 'betty', 'helen', 'rebecca', 'julia', 'emily', 'laura',
-    'john', 'paul', 'mike', 'kevin', 'steve', 'greg', 'jeff', 'bill',
-    'brian', 'ronald', 'david', 'james', 'robert', 'michael', 'william',
-    'executive', 'management', 'corporation', 'salary', 'office',
-    'business', 'career', 'professional',
-    'parents', 'children', 'cousins', 'marriage', 'wedding', 'relatives',
-    'household', 'kids', 'home', 'family',
-    'math', 'algebra', 'geometry', 'calculus', 'equations', 'computation',
-    'numbers', 'addition', 'poetry', 'art', 'dance', 'literature', 'novel',
-    'symphony', 'drama', 'sculpture',
-    'science', 'physics', 'chemistry', 'einstein', 'nasa', 'experiment',
-    'astronomy',
     # Animals, emotions, food, tenses for the explorer tabs
     'cat', 'dog', 'horse', 'bird', 'fish', 'lion', 'tiger', 'bear',
     'wolf', 'eagle', 'snake', 'rabbit',
@@ -96,10 +89,32 @@ REQUIRED_WORDS = {
     'consent', 'accountability', 'transparency', 'discrimination',
 }
 
+# Pinned into the LARGE tier only. These are the word sets the published
+# methods require; leaving them out of the small tier is deliberate, so the
+# tool can show what a limited vocabulary costs you rather than assert it.
+EXTENDED_WORDS = {
+    # WEAT target and attribute sets (Caliskan et al. 2017, tests 6-8)
+    'amy', 'joan', 'lisa', 'sarah', 'diana', 'kate', 'ann', 'donna',
+    'mary', 'elizabeth', 'maria', 'susan', 'barbara', 'sharon', 'nancy',
+    'karen', 'betty', 'helen', 'rebecca', 'julia', 'emily', 'laura',
+    'john', 'paul', 'mike', 'kevin', 'steve', 'greg', 'jeff', 'bill',
+    'brian', 'ronald', 'david', 'james', 'robert', 'michael', 'william',
+    'executive', 'management', 'corporation', 'salary', 'office',
+    'business', 'career', 'professional',
+    'parents', 'children', 'cousins', 'marriage', 'wedding', 'relatives',
+    'household', 'kids', 'home', 'family',
+    'math', 'algebra', 'geometry', 'calculus', 'equations', 'computation',
+    'numbers', 'addition', 'poetry', 'art', 'dance', 'literature', 'novel',
+    'symphony', 'drama', 'sculpture',
+    'science', 'physics', 'chemistry', 'einstein', 'nasa', 'experiment',
+    'astronomy',
+}
 
-def download_glove():
-    if os.path.exists(GLOVE_TXT):
-        print(f"  {GLOVE_TXT} already extracted.")
+
+def download_glove(dims):
+    needed = [f"glove.6B.{d}d.txt" for d in dims]
+    if all(os.path.exists(n) for n in needed):
+        print("  source files already extracted.")
         return
     if not os.path.exists(GLOVE_ZIP):
         print(f"Downloading {GLOVE_URL} (~862 MB)...")
@@ -112,57 +127,65 @@ def download_glove():
 
         urllib.request.urlretrieve(GLOVE_URL, GLOVE_ZIP, report)
         print()
-    print(f"Extracting {GLOVE_TXT}...")
     with zipfile.ZipFile(GLOVE_ZIP) as zf:
-        zf.extract(GLOVE_TXT, ".")
+        for name in needed:
+            if not os.path.exists(name):
+                print(f"Extracting {name}...")
+                zf.extract(name, ".")
 
 
-def build():
-    print(f"Reading {GLOVE_TXT}...")
+def build(dim, vocab_size, suffix, extended):
+    required = CORE_WORDS | EXTENDED_WORDS if extended else CORE_WORDS
+    src = f"glove.6B.{dim}d.txt"
+    out_bin = f"glove-{suffix}.bin"
+    out_vocab = f"glove-{suffix}.json"
+
+    print(f"\nBuilding '{suffix}' tier: {vocab_size:,} words x {dim}d from {src}")
     words, vectors = [], []
     seen = set()
     kept_required = set()
 
-    with open(GLOVE_TXT, "r", encoding="utf-8") as fh:
+    with open(src, "r", encoding="utf-8") as fh:
         for rank, line in enumerate(fh):
             parts = line.rstrip().split(" ")
             word = parts[0]
-            if len(parts) != DIM + 1:
+            if len(parts) != dim + 1:
                 continue
-            required = word in REQUIRED_WORDS
-            if rank >= VOCAB_SIZE and not required:
+            is_required = word in required
+            if rank >= vocab_size and not is_required:
                 continue
             if word in seen:
                 continue
             seen.add(word)
-            if required:
+            if is_required:
                 kept_required.add(word)
             words.append(word)
             vectors.append([float(x) for x in parts[1:]])
 
-    print(f"  kept {len(words):,} words at {DIM}d")
-
-    missing = REQUIRED_WORDS - kept_required
+    missing = required - kept_required
     if missing:
-        print(f"  WARNING: {len(missing)} required words absent from GloVe: {sorted(missing)}")
-    else:
-        print("  all required words present")
+        print(f"  WARNING: {len(missing)} required words absent: {sorted(missing)[:10]}")
 
-    with open(OUT_BIN, "wb") as fh:
+    with open(out_bin, "wb") as fh:
         for vec in vectors:
-            fh.write(struct.pack(f"<{DIM}f", *vec))
+            fh.write(struct.pack(f"<{dim}f", *vec))
 
-    with open(OUT_VOCAB, "w") as fh:
-        json.dump({"dim": DIM, "count": len(words), "words": words}, fh, separators=(",", ":"))
+    with open(out_vocab, "w") as fh:
+        json.dump({"dim": dim, "count": len(words), "tier": suffix,
+                   "words": words}, fh, separators=(",", ":"))
 
-    bin_mb = os.path.getsize(OUT_BIN) / 1048576
-    vocab_mb = os.path.getsize(OUT_VOCAB) / 1048576
-    print(f"  wrote {OUT_BIN} ({bin_mb:.1f} MB) and {OUT_VOCAB} ({vocab_mb:.2f} MB)")
-    print("\nDelete glove.6B.zip and the extracted .txt when finished; they are")
-    print("build inputs and must not be committed.")
+    mb = os.path.getsize(out_bin) / 1048576
+    print(f"  {len(words):,} words -> {out_bin} ({mb:.1f} MB) + {out_vocab}")
+    return {"tier": suffix, "dim": dim, "count": len(words), "mb": round(mb, 2),
+            "extendedVocabulary": extended}
 
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    download_glove()
-    build()
+    download_glove([t["dim"] for t in TIERS])
+    manifest = [build(t["dim"], t["vocab"], t["suffix"], t["extended"]) for t in TIERS]
+    with open("glove-tiers.json", "w") as fh:
+        json.dump({"tiers": manifest}, fh, indent=2)
+    print("\nwrote glove-tiers.json")
+    print("Delete glove.6B.zip and the extracted .txt files when finished;")
+    print("they are build inputs and must not be committed.")

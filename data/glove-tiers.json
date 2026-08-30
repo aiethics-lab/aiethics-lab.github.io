@@ -1,0 +1,18 @@
+{
+  "tiers": [
+    {
+      "tier": "small",
+      "dim": 50,
+      "count": 5061,
+      "mb": 0.97,
+      "extendedVocabulary": false
+    },
+    {
+      "tier": "large",
+      "dim": 100,
+      "count": 20013,
+      "mb": 7.63,
+      "extendedVocabulary": true
+    }
+  ]
+}
