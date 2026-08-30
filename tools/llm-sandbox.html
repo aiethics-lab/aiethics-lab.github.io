@@ -92,85 +92,33 @@
             color: inherit;
         }
     </style>
+    <script>
+        // Paint the saved theme before first render to avoid a flash of the
+        // wrong theme. Toolkit.mountShell() wires the toggle control later.
+        (function () {
+            var saved = null;
+            try { saved = localStorage.getItem('ethicsToolkitTheme'); } catch (e) { }
+            function apply(dark) {
+                var root = document.documentElement;
+                root.classList.toggle('dark', dark);
+                root.classList.toggle('light', !dark);
+            }
+            apply(saved !== 'light');
+            window.__setToolkitTheme = function (dark) {
+                apply(dark);
+                try { localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); } catch (e) { }
+            };
+        })();
+    </script>
+    <link rel="stylesheet" href="../shared/toolkit.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%AD%3C/text%3E%3C/svg%3E" />
 </head>
 
 <body
     class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white overflow-x-hidden">
-    <!-- Mobile Overlay -->
-    <div id="mobileOverlay" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity opacity-0"></div>
+    <a href="#main" class="skip-link">Skip to main content</a>
 
-    <!-- Sidebar -->
-    <aside id="sidebar"
-        class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0">
-        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
-            <a href="../index.html" class="flex items-center hover:opacity-80 transition-opacity">
-                <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
-                <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
-            </a>
-            <button id="closeSidebar"
-                class="md:hidden text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
-                <span class="material-icons-outlined">close</span>
-            </button>
-        </div>
-        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1" id="sidebarNav">
-            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group"
-                href="../index.html">
-                <span
-                    class="material-icons-outlined mr-3 text-2xl group-hover:scale-110 transition-transform">grid_view</span>
-                Toolkit Overview
-            </a>
-            <div class="pt-4 pb-2 px-3">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
-            </div>
-            <!-- Standard Links -->
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="word-embeddings.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">scatter_plot</span>
-                Word Embeddings</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="explainability-lab.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">visibility</span>
-                Explainability Lab</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="bias-auditor.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">saved_search</span>
-                Bias Auditor</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="adversarial-sandbox.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">security</span>
-                Adversarial Sandbox</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="filter-bubble.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">bubble_chart</span>
-                Filter Bubble Sim</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="privacy-lab.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">vpn_key</span>
-                Privacy Lab</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="value-alignment.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">balance</span>
-                Value Alignment</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="proxy-detector.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">find_replace</span>
-                Proxy Detector</a>
-
-            <!-- New Current Link -->
-            <a class="flex items-center px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium group text-sm"
-                href="llm-sandbox.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">chat</span>
-                LLM Ethical Sandbox</a>
-        </nav>
-        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
-            <p class="text-[10px] text-slate-400 mb-2">© 2026 <a href="https://hamedyaghoobian.com"
-                    class="text-primary hover:underline">Hamed Yaghoobian</a></p>
-            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Version
-                    2.1.0</span><a class="hover:text-primary transition-colors" href="../legal.html">Legal</a></div>
-        </div>
-    </aside>
-
-    <main class="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto h-screen flex flex-col">
+    <main id="main" tabindex="-1" class="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto h-screen flex flex-col">
         <header
             class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 md:gap-0 shrink-0">
             <div class="flex items-center w-full md:w-auto justify-between">
@@ -178,7 +126,7 @@
                     <div class="flex items-center mb-1">
                         <a href="../index.html"
                             class="text-slate-400 hover:text-primary transition-colors text-sm mr-2">Toolkit</a>
-                        <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
+                        <span class="material-icons-outlined text-slate-400 text-sm" aria-hidden="true">chevron_right</span>
                         <span class="text-primary text-sm ml-2">LLM Ethical Sandbox</span>
                     </div>
                     <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">LLM Ethical Sandbox</h1>
@@ -187,8 +135,8 @@
                         WebGPU.</p>
                 </div>
                 <!-- Mobile Menu Button -->
-                <button id="openSidebar" class="md:hidden p-2 text-slate-500 hover:text-primary transition-colors">
-                    <span class="material-icons-outlined text-2xl">menu</span>
+                <button id="openSidebar" type="button" aria-label="Open navigation" class="md:hidden p-2 text-slate-500 hover:text-primary transition-colors">
+                    <span class="material-icons-outlined text-2xl" aria-hidden="true">menu</span>
                 </button>
             </div>
             <label class="relative inline-flex items-center cursor-pointer self-end md:self-auto">
@@ -204,7 +152,7 @@
         <div id="webgpuWarning"
             class="hidden mb-6 bg-red-50 dark:bg-red-500/10 border-l-4 border-red-500 p-4 rounded-r-xl">
             <div class="flex items-start">
-                <span class="material-icons-outlined text-red-500 mr-3">error_outline</span>
+                <span class="material-icons-outlined text-red-500 mr-3" aria-hidden="true">error_outline</span>
                 <div>
                     <h3 class="text-red-800 dark:text-red-400 font-medium text-sm">WebGPU Not Supported</h3>
                     <p class="text-red-700 dark:text-red-300 text-xs mt-1">Your browser does not support WebGPU, which
@@ -219,7 +167,7 @@
             <div
                 class="lg:col-span-1 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5 flex flex-col order-first">
                 <h3 class="font-bold text-slate-900 dark:text-white mb-4 flex items-center">
-                    <span class="material-icons-outlined text-primary mr-2">tune</span> Model Controls
+                    <span class="material-icons-outlined text-primary mr-2" aria-hidden="true">tune</span> Model Controls
                 </h3>
 
                 <div class="space-y-5 flex-1">
@@ -251,14 +199,14 @@
 
                         <div id="modelStatus"
                             class="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-surface-dark-lighter rounded-lg border border-slate-200 dark:border-slate-700 text-center">
-                            <span class="material-icons-outlined text-slate-400 text-3xl mb-2">cloud_download</span>
+                            <span class="material-icons-outlined text-slate-400 text-3xl mb-2" aria-hidden="true">cloud_download</span>
                             <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Not Loaded</h4>
                             <p class="text-[10px] text-slate-500 dark:text-slate-400">The 1.2B LFM model (~1.5GB) needs
                                 to be downloaded once and cached in your browser.</p>
 
                             <button id="loadBtn"
                                 class="mt-4 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-medium transition-colors w-full flex items-center justify-center">
-                                <span class="material-icons-outlined text-sm mr-2">download</span> Load Model
+                                <span class="material-icons-outlined text-sm mr-2" aria-hidden="true">download</span> Load Model
                             </button>
                         </div>
 
@@ -275,7 +223,7 @@
 
                         <div id="modelReady"
                             class="hidden flex-col items-center justify-center p-4 bg-green-50 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-500/30 text-center text-green-700 dark:text-green-400">
-                            <span class="material-icons-outlined text-3xl mb-2">check_circle</span>
+                            <span class="material-icons-outlined text-3xl mb-2" aria-hidden="true">check_circle</span>
                             <h4 class="text-sm font-medium mb-1">Model Ready</h4>
                             <p class="text-[10px] opacity-80" id="tpsCounter">Ready for inference</p>
                         </div>
@@ -289,13 +237,13 @@
                 <div
                     class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-surface-dark flex-shrink-0">
                     <h3 class="font-bold text-slate-900 dark:text-white flex items-center">
-                        <span class="material-icons-outlined text-primary mr-2">forum</span> Sandbox Chat
+                        <span class="material-icons-outlined text-primary mr-2" aria-hidden="true">forum</span> Sandbox Chat
                     </h3>
                     <div class="flex gap-2">
                         <button id="clearBtn"
                             class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Clear Chat">
-                            <span class="material-icons-outlined text-lg">delete_sweep</span>
+                            <span class="material-icons-outlined text-lg" aria-hidden="true">delete_sweep</span>
                         </button>
                     </div>
                 </div>
@@ -304,7 +252,7 @@
                     <!-- Welcome Message -->
                     <div class="flex gap-4">
                         <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <span class="material-icons-outlined text-primary text-sm">psychology</span>
+                            <span class="material-icons-outlined text-primary text-sm" aria-hidden="true">psychology</span>
                         </div>
                         <div class="flex-1 space-y-2">
                             <div
@@ -327,11 +275,11 @@
                             placeholder="Type your message here... (Shift+Enter for new line)"></textarea>
                         <button id="sendBtn" disabled
                             class="px-4 bg-primary hover:bg-primary-hover disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-xl transition-colors flex items-center justify-center flex-shrink-0 shadow-sm disabled:cursor-not-allowed">
-                            <span class="material-icons-outlined text-xl">send</span>
+                            <span class="material-icons-outlined text-xl" aria-hidden="true">send</span>
                         </button>
                         <button id="stopBtn"
                             class="hidden px-4 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors flex items-center justify-center flex-shrink-0 shadow-sm">
-                            <span class="material-icons-outlined text-xl">stop</span>
+                            <span class="material-icons-outlined text-xl" aria-hidden="true">stop</span>
                         </button>
                     </div>
                     <p class="text-center text-[10px] text-slate-400 mt-2">All processing happens locally on your
@@ -340,34 +288,11 @@
             </div>
         </div>
 
-        <footer class="mt-8 py-6 border-t border-slate-200 dark:border-slate-800 flex-shrink-0">
-            <div class="text-center text-xs text-slate-400 dark:text-slate-500 px-4">
-                <p>AI Ethics Toolkit &copy; 2026 Hamed Yaghoobian.<br>
-                    Developed for the Department of Mathematics, Computer Science, and Statistics at Muhlenberg College.<br>
-                    Feedback: <a href="mailto:hamedyaghoobian@muhlenberg.edu"
-                        class="hover:text-primary transition-colors">hamedyaghoobian@muhlenberg.edu</a></p>
-            </div>
-        </footer>
     </main>
 
     <script>
         // ==================== THEME & SIDEBAR ====================
-        const themeToggle = document.getElementById('themeToggle');
-        function setTheme(dark) { document.documentElement.classList.toggle('dark', dark); document.documentElement.classList.toggle('light', !dark); localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); }
-        const savedTheme = localStorage.getItem('ethicsToolkitTheme');
-        if (savedTheme === 'light') { setTheme(false); themeToggle.checked = false; }
-        themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
 
-        const sidebar = document.getElementById('sidebar');
-        const mobileOverlay = document.getElementById('mobileOverlay');
-        function toggleSidebar() {
-            const isClosed = sidebar.classList.contains('-translate-x-full');
-            if (isClosed) { sidebar.classList.remove('-translate-x-full'); mobileOverlay.classList.remove('hidden'); setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10); }
-            else { sidebar.classList.add('-translate-x-full'); mobileOverlay.classList.add('opacity-0'); setTimeout(() => mobileOverlay.classList.add('hidden'), 300); }
-        }
-        document.getElementById('openSidebar')?.addEventListener('click', toggleSidebar);
-        document.getElementById('closeSidebar')?.addEventListener('click', toggleSidebar);
-        mobileOverlay?.addEventListener('click', toggleSidebar);
 
         // ==================== WEB WORKER IMPLEMENTATION ====================
 
@@ -503,12 +428,12 @@
                 html = `
                 <div class="flex gap-4" id="${id}">
                     <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1 shadow-md shadow-primary/20">
-                        <span class="material-icons-outlined text-white text-sm">psychology</span>
+                        <span class="material-icons-outlined text-white text-sm" aria-hidden="true">psychology</span>
                     </div>
                     <div class="flex-1 space-y-3 min-w-0">
                         <div class="thought-container hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-surface-dark-lighter rounded-xl overflow-hidden text-sm">
                             <div class="px-3 py-2 border-b border-slate-200 dark:border-slate-700 font-medium text-slate-500 flex items-center text-xs uppercase tracking-wide bg-slate-100/50 dark:bg-slate-800">
-                                <span class="material-icons-outlined text-[14px] mr-1">lightbulb</span> Thought Process
+                                <span class="material-icons-outlined text-[14px] mr-1" aria-hidden="true">lightbulb</span> Thought Process
                             </div>
                             <div class="thought-content p-3 text-slate-600 dark:text-slate-400 italic max-h-[300px] overflow-y-auto whitespace-pre-wrap font-[sans-serif]"></div>
                         </div>
@@ -662,6 +587,12 @@
             chatMessages.appendChild(welcomeMsg);
         });
 
+    </script>
+    <script src="../shared/session.js"></script>
+    <script src="../shared/toolkit.js"></script>
+    <script>
+        Toolkit.mountShell({ active: 'llm-sandbox' });
+        ToolkitSession.maybeOfferConsent();
     </script>
 </body>
 

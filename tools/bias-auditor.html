@@ -73,90 +73,40 @@
             pointer-events: none;
         }
     </style>
+    <script>
+        // Paint the saved theme before first render to avoid a flash of the
+        // wrong theme. Toolkit.mountShell() wires the toggle control later.
+        (function () {
+            var saved = null;
+            try { saved = localStorage.getItem('ethicsToolkitTheme'); } catch (e) { }
+            function apply(dark) {
+                var root = document.documentElement;
+                root.classList.toggle('dark', dark);
+                root.classList.toggle('light', !dark);
+            }
+            apply(saved !== 'light');
+            window.__setToolkitTheme = function (dark) {
+                apply(dark);
+                try { localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); } catch (e) { }
+            };
+        })();
+    </script>
+    <link rel="stylesheet" href="../shared/toolkit.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%AD%3C/text%3E%3C/svg%3E" />
 </head>
 
 <body
     class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white overflow-x-hidden">
-    <!-- Mobile Overlay -->
-    <div id="mobileOverlay" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity opacity-0"></div>
+    <a href="#main" class="skip-link">Skip to main content</a>
 
-    <!-- Sidebar -->
-    <aside id="sidebar"
-        class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0">
-        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
-            <a href="../index.html" class="flex items-center hover:opacity-80 transition-opacity">
-                <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
-                <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
-            </a>
-            <button id="closeSidebar"
-                class="md:hidden text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
-                <span class="material-icons-outlined">close</span>
-            </button>
-        </div>
-        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group"
-                href="../index.html">
-                <span
-                    class="material-icons-outlined mr-3 text-2xl group-hover:scale-110 transition-transform">grid_view</span>
-                Toolkit Overview
-            </a>
-            <div class="pt-4 pb-2 px-3">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
-            </div>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="word-embeddings.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">scatter_plot</span>
-                Word Embeddings</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="explainability-lab.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">visibility</span>
-                Explainability Lab</a>
-            <a class="flex items-center px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium group text-sm"
-                href="bias-auditor.html"><span class="material-icons-outlined mr-3 text-xl">saved_search</span> Bias
-                Auditor</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="adversarial-sandbox.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">security</span>
-                Adversarial Sandbox</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="filter-bubble.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">bubble_chart</span>
-                Filter Bubble Sim</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="privacy-lab.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">vpn_key</span>
-                Privacy Lab</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="value-alignment.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">balance</span>
-                Value Alignment</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="proxy-detector.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">find_replace</span>
-                Proxy Detector</a>
-        
-            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm"
-                href="llm-sandbox.html">
-                <span class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">chat</span>
-                LLM Ethical Sandbox
-            </a>
-</nav>
-        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
-            <p class="text-[10px] text-slate-400 mb-2">© 2026 <a href="https://hamedyaghoobian.com"
-                    class="text-primary hover:underline">Hamed Yaghoobian</a></p>
-            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Version
-                    2.1.0</span><a class="hover:text-primary transition-colors" href="../legal.html">Legal</a></div>
-        </div>
-    </aside>
-
-    <main class="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto h-screen flex flex-col">
+    <main id="main" tabindex="-1" class="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto h-screen flex flex-col">
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 md:gap-0">
             <div class="flex items-center w-full md:w-auto justify-between">
                 <div>
                     <div class="flex items-center mb-1">
                         <a href="../index.html"
                             class="text-slate-400 hover:text-primary transition-colors text-sm mr-2">Toolkit</a>
-                        <span class="material-icons-outlined text-slate-400 text-sm">chevron_right</span>
+                        <span class="material-icons-outlined text-slate-400 text-sm" aria-hidden="true">chevron_right</span>
                         <span class="text-primary text-sm ml-2">Bias Auditor</span>
                     </div>
                     <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Dataset Bias Auditor</h1>
@@ -165,8 +115,8 @@
                         and representation imbalances.</p>
                 </div>
                 <!-- Mobile Menu Button -->
-                <button id="openSidebar" class="md:hidden p-2 text-slate-500 hover:text-primary transition-colors">
-                    <span class="material-icons-outlined text-2xl">menu</span>
+                <button id="openSidebar" type="button" aria-label="Open navigation" class="md:hidden p-2 text-slate-500 hover:text-primary transition-colors">
+                    <span class="material-icons-outlined text-2xl" aria-hidden="true">menu</span>
                 </button>
             </div>
             <label class="relative inline-flex items-center cursor-pointer self-end md:self-auto">
@@ -184,13 +134,13 @@
             <div
                 class="lg:col-span-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                    <span class="material-icons-outlined text-primary mr-2 align-middle">upload_file</span> Data Source
+                    <span class="material-icons-outlined text-primary mr-2 align-middle" aria-hidden="true">upload_file</span> Data Source
                 </h3>
                 <div class="flex gap-4 mb-4">
                     <label class="flex-1 cursor-pointer">
                         <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-6 text-center hover:border-primary transition-colors"
                             id="dropZone">
-                            <span class="material-icons-outlined text-4xl text-slate-400 mb-2 block">cloud_upload</span>
+                            <span class="material-icons-outlined text-4xl text-slate-400 mb-2 block" aria-hidden="true">cloud_upload</span>
                             <p class="text-sm text-slate-500 dark:text-slate-400">Drag & drop a CSV file or <span
                                     class="text-primary font-medium">browse</span></p>
                             <input type="file" id="csvUpload" accept=".csv" class="hidden" />
@@ -200,15 +150,15 @@
                 <div class="flex flex-wrap gap-2">
                     <button id="sample-credit" onclick="loadSampleDataset('credit', event)"
                         class="px-4 py-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition-colors">
-                        <span class="material-icons-outlined text-sm align-middle mr-1">credit_card</span> Credit Risk
+                        <span class="material-icons-outlined text-sm align-middle mr-1" aria-hidden="true">credit_card</span> Credit Risk
                     </button>
                     <button id="sample-hiring" onclick="loadSampleDataset('hiring', event)"
                         class="px-4 py-2 rounded-lg bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 text-sm font-medium transition-colors">
-                        <span class="material-icons-outlined text-sm align-middle mr-1">work</span> Hiring Data
+                        <span class="material-icons-outlined text-sm align-middle mr-1" aria-hidden="true">work</span> Hiring Data
                     </button>
                     <button id="sample-recidivism" onclick="loadSampleDataset('recidivism', event)"
                         class="px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 text-sm font-medium transition-colors">
-                        <span class="material-icons-outlined text-sm align-middle mr-1">gavel</span> Recidivism
+                        <span class="material-icons-outlined text-sm align-middle mr-1" aria-hidden="true">gavel</span> Recidivism
                     </button>
                 </div>
             </div>
@@ -257,7 +207,7 @@
                     <p id="configHint" class="text-[11px] text-amber-600 dark:text-amber-400 leading-snug"></p>
                     <button onclick="runAudit()" id="runAuditBtn"
                         class="w-full py-2 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors text-sm flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed">
-                        <span class="material-icons-outlined mr-1 text-base">play_arrow</span> Run Audit
+                        <span class="material-icons-outlined mr-1 text-base" aria-hidden="true">play_arrow</span> Run Audit
                     </button>
                 </div>
             </div>
@@ -268,7 +218,7 @@
             class="hidden mb-6 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white">
-                    <span class="material-icons-outlined text-primary mr-2 align-middle">table_chart</span> Data Preview
+                    <span class="material-icons-outlined text-primary mr-2 align-middle" aria-hidden="true">table_chart</span> Data Preview
                 </h3>
                 <span id="dataInfo" class="text-sm text-slate-500 dark:text-slate-400"></span>
             </div>
@@ -291,7 +241,7 @@
                 <div
                     class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                        <span class="material-icons-outlined text-orange-500 mr-2 align-middle">bar_chart</span> Class
+                        <span class="material-icons-outlined text-orange-500 mr-2 align-middle" aria-hidden="true">bar_chart</span> Class
                         Distribution
                     </h3>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Distribution of the target variable
@@ -303,7 +253,7 @@
                 <div
                     class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                        <span class="material-icons-outlined text-blue-500 mr-2 align-middle">pie_chart</span> Group
+                        <span class="material-icons-outlined text-blue-500 mr-2 align-middle" aria-hidden="true">pie_chart</span> Group
                         Representation
                     </h3>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Proportion of each group in the dataset.
@@ -317,7 +267,7 @@
                 <div
                     class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                        <span class="material-icons-outlined text-purple-500 mr-2 align-middle">grid_on</span>
+                        <span class="material-icons-outlined text-purple-500 mr-2 align-middle" aria-hidden="true">grid_on</span>
                         Correlation Heatmap
                     </h3>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Pearson correlation between numeric
@@ -329,7 +279,7 @@
                 <div
                     class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                        <span class="material-icons-outlined text-green-500 mr-2 align-middle">assessment</span>
+                        <span class="material-icons-outlined text-green-500 mr-2 align-middle" aria-hidden="true">assessment</span>
                         Fairness Metrics
                     </h3>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Selection-rate metrics need only the
@@ -341,7 +291,7 @@
             <!-- Intersectional Analysis -->
             <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                    <span class="material-icons-outlined text-pink-500 mr-2 align-middle">diversity_3</span>
+                    <span class="material-icons-outlined text-pink-500 mr-2 align-middle" aria-hidden="true">diversity_3</span>
                     Intersectional Analysis
                 </h3>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Bias can be amplified at intersections of
@@ -353,52 +303,15 @@
             <div class="flex justify-end gap-3">
                 <button onclick="exportReport()"
                     class="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors flex items-center text-sm">
-                    <span class="material-icons-outlined mr-2 text-base">download</span> Export Report (HTML)
+                    <span class="material-icons-outlined mr-2 text-base" aria-hidden="true">download</span> Export Report (HTML)
                 </button>
             </div>
         </div>
 
-        <!-- Disclaimer Footer -->
-        <footer class="mt-auto py-6 border-t border-slate-200 dark:border-slate-800">
-            <div class="text-center text-xs text-slate-400 dark:text-slate-500 px-4">
-                <p>AI Ethics Toolkit &copy; 2026 Hamed Yaghoobian.<br>
-                    Developed for the Department of Mathematics, Computer Science, and Statistics at Muhlenberg College.<br>
-                    Feedback: <a href="mailto:hamedyaghoobian@muhlenberg.edu"
-                        class="hover:text-primary transition-colors">hamedyaghoobian@muhlenberg.edu</a></p>
-            </div>
-        </footer>
     </main>
 
     <script>
-        // ==================== MOBILE MENU ====================
-        const sidebar = document.getElementById('sidebar');
-        const openSidebarBtn = document.getElementById('openSidebar');
-        const closeSidebarBtn = document.getElementById('closeSidebar');
-        const mobileOverlay = document.getElementById('mobileOverlay');
 
-        function toggleSidebar() {
-            const isClosed = sidebar.classList.contains('-translate-x-full');
-            if (isClosed) {
-                sidebar.classList.remove('-translate-x-full');
-                mobileOverlay.classList.remove('hidden');
-                setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10);
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                mobileOverlay.classList.add('opacity-0');
-                setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
-            }
-        }
-
-        openSidebarBtn?.addEventListener('click', toggleSidebar);
-        closeSidebarBtn?.addEventListener('click', toggleSidebar);
-        mobileOverlay?.addEventListener('click', toggleSidebar);
-
-        // ==================== THEME ====================
-        const themeToggle = document.getElementById('themeToggle');
-        function setTheme(dark) { document.documentElement.classList.toggle('dark', dark); document.documentElement.classList.toggle('light', !dark); localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); }
-        const savedTheme = localStorage.getItem('ethicsToolkitTheme');
-        if (savedTheme === 'light') { setTheme(false); themeToggle.checked = false; }
-        themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
 
         // ==================== STATE ====================
         let currentData = null;
@@ -423,7 +336,7 @@
             const btn = (evt && evt.target.closest('button')) || document.getElementById(`sample-${type}`);
             if (!btn) { Papa.parse(url, { download: true, header: true, dynamicTyping: true, skipEmptyLines: true, complete: r => processData(r.data) }); return; }
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="material-icons-outlined text-sm align-middle mr-1 animate-spin">sync</span> Loading...';
+            btn.innerHTML = '<span class="material-icons-outlined text-sm align-middle mr-1 animate-spin" aria-hidden="true">sync</span> Loading...';
             btn.disabled = true;
 
             Papa.parse(url, {
@@ -1146,7 +1059,7 @@
                 const colors = { warning: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-600 dark:text-yellow-400', caution: 'bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-400', danger: 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400' };
                 const icons = { warning: 'warning', caution: 'error_outline', danger: 'dangerous' };
                 return `<div class="flex items-start p-4 rounded-xl border ${colors[a.type]}">
-                <span class="material-icons-outlined mr-3 mt-0.5">${icons[a.type]}</span>
+                <span class="material-icons-outlined mr-3 mt-0.5" aria-hidden="true">${icons[a.type]}</span>
                 <p class="text-sm">${esc(a.text)}</p>
             </div>`;
             }).join('');
@@ -1264,6 +1177,12 @@ Sample datasets are synthetic; see <code>data/generate_samples.py</code> for the
             link.click();
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
+    </script>
+    <script src="../shared/session.js"></script>
+    <script src="../shared/toolkit.js"></script>
+    <script>
+        Toolkit.mountShell({ active: 'bias-auditor' });
+        ToolkitSession.maybeOfferConsent();
     </script>
 </body>
 

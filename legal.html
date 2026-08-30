@@ -47,79 +47,33 @@
             background: #137fec;
         }
     </style>
+    <script>
+        // Paint the saved theme before first render to avoid a flash of the
+        // wrong theme. Toolkit.mountShell() wires the toggle control later.
+        (function () {
+            var saved = null;
+            try { saved = localStorage.getItem('ethicsToolkitTheme'); } catch (e) { }
+            function apply(dark) {
+                var root = document.documentElement;
+                root.classList.toggle('dark', dark);
+                root.classList.toggle('light', !dark);
+            }
+            apply(saved !== 'light');
+            window.__setToolkitTheme = function (dark) {
+                apply(dark);
+                try { localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); } catch (e) { }
+            };
+        })();
+    </script>
+    <link rel="stylesheet" href="shared/toolkit.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%AD%3C/text%3E%3C/svg%3E" />
 </head>
 
 <body
     class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 font-display min-h-screen flex antialiased selection:bg-primary selection:text-white overflow-x-hidden">
-    <!-- Mobile Overlay -->
-    <div id="mobileOverlay" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity opacity-0"></div>
+    <a href="#main" class="skip-link">Skip to main content</a>
 
-    <aside id="sidebar"
-        class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0">
-        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
-            <a href="index.html" class="flex items-center hover:opacity-80 transition-opacity">
-                <span class="material-icons-outlined text-primary text-3xl mr-2">psychology</span>
-                <span class="text-xl font-bold tracking-tight dark:text-white">AI Ethics Toolkit</span>
-            </a>
-            <button id="closeSidebar"
-                class="md:hidden text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
-                <span class="material-icons-outlined">close</span>
-            </button>
-        </div>
-        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group"
-                href="index.html"><span class="material-icons-outlined mr-3 text-2xl">grid_view</span> Toolkit
-                Overview</a>
-            <div class="pt-4 pb-2 px-3">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
-            </div>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="tools/word-embeddings.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">scatter_plot</span> Word
-                Embeddings</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="tools/explainability-lab.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">visibility</span>
-                Explainability Lab</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="tools/bias-auditor.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">saved_search</span> Bias
-                Auditor</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="tools/adversarial-sandbox.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">security</span> Adversarial
-                Sandbox</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="tools/filter-bubble.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">bubble_chart</span> Filter
-                Bubble Sim</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="tools/privacy-lab.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">vpn_key</span> Privacy Lab</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="tools/value-alignment.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">balance</span> Value
-                Alignment</a>
-            <a class="flex items-center px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter transition-colors group text-sm"
-                href="tools/proxy-detector.html"><span
-                    class="material-icons-outlined mr-3 text-xl group-hover:text-primary">find_replace</span> Proxy
-                Detector</a>
-        
-            <a class="flex items-center px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark-lighter hover:text-slate-900 dark:hover:text-white transition-colors group text-sm"
-                href="tools/llm-sandbox.html">
-                <span class="material-icons-outlined mr-3 text-xl group-hover:text-primary transition-colors">chat</span>
-                LLM Ethical Sandbox
-            </a>
-</nav>
-        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
-            <p class="text-[10px] text-slate-400 mb-2">© 2026 <a href="https://hamedyaghoobian.com"
-                    class="text-primary hover:underline">Hamed Yaghoobian</a></p>
-            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Version
-                    2.1.0</span><a class="hover:text-primary text-primary font-bold" href="legal.html">Legal</a></div>
-        </div>
-    </aside>
-
-    <main class="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto h-screen flex flex-col">
+    <main id="main" tabindex="-1" class="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto h-screen flex flex-col">
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 md:gap-0">
             <div class="flex items-center w-full md:w-auto justify-between">
                 <div>
@@ -128,8 +82,8 @@
                         information.</p>
                 </div>
                 <!-- Mobile Menu Button -->
-                <button id="openSidebar" class="md:hidden p-2 text-slate-500 hover:text-primary transition-colors">
-                    <span class="material-icons-outlined text-2xl">menu</span>
+                <button id="openSidebar" type="button" aria-label="Open navigation" class="md:hidden p-2 text-slate-500 hover:text-primary transition-colors">
+                    <span class="material-icons-outlined text-2xl" aria-hidden="true">menu</span>
                 </button>
             </div>
             <label class="relative inline-flex items-center cursor-pointer self-end md:self-auto">
@@ -145,7 +99,7 @@
         <div class="space-y-8 max-w-4xl">
             <section class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-xl p-6">
                 <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-3 flex items-center">
-                    <span class="material-icons-outlined text-primary mr-2">description</span> Disclaimer
+                    <span class="material-icons-outlined text-primary mr-2" aria-hidden="true">description</span> Disclaimer
                 </h2>
                 <div class="prose dark:prose-invert text-sm text-slate-600 dark:text-slate-400">
                     <p class="mb-2">
@@ -166,7 +120,7 @@
 
             <section class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-xl p-6">
                 <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-3 flex items-center">
-                    <span class="material-icons-outlined text-purple-500 mr-2">privacy_tip</span> Data Privacy
+                    <span class="material-icons-outlined text-purple-500 mr-2" aria-hidden="true">privacy_tip</span> Data Privacy
                 </h2>
                 <div class="prose dark:prose-invert text-sm text-slate-600 dark:text-slate-400">
                     <p class="mb-2">
@@ -183,7 +137,7 @@
 
             <section class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-xl p-6">
                 <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-3 flex items-center">
-                    <span class="material-icons-outlined text-orange-500 mr-2">gavel</span> License
+                    <span class="material-icons-outlined text-orange-500 mr-2" aria-hidden="true">gavel</span> License
                 </h2>
                 <div class="prose dark:prose-invert text-sm text-slate-600 dark:text-slate-400">
                     <p class="mb-2">
@@ -198,45 +152,13 @@
             </section>
         </div>
 
-        <footer class="mt-auto py-6 border-t border-slate-200 dark:border-slate-800">
-            <div class="text-center text-xs text-slate-400 dark:text-slate-500 px-4">
-                <p>AI Ethics Toolkit &copy; 2026 Hamed Yaghoobian.<br>
-                    Developed for the Department of Mathematics, Computer Science, and Statistics at Muhlenberg College.<br>
-                    Feedback: <a href="mailto:hamedyaghoobian@muhlenberg.edu"
-                        class="hover:text-primary transition-colors">hamedyaghoobian@muhlenberg.edu</a></p>
-            </div>
-        </footer>
     </main>
 
+    <script src="shared/session.js"></script>
+    <script src="shared/toolkit.js"></script>
     <script>
-        // Theme
-        const themeToggle = document.getElementById('themeToggle');
-        function setTheme(dark) { document.documentElement.classList.toggle('dark', dark); localStorage.setItem('ethicsToolkitTheme', dark ? 'dark' : 'light'); }
-        if (localStorage.getItem('ethicsToolkitTheme') === 'light') { setTheme(false); themeToggle.checked = false; }
-        themeToggle.addEventListener('change', () => setTheme(themeToggle.checked));
-
-        // Mobile Menu
-        const sidebar = document.getElementById('sidebar');
-        const openSidebarBtn = document.getElementById('openSidebar');
-        const closeSidebarBtn = document.getElementById('closeSidebar');
-        const mobileOverlay = document.getElementById('mobileOverlay');
-
-        function toggleSidebar() {
-            const isClosed = sidebar.classList.contains('-translate-x-full');
-            if (isClosed) {
-                sidebar.classList.remove('-translate-x-full');
-                mobileOverlay.classList.remove('hidden');
-                setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10);
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                mobileOverlay.classList.add('opacity-0');
-                setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
-            }
-        }
-
-        openSidebarBtn?.addEventListener('click', toggleSidebar);
-        closeSidebarBtn?.addEventListener('click', toggleSidebar);
-        mobileOverlay?.addEventListener('click', toggleSidebar);
+        Toolkit.mountShell({ active: null });
+        ToolkitSession.maybeOfferConsent();
     </script>
 </body>
 

@@ -1,0 +1,129 @@
+/* Shared chrome styles for every toolkit page.
+   Previously each page carried its own copy of these rules and they drifted:
+   the light-mode scrollbar override existed only on index.html, so every tool
+   page rendered a dark navy scrollbar against a white background. */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #101922;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #2d3f50;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #137fec;
+}
+
+.light ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.light ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+html {
+    scrollbar-color: #2d3f50 #101922;
+}
+
+html.light {
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Visible keyboard focus everywhere. Several controls previously had none, so
+   a keyboard user could not tell where they were on the page. */
+:focus-visible {
+    outline: 2px solid #137fec;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Screen-reader-only text, used for table captions and control labels that are
+   conveyed visually by an icon. */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Skip link: first tab stop on every page. */
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 0.75rem 1.25rem;
+    background: #137fec;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 0 0 0.5rem 0;
+}
+
+.skip-link:focus {
+    left: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Lab reports are submitted as PDFs, so give printing a sane default: drop the
+   fixed sidebar, unclip scroll panes, and stop content being cut off. */
+@media print {
+
+    #sidebar,
+    #mobileOverlay,
+    #openSidebar,
+    .no-print {
+        display: none !important;
+    }
+
+    main {
+        margin-left: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    body {
+        background: #fff !important;
+        color: #000 !important;
+    }
+
+    .overflow-y-auto,
+    .overflow-x-auto,
+    [class*="max-h-"] {
+        overflow: visible !important;
+        max-height: none !important;
+    }
+
+    a[href^="http"]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.75em;
+        color: #555;
+    }
+}
