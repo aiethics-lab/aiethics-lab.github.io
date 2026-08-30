@@ -7,30 +7,12 @@
     <title>Dataset Bias Auditor | AI Ethics Toolkit</title>
     <meta name="description"
         content="Scan datasets for representation imbalances and historical bias patterns before training starts." />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="../shared/tailwind.css" />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#137fec",
-                        "primary-hover": "#0f6bd1",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
-                        "surface-dark": "#182430",
-                        "surface-dark-lighter": "#212e3b",
-                    },
-                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] },
-                },
-            },
-        }
-    </script>
+    <script src="../vendor/plotly-2.27.0.min.js"></script>
+    <script src="../vendor/papaparse-5.4.1.min.js"></script>
     <style>
         ::-webkit-scrollbar {
             width: 8px;
@@ -301,6 +283,10 @@
 
             <!-- Export -->
             <div class="flex justify-end gap-3">
+                <button type="button" id="copyLinkBtn"
+                    class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors">
+                    Copy link to this configuration
+                </button>
                 <button onclick="exportReport()"
                     class="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors flex items-center text-sm">
                     <span class="material-icons-outlined mr-2 text-base" aria-hidden="true">download</span> Export Report (HTML)
@@ -1183,6 +1169,56 @@ Sample datasets are synthetic; see <code>data/generate_samples.py</code> for the
     <script>
         Toolkit.mountShell({ active: 'bias-auditor' });
         ToolkitSession.maybeOfferConsent();
+
+        // ---- shareable configuration + session recording ------------------
+        const auditState = Toolkit.state.bind(
+            ['protectedAttr', 'targetVar', 'favorableVal', 'truthVar', 'truthPositiveVal'],
+            { onRestore: () => { if (currentData) runAudit(); } }
+        );
+        Toolkit.state.wireCopyButton('copyLinkBtn');
+
+        // Restoring a shared link is a two-step dance: the column dropdowns do
+        // not exist until the CSV has been parsed, so the URL state has to be
+        // re-applied after processData rather than only at bind time.
+        const _processData = processData;
+        processData = function (data) {
+            _processData.call(this, data);
+            const applied = auditState.restore();
+            if (applied && document.getElementById('favorableVal').value) {
+                onConfigChange();
+                runAudit();
+            }
+        };
+
+        (function restoreFromLink() {
+            const incoming = Toolkit.state.read();
+            if (incoming.dataset && SAMPLE_DATASETS[incoming.dataset]) {
+                loadSampleDataset(incoming.dataset);
+            }
+        })();
+
+        const _runAudit = runAudit;
+        runAudit = function () {
+            _runAudit.apply(this, arguments);
+            auditState.sync();
+            ToolkitSession?.record('audit.run', {
+                protectedAttr: document.getElementById('protectedAttr').value,
+                decision: document.getElementById('targetVar').value,
+                favorable: document.getElementById('favorableVal').value,
+                groundTruth: document.getElementById('truthVar').value || 'none',
+                rows: currentData ? currentData.length : 0,
+                failed: lastAudit ? lastAudit.failed.length : 0
+            });
+        };
+
+        const _loadSample = loadSampleDataset;
+        loadSampleDataset = function (type, evt) {
+            _loadSample.call(this, type, evt);
+            const st = Toolkit.state.read();
+            st.dataset = type;
+            Toolkit.state.write(st);
+            ToolkitSession?.record('dataset.load', { dataset: type });
+        };
     </script>
 </body>
 

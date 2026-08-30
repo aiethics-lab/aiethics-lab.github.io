@@ -5,21 +5,11 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Privacy & Anonymization Lab | AI Ethics Toolkit</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="../shared/tailwind.css" />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class", theme: {
-                extend: {
-                    colors: { "primary": "#137fec", "primary-hover": "#0f6bd1", "background-light": "#f6f7f8", "background-dark": "#101922", "surface-dark": "#182430", "surface-dark-lighter": "#212e3b" },
-                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
-                }
-            }
-        }
-    </script>
+    <script src="../vendor/plotly-2.27.0.min.js"></script>
     <style>
         ::-webkit-scrollbar {
             width: 8px;
@@ -320,6 +310,17 @@ Thanks, John</textarea>
                 </div>
             </div>
         </div>
+                <div class="flex flex-wrap gap-2 mb-6 no-print">
+                    <button type="button" id="copyLinkBtn"
+                        class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors">
+                        Copy link to this configuration
+                    </button>
+                    <button type="button" onclick="exportPrivacyReport()"
+                        class="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors flex items-center">
+                        <span class="material-icons-outlined mr-2 text-base" aria-hidden="true">download</span>
+                        Export report (HTML)
+                    </button>
+                </div>
     </main>
 
     <script>
@@ -886,6 +887,87 @@ Thanks, John</textarea>
     <script>
         Toolkit.mountShell({ active: 'privacy-lab' });
         ToolkitSession.maybeOfferConsent();
+
+        // ---- shareable configuration + session recording ------------------
+        Toolkit.state.bind(
+            ['anonTechniqueUnused', 'kValue', 'lValue', 'suppressValue', 'dpQuery', 'dpEpsilon', 'nQueries', 'dpBudgetCap'],
+            { onRestore: () => { applyAnonymization(); updateDPCost(); } }
+        );
+        Toolkit.state.wireCopyButton('copyLinkBtn');
+
+        const _applyAnon = applyAnonymization;
+        applyAnonymization = function () {
+            _applyAnon.apply(this, arguments);
+            ToolkitSession?.record('anonymize', {
+                k: +document.getElementById('kValue').value,
+                l: +document.getElementById('lValue').value,
+                suppression: +document.getElementById('suppressValue').value
+            });
+        };
+
+        const _runDP = runDPExperiment;
+        runDPExperiment = function () {
+            const before = dpEpsilonSpent;
+            _runDP.apply(this, arguments);
+            if (dpEpsilonSpent !== before) {
+                ToolkitSession?.record('dp.run', {
+                    query: document.getElementById('dpQuery').value,
+                    epsilon: +document.getElementById('dpEpsilon').value / 10,
+                    queries: +document.getElementById('nQueries').value,
+                    spent: +dpEpsilonSpent.toFixed(1)
+                });
+            }
+        };
+
+        const _detectPII = detectPII;
+        detectPII = function () {
+            _detectPII.apply(this, arguments);
+            ToolkitSession?.record('pii.scan', {});
+        };
+
+        async function exportPrivacyReport() {
+            const dpChart = await Toolkit.report.chartImage('dpChart');
+            Toolkit.report.download({
+                tool: 'privacy-lab',
+                title: 'Privacy & Anonymization Lab — Report',
+                config: {
+                    'k (minimum class size)': document.getElementById('kValue').value,
+                    'l (distinct conditions)': document.getElementById('lValue').value,
+                    'Suppression budget': document.getElementById('suppressValue').value + '%',
+                    'DP query': document.getElementById('dpQuery').value,
+                    'Epsilon per query': (+document.getElementById('dpEpsilon').value / 10).toFixed(1),
+                    'Queries released': document.getElementById('nQueries').value,
+                    'Budget ceiling': document.getElementById('dpBudgetCap').value
+                },
+                sections: [
+                    { heading: 'Anonymized table', html: plainifyNode(document.querySelector('#anonResult').closest('table')) },
+                    { heading: 'Anonymization metrics', html: plainify('anonMetrics') },
+                    { heading: 'Differential privacy', html: dpChart ? `<img src="${dpChart}" alt="Distribution of noisy query results">` : '<p>No experiment run.</p>' },
+                    { heading: 'Query statistics', html: plainify('dpStats') },
+                    { heading: 'Detected PII', html: plainify('piiResults') }
+                ]
+            });
+        }
+
+        // Strip Tailwind classes and icon glyphs: the exported file carries its
+        // own stylesheet and must not depend on Tailwind or an icon font.
+        function plainifyNode(el, outer) {
+            if (!el) return '';
+            const clone = el.cloneNode(true);
+            clone.querySelectorAll('.material-icons-outlined').forEach(n => n.remove());
+            clone.querySelectorAll('[aria-hidden="true"]').forEach(n => n.remove());
+            clone.querySelectorAll('[class]').forEach(n => n.removeAttribute('class'));
+            clone.querySelectorAll('[style]').forEach(n => n.removeAttribute('style'));
+            clone.removeAttribute('class');
+            clone.removeAttribute('style');
+            return outer === false ? clone.innerHTML : clone.outerHTML;
+        }
+
+        function plainify(id) {
+            const el = document.getElementById(id);
+            if (!el || !el.innerHTML.trim()) return '';
+            return plainifyNode(el, false);
+        }
     </script>
 </body>
 

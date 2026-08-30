@@ -7,29 +7,11 @@
     <title>LLM Ethical Sandbox | AI Ethics Toolkit</title>
     <meta name="description"
         content="Experiment with LiquidAI's LFM2.5 WebGPU model to explore system prompt adherence, bias, and prompt injection entirely in your browser." />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="../shared/tailwind.css" />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#137fec",
-                        "primary-hover": "#0f6bd1",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
-                        "surface-dark": "#182430",
-                        "surface-dark-lighter": "#212e3b",
-                    },
-                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] },
-                },
-            },
-        }
-    </script>
+    <script src="../vendor/marked-12.0.2.min.js"></script>
     <style>
         ::-webkit-scrollbar {
             width: 8px;

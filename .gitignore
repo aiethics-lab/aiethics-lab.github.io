@@ -2,6 +2,7 @@
 stitch/
 *.pyc
 __pycache__/
+node_modules/
 
 # Course materials live in their own PRIVATE repo:
 # https://github.com/hamedyaghoobian/ai-data-ethics-course

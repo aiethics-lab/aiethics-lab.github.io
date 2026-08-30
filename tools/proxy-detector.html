@@ -5,22 +5,12 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Proxy Variable Detector | AI Ethics Toolkit</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="../shared/tailwind.css" />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class", theme: {
-                extend: {
-                    colors: { "primary": "#137fec", "primary-hover": "#0f6bd1", "background-light": "#f6f7f8", "background-dark": "#101922", "surface-dark": "#182430", "surface-dark-lighter": "#212e3b" },
-                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
-                }
-            }
-        }
-    </script>
+    <script src="../vendor/plotly-2.27.0.min.js"></script>
+    <script src="../vendor/papaparse-5.4.1.min.js"></script>
     <style>
         ::-webkit-scrollbar {
             width: 8px;
@@ -196,6 +186,17 @@
                 </div>
             </div>
         </div>
+                <div class="flex flex-wrap gap-2 mb-6 no-print">
+                    <button type="button" id="copyLinkBtn"
+                        class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors">
+                        Copy link to this configuration
+                    </button>
+                    <button type="button" onclick="exportProxyReport()"
+                        class="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors flex items-center">
+                        <span class="material-icons-outlined mr-2 text-base" aria-hidden="true">download</span>
+                        Export report (HTML)
+                    </button>
+                </div>
     </main>
 
     <script>
@@ -719,6 +720,66 @@
     <script>
         Toolkit.mountShell({ active: 'proxy-detector' });
         ToolkitSession.maybeOfferConsent();
+
+        // ---- shareable configuration + session recording ------------------
+        Toolkit.state.bind(['protectedSelect'], { onRestore: () => runAnalysis() });
+        Toolkit.state.wireCopyButton('copyLinkBtn');
+
+        (function restoreScenario() {
+            const st = Toolkit.state.read();
+            if (st.scenario && SCENARIOS[st.scenario]) loadScenario(st.scenario);
+        })();
+
+        const _loadScenario = loadScenario;
+        loadScenario = function (name) {
+            _loadScenario.call(this, name);
+            const st = Toolkit.state.read();
+            st.scenario = name;
+            Toolkit.state.write(st);
+            ToolkitSession?.record('scenario.load', { scenario: name });
+        };
+
+        const _runAnalysis = runAnalysis;
+        runAnalysis = function () {
+            _runAnalysis.apply(this, arguments);
+            ToolkitSession?.record('proxy.analyze', {
+                scenario: currentScenario,
+                protectedAttr: document.getElementById('protectedSelect').value
+            });
+        };
+
+        async function exportProxyReport() {
+            const heat = await Toolkit.report.chartImage('correlationMap');
+            const vif = await Toolkit.report.chartImage('vifChart');
+            const s = SCENARIOS[currentScenario];
+            Toolkit.report.download({
+                tool: 'proxy-detector',
+                title: 'Proxy Variable Detector — Report',
+                config: {
+                    Scenario: s ? s.name : currentScenario,
+                    'Protected attribute': document.getElementById('protectedSelect').value,
+                    Provenance: s ? s.source : ''
+                },
+                sections: [
+                    { heading: 'Association with the protected attribute', html: plainify('featureList') },
+                    { heading: 'Association heatmap', html: heat ? `<img src="${heat}" alt="Feature by protected attribute association heatmap">` : '' },
+                    { heading: 'Multicollinearity (VIF)', html: vif ? `<img src="${vif}" alt="Variance inflation factor by feature">` : '' },
+                    { heading: 'Findings', html: plainify('proxyAlerts') },
+                    { heading: 'Recommendations', html: plainify('recommendations') }
+                ]
+            });
+        }
+
+        function plainify(id) {
+            const el = document.getElementById(id);
+            if (!el || !el.innerHTML.trim()) return '';
+            const clone = el.cloneNode(true);
+            clone.querySelectorAll('.material-icons-outlined').forEach(n => n.remove());
+            clone.querySelectorAll('[aria-hidden="true"]').forEach(n => n.remove());
+            clone.querySelectorAll('[class]').forEach(n => n.removeAttribute('class'));
+            clone.querySelectorAll('[style]').forEach(n => n.removeAttribute('style'));
+            return clone.innerHTML;
+        }
     </script>
 </body>
 

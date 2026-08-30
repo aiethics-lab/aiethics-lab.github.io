@@ -269,5 +269,203 @@
         }
     }
 
-    global.Toolkit = { TOOLS, CATEGORIES, VERSION, mountShell, esc, base, toolHref };
+    // ------------------------------------------------------- shareable state
+    //
+    // Tool configuration is mirrored into the URL hash so a student can paste a
+    // link into a lab report and you get their exact run back, and so labs can
+    // hand out pre-configured links ("open the auditor already set to
+    // Race x PredictedRisk"). Values are read on load and written on change.
+
+    const stateApi = {
+        read() {
+            const hash = global.location.hash.replace(/^#/, '');
+            if (!hash) return {};
+            const out = {};
+            new URLSearchParams(hash).forEach((v, k) => { out[k] = v; });
+            return out;
+        },
+
+        write(values) {
+            const params = new URLSearchParams();
+            Object.entries(values).forEach(([k, v]) => {
+                if (v !== null && v !== undefined && v !== '') params.set(k, v);
+            });
+            const next = params.toString();
+            // replaceState keeps the back button meaning "previous page", not
+            // "previous slider position".
+            history.replaceState(null, '', next ? '#' + next : global.location.pathname + global.location.search);
+        },
+
+        /**
+         * Two-way bind a set of controls to the URL hash.
+         *
+         * @param {string[]} ids   element ids to sync
+         * @param {object}   opts  onRestore() runs after values are applied
+         * @returns {{capture: function, link: function}}
+         */
+        bind(ids, opts = {}) {
+            const els = () => ids.map(id => document.getElementById(id)).filter(Boolean);
+            const valueOf = el => el.type === 'checkbox' ? (el.checked ? '1' : '') : el.value;
+
+            // Snapshot the incoming link ONCE. Restoring dispatches change
+            // events, which trigger sync, which would otherwise overwrite the
+            // hash with whatever is currently in the controls - wiping values
+            // meant for dropdowns that have not been populated yet.
+            const incoming = stateApi.read();
+            let restoring = false;
+
+            const capture = () => {
+                const out = {};
+                els().forEach(el => { out[el.id] = valueOf(el); });
+                return out;
+            };
+
+            // Merge rather than replace: keys written by the page outside this
+            // bound set (a dataset choice, a scenario name) must survive.
+            const sync = () => {
+                if (restoring) return;
+                stateApi.write(Object.assign(stateApi.read(), capture()));
+            };
+
+            // Safe to call repeatedly. Options that arrive asynchronously (CSV
+            // columns, scenario attributes) only become settable once their
+            // dropdown has been populated, so pages call this again afterwards.
+            const restore = () => {
+                restoring = true;
+                let applied = 0;
+                els().forEach(el => {
+                    if (!(el.id in incoming)) return;
+                    const wanted = incoming[el.id];
+                    if (el.type === 'checkbox') {
+                        el.checked = wanted === '1';
+                    } else {
+                        const options = el.tagName === 'SELECT' ? [...el.options].map(o => o.value) : null;
+                        if (options && !options.includes(wanted)) return;   // not populated yet
+                        el.value = wanted;
+                    }
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    applied++;
+                });
+                restoring = false;
+                return applied;
+            };
+
+            els().forEach(el => {
+                el.addEventListener('change', sync);
+                if (el.type === 'range' || el.tagName === 'INPUT') el.addEventListener('input', sync);
+            });
+
+            const applied = restore();
+            if (applied && typeof opts.onRestore === 'function') {
+                setTimeout(() => opts.onRestore(applied), 0);
+            }
+
+            return { capture, restore, sync, incoming, link: () => global.location.href };
+        },
+
+        /** Wire a "copy link to this configuration" button. */
+        wireCopyButton(buttonId) {
+            const btn = document.getElementById(buttonId);
+            if (!btn) return;
+            btn.addEventListener('click', async () => {
+                const original = btn.textContent;
+                try {
+                    await navigator.clipboard.writeText(global.location.href);
+                    btn.textContent = 'Link copied';
+                } catch (e) {
+                    btn.textContent = 'Copy failed — use the address bar';
+                }
+                global.ToolkitSession?.record('share.link', {});
+                setTimeout(() => { btn.textContent = original; }, 2200);
+            });
+        }
+    };
+
+    // ------------------------------------------------------------- reporting
+    //
+    // A shared, self-contained HTML report so every tool can produce lab
+    // evidence. It carries its own stylesheet: exported files must not depend
+    // on Tailwind or an icon font being present, which an earlier DOM-scraping
+    // export did, and which rendered icon ligature names as body text.
+
+    const REPORT_CSS = `
+  :root { color-scheme: light; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+         max-width: 880px; margin: 2.5em auto; padding: 0 1.5em; color: #1e293b; line-height: 1.6; }
+  h1 { color: #0f172a; font-size: 1.7rem; margin-bottom: .15em; }
+  h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: #475569;
+       border-bottom: 2px solid #0f172a; padding-bottom: .4em; margin-top: 2.2em; }
+  .sub { color: #64748b; margin-top: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: .9rem; }
+  th, td { border-bottom: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; }
+  th { background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: .78rem;
+       text-transform: uppercase; letter-spacing: .05em; color: #475569; }
+  td.num, .num { font-variant-numeric: tabular-nums; text-align: right; }
+  img { max-width: 100%; height: auto; border: 1px solid #e2e8f0; border-radius: 6px; margin: 1em 0; }
+  .note { background: #f8fafc; border-left: 3px solid #94a3b8; padding: 10px 14px;
+          font-size: .88rem; color: #475569; margin: 1em 0; }
+  .link { word-break: break-all; font-family: ui-monospace, Menlo, monospace; font-size: .78rem; color: #2563eb; }
+  footer { margin-top: 3em; padding-top: 1em; border-top: 1px solid #e2e8f0;
+           font-size: .8rem; color: #94a3b8; }`;
+
+    const reportApi = {
+        /** Render a Plotly chart to a PNG data URI, or null if unavailable. */
+        async chartImage(elementId, opts = {}) {
+            const el = document.getElementById(elementId);
+            if (!el || !global.Plotly || !el.data) return null;
+            try {
+                return await global.Plotly.toImage(el, {
+                    format: 'png',
+                    width: opts.width || 900,
+                    height: opts.height || 450,
+                    scale: 2
+                });
+            } catch (e) {
+                return null;
+            }
+        },
+
+        /**
+         * @param {object} o
+         * @param {string} o.tool     tool id, used in the filename
+         * @param {string} o.title    report heading
+         * @param {object} o.config   key/value rows describing the configuration
+         * @param {Array}  o.sections [{ heading, html }]
+         */
+        download(o) {
+            const rows = Object.entries(o.config || {})
+                .map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('');
+            const body = (o.sections || [])
+                .filter(s => s && s.html)
+                .map(s => `<h2>${esc(s.heading)}</h2>\n${s.html}`).join('\n');
+
+            const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<title>${esc(o.title)}</title>
+<style>${REPORT_CSS}</style></head><body>
+<h1>${esc(o.title)}</h1>
+<p class="sub">${new Date().toLocaleString()}</p>
+${rows ? `<h2>Configuration</h2><table>${rows}</table>` : ''}
+${body}
+<h2>Reproduce this run</h2>
+<p class="note">Open this link to restore the exact configuration above:<br>
+<span class="link">${esc(global.location.href)}</span></p>
+<footer>Generated by the AI Ethics Toolkit v${VERSION}. Sample datasets are synthetic;
+see <code>data/generate_samples.py</code> for the generating process.</footer>
+</body></html>`;
+
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${o.tool || 'toolkit'}_report.html`.replace(/[^\w.\-]/g, '_');
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            global.ToolkitSession?.record('export', { kind: 'report', tool: o.tool });
+        }
+    };
+
+    global.Toolkit = { TOOLS, CATEGORIES, VERSION, mountShell, esc, base, toolHref,
+                       state: stateApi, report: reportApi };
 })(window);

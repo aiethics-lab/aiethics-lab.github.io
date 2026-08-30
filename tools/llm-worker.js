@@ -1,4 +1,14 @@
-import { pipeline, TextStreamer, InterruptableStoppingCriteria, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0-next.3';
+// Pinned to a stable release rather than the 4.0.0-next.3 prerelease this
+// previously used. Prereleases get superseded and unpublished; a course
+// running in 2027 should not depend on one. Same major version, so the
+// pipeline / TextStreamer / InterruptableStoppingCriteria API is unchanged.
+//
+// This is the one dependency not vendored into /vendor: transformers.js is an
+// ES module that pulls in ONNX Runtime and WASM binaries at runtime, so a
+// single-file copy would not work. It needs network access on first load, and
+// the model weights (~1 GB) are fetched from Hugging Face and then cached by
+// the browser. Plan Week 13 accordingly - see README.
+import { pipeline, TextStreamer, InterruptableStoppingCriteria, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0';
 
 // Optimizations for WebGPU
 env.allowLocalModels = false;
