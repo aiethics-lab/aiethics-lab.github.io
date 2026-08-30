@@ -27,6 +27,10 @@ The one exception is the **LLM Ethical Sandbox**, which needs WebGPU and
 downloads roughly 1.2 GB of model weights from Hugging Face on first use. Plan
 for that before running it with a full class on shared wifi.
 
+Set a **secret to watch for** and every reply is checked for it, in the answer
+and in the reasoning. A model that keeps a secret out of its answer but writes
+it into a visible chain of thought has still leaked it, and the tool says so.
+
 It runs a *reasoning* model: it writes a private `<think>` block before
 answering, often 500–2000 tokens, so first replies can take a while. The
 reasoning budget slider defaults to no cap, because a cap that fires mid-thought
@@ -47,7 +51,7 @@ offers a one-click retry that asks for a direct answer instead.
 | Privacy & Anonymization Lab | k-anonymity lattice search, l-diversity, and a differential privacy budget you can exhaust |
 | Value Alignment Tool | Twelve real AI dilemmas mapped across five ethical frameworks |
 | Proxy Variable Detector | How strongly ordinary features encode protected attributes |
-| LLM Ethical Sandbox | Red-teaming a small language model running locally via WebGPU |
+| LLM Ethical Sandbox | Red-teaming a small language model running locally via WebGPU, with automatic leak detection |
 
 ---
 
