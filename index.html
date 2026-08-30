@@ -217,8 +217,9 @@
                         </div>
                         <h2 class="text-2xl font-bold text-white mb-2">Model Explainability Lab</h2>
                         <p class="text-slate-400 text-sm md:text-base max-w-2xl mb-4">
-                            Demystify complex AI decisions. Use state-of-the-art interpretability techniques like SHAP
-                            and LIME to visualize feature importance and understand model behavior.
+                            Two explanations of the same prediction, computed two different ways: LIME fits a local
+                            surrogate by perturbing the input, while SHAP reads exact Shapley values off the model.
+                            Where they disagree tells you something.
                         </p>
                         <div class="flex items-center space-x-4 text-sm text-slate-400">
                             <div class="flex items-center">
@@ -342,7 +343,7 @@
             {
                 id: 'explainability-lab',
                 name: 'Model Explainability Lab',
-                description: 'Use SHAP and LIME to interpret predictions and visualize decision boundaries on image data.',
+                description: 'Compare a sampled LIME surrogate against exact Shapley values on text, lending, health and risk-scoring models.',
                 icon: 'visibility',
                 color: 'purple',
                 category: 'explainability',
@@ -351,7 +352,7 @@
             {
                 id: 'bias-auditor',
                 name: 'Dataset Bias Auditor',
-                description: 'Scan datasets for representation imbalances and historical bias patterns before training starts.',
+                description: 'Compute selection-rate and error-rate fairness metrics from a real confusion matrix, and see why they conflict.',
                 icon: 'saved_search',
                 color: 'orange',
                 category: 'fairness',
@@ -387,7 +388,7 @@
             {
                 id: 'value-alignment',
                 name: 'Value Alignment Tool',
-                description: 'Experiment with reward functions to align AI agents with human values in complex environments.',
+                description: 'Work through 12 real AI dilemmas and see your choices mapped across five ethical frameworks.',
                 icon: 'balance',
                 color: 'pink',
                 category: 'safety',
@@ -406,7 +407,7 @@
             {
                 id: 'proxy-detector',
                 name: 'Proxy Variable Detector',
-                description: 'Identify variables that correlate with protected attributes and cause indirect discrimination.',
+                description: 'Measure how strongly ordinary features encode protected attributes, using the right statistic for each pair.',
                 icon: 'find_replace',
                 color: 'cyan',
                 category: 'fairness',

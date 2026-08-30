@@ -198,15 +198,15 @@
                     </label>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="loadSampleDataset('credit')"
+                    <button id="sample-credit" onclick="loadSampleDataset('credit', event)"
                         class="px-4 py-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-sm font-medium transition-colors">
                         <span class="material-icons-outlined text-sm align-middle mr-1">credit_card</span> Credit Risk
                     </button>
-                    <button onclick="loadSampleDataset('hiring')"
+                    <button id="sample-hiring" onclick="loadSampleDataset('hiring', event)"
                         class="px-4 py-2 rounded-lg bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 text-sm font-medium transition-colors">
                         <span class="material-icons-outlined text-sm align-middle mr-1">work</span> Hiring Data
                     </button>
-                    <button onclick="loadSampleDataset('recidivism')"
+                    <button id="sample-recidivism" onclick="loadSampleDataset('recidivism', event)"
                         class="px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 text-sm font-medium transition-colors">
                         <span class="material-icons-outlined text-sm align-middle mr-1">gavel</span> Recidivism
                     </button>
@@ -218,21 +218,45 @@
                 <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Audit Configuration</h3>
                 <div class="space-y-3">
                     <div>
-                        <label class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Protected Attribute</label>
-                        <select id="protectedAttr"
+                        <label for="protectedAttr" class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Protected attribute</label>
+                        <select id="protectedAttr" onchange="onConfigChange()"
                             class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 focus:ring-primary focus:border-primary">
                             <option>Load a dataset first</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Target Variable</label>
-                        <select id="targetVar"
+                        <label for="targetVar" class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Decision column <span class="text-slate-400">(what the system output)</span></label>
+                        <select id="targetVar" onchange="onConfigChange()"
                             class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 focus:ring-primary focus:border-primary">
                             <option>Load a dataset first</option>
                         </select>
                     </div>
-                    <button onclick="runAudit()"
-                        class="w-full py-2 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors text-sm flex items-center justify-center">
+                    <div>
+                        <label for="favorableVal" class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Favorable value <span class="text-slate-400">(required)</span></label>
+                        <select id="favorableVal" onchange="onConfigChange()"
+                            class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 focus:ring-primary focus:border-primary">
+                            <option value="">—</option>
+                        </select>
+                        <p class="text-[10px] text-slate-400 mt-1 leading-snug">Which outcome benefits the person. This is
+                            a value judgement, not a property of the data — you have to make it.</p>
+                    </div>
+                    <div class="pt-1 border-t border-slate-200 dark:border-slate-700/60">
+                        <label for="truthVar" class="text-xs text-slate-500 dark:text-slate-400 block mb-1 mt-2">Ground-truth column <span class="text-slate-400">(what actually happened)</span></label>
+                        <select id="truthVar" onchange="onConfigChange()"
+                            class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 focus:ring-primary focus:border-primary">
+                            <option value="">None — selection-rate metrics only</option>
+                        </select>
+                    </div>
+                    <div id="truthValWrap" class="hidden">
+                        <label for="truthPositiveVal" class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Value meaning the favorable outcome was deserved</label>
+                        <select id="truthPositiveVal" onchange="onConfigChange()"
+                            class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 focus:ring-primary focus:border-primary">
+                            <option value="">—</option>
+                        </select>
+                    </div>
+                    <p id="configHint" class="text-[11px] text-amber-600 dark:text-amber-400 leading-snug"></p>
+                    <button onclick="runAudit()" id="runAuditBtn"
+                        class="w-full py-2 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors text-sm flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed">
                         <span class="material-icons-outlined mr-1 text-base">play_arrow</span> Run Audit
                     </button>
                 </div>
@@ -306,10 +330,10 @@
                     class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-6">
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
                         <span class="material-icons-outlined text-green-500 mr-2 align-middle">assessment</span>
-                        Fairness Metrics (7 Tests)
+                        Fairness Metrics
                     </h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Comprehensive fairness evaluation using
-                        multiple complementary metrics.</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Selection-rate metrics need only the
+                        decision column. Error-rate metrics also need ground truth, and are disabled without it.</p>
                     <div id="fairnessMetrics" class="space-y-4"></div>
                 </div>
             </div>
@@ -379,20 +403,25 @@
         // ==================== STATE ====================
         let currentData = null;
         let currentColumns = [];
+        let lastAudit = null;
 
         // ==================== SAMPLE DATASETS (REAL CSV FILES) ====================
+        // Bump DATA_VERSION whenever the sample CSVs are regenerated. Without
+        // it browsers serve the previously cached file and the tool silently
+        // audits last semester's data against this semester's column names.
+        const DATA_VERSION = '2026-08-30';
         const SAMPLE_DATASETS = {
-            credit: '../data/credit-risk-sample.csv',
-            hiring: '../data/hiring-sample.csv',
-            recidivism: '../data/recidivism-sample.csv'
+            credit: `../data/credit-risk-sample.csv?v=${DATA_VERSION}`,
+            hiring: `../data/hiring-sample.csv?v=${DATA_VERSION}`,
+            recidivism: `../data/recidivism-sample.csv?v=${DATA_VERSION}`
         };
 
-        function loadSampleDataset(type) {
+        function loadSampleDataset(type, evt) {
             const url = SAMPLE_DATASETS[type];
             if (!url) return;
 
-            // Show loading state on the button
-            const btn = event.target.closest('button');
+            const btn = (evt && evt.target.closest('button')) || document.getElementById(`sample-${type}`);
+            if (!btn) { Papa.parse(url, { download: true, header: true, dynamicTyping: true, skipEmptyLines: true, complete: r => processData(r.data) }); return; }
             const originalHTML = btn.innerHTML;
             btn.innerHTML = '<span class="material-icons-outlined text-sm align-middle mr-1 animate-spin">sync</span> Loading...';
             btn.disabled = true;
@@ -446,23 +475,90 @@
             showPreview();
         }
 
+        // Escape anything that came from a file before it reaches innerHTML.
+        function esc(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
+        function distinctValues(col) {
+            return [...new Set(currentData.map(r => r[col]))]
+                .filter(v => v !== null && v !== undefined && v !== '')
+                .sort((a, b) => String(a).localeCompare(String(b)));
+        }
+
         function updateDropdowns() {
             const protectedAttr = document.getElementById('protectedAttr');
             const targetVar = document.getElementById('targetVar');
+            const truthVar = document.getElementById('truthVar');
 
             const categoricalCols = currentColumns.filter(col => {
                 const vals = new Set(currentData.map(r => r[col]));
                 return vals.size <= 10 && vals.size >= 2;
             });
 
-            protectedAttr.innerHTML = categoricalCols.map(c => `<option value="${c}">${c}</option>`).join('');
-            targetVar.innerHTML = categoricalCols.map(c => `<option value="${c}">${c}</option>`).join('');
+            const opts = categoricalCols.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+            protectedAttr.innerHTML = opts;
+            targetVar.innerHTML = opts;
+            truthVar.innerHTML = '<option value="">None — selection-rate metrics only</option>' + opts;
 
-            // Auto-select likely candidates
+            // Suggest likely columns. The student can override any of these, and
+            // must still choose the favorable value explicitly.
             const protCandidates = ['Gender', 'Race', 'Sex', 'gender', 'race'];
-            const targetCandidates = ['Decision', 'Hired', 'Recidivism', 'Outcome', 'Label', 'Target', 'decision', 'outcome'];
+            const decisionCandidates = ['Decision', 'Hired', 'PredictedRisk', 'Prediction', 'Outcome', 'Label'];
+            const truthCandidates = ['Defaulted', 'JobPerformance', 'Recidivated', 'GroundTruth', 'Actual'];
             protCandidates.forEach(c => { if (categoricalCols.includes(c)) protectedAttr.value = c; });
-            targetCandidates.forEach(c => { if (categoricalCols.includes(c)) targetVar.value = c; });
+            decisionCandidates.forEach(c => { if (categoricalCols.includes(c)) targetVar.value = c; });
+            truthCandidates.forEach(c => { if (categoricalCols.includes(c)) truthVar.value = c; });
+
+            onConfigChange();
+        }
+
+        // Repopulate the value dropdowns whenever a column choice changes, and
+        // gate the Run button until the favorable value has actually been picked.
+        function onConfigChange() {
+            if (!currentData) return;
+            const target = document.getElementById('targetVar').value;
+            const truth = document.getElementById('truthVar').value;
+            const favSel = document.getElementById('favorableVal');
+            const truthSel = document.getElementById('truthPositiveVal');
+
+            const rebuild = (sel, col) => {
+                const previous = sel.value;
+                const vals = col ? distinctValues(col) : [];
+                sel.innerHTML = '<option value="">—</option>' +
+                    vals.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+                if (vals.map(String).includes(previous)) sel.value = previous;
+                return vals;
+            };
+
+            const favVals = rebuild(favSel, target);
+            // Only pre-select when the wording is unambiguous. Anything else the
+            // student decides, because "which outcome is favorable" is a judgement.
+            if (!favSel.value) {
+                const obvious = favVals.find(v => /^(approved|hired|yes|accepted|granted)$/i.test(String(v)));
+                if (obvious !== undefined) favSel.value = String(obvious);
+            }
+
+            document.getElementById('truthValWrap').classList.toggle('hidden', !truth);
+            const truthVals = rebuild(truthSel, truth);
+            if (truth && !truthSel.value) {
+                const obvious = truthVals.find(v => /^(no|strong|yes|good|repaid)$/i.test(String(v)));
+                if (obvious !== undefined) truthSel.value = String(obvious);
+            }
+
+            const hint = document.getElementById('configHint');
+            const btn = document.getElementById('runAuditBtn');
+            let msg = '';
+            if (!favSel.value) msg = 'Choose which value of the decision column is the favorable outcome.';
+            else if (truth && !truthSel.value) msg = 'Choose which ground-truth value means the favorable outcome was deserved.';
+            else if (!truth) msg = 'No ground truth selected — error-rate metrics will be unavailable.';
+            hint.textContent = msg;
+            hint.className = msg && !favSel.value
+                ? 'text-[11px] text-amber-600 dark:text-amber-400 leading-snug'
+                : 'text-[11px] text-slate-400 leading-snug';
+            btn.disabled = !favSel.value || (truth && !truthSel.value);
         }
 
         function showPreview() {
@@ -470,12 +566,12 @@
             document.getElementById('dataInfo').textContent = `${currentData.length} rows × ${currentColumns.length} columns`;
 
             const head = document.getElementById('previewHead');
-            head.innerHTML = `<tr>${currentColumns.map(c => `<th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">${c}</th>`).join('')}</tr>`;
+            head.innerHTML = `<tr>${currentColumns.map(c => `<th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">${esc(c)}</th>`).join('')}</tr>`;
 
             const body = document.getElementById('previewBody');
             body.innerHTML = currentData.slice(0, 8).map(row =>
                 `<tr class="hover:bg-slate-50 dark:hover:bg-surface-dark-lighter transition-colors">${currentColumns.map(c =>
-                    `<td class="px-4 py-2 text-sm text-slate-700 dark:text-slate-300">${row[c]}</td>`
+                    `<td class="px-4 py-2 text-sm text-slate-700 dark:text-slate-300">${esc(row[c])}</td>`
                 ).join('')}</tr>`
             ).join('');
         }
@@ -485,6 +581,25 @@
             if (!currentData) return;
             const protAttr = document.getElementById('protectedAttr').value;
             const target = document.getElementById('targetVar').value;
+            const favorableVal = document.getElementById('favorableVal').value;
+            const truthCol = document.getElementById('truthVar').value;
+            const truthPositiveVal = document.getElementById('truthPositiveVal').value;
+
+            // Validate here as well as in the UI, so a programmatic call cannot
+            // silently produce an all-zero audit that reads as "no bias found".
+            if (!favorableVal) {
+                alert('Choose which value of the decision column counts as the favorable outcome before running the audit.');
+                return;
+            }
+            if (truthCol && !truthPositiveVal) {
+                alert('Choose which ground-truth value means the favorable outcome was deserved.');
+                return;
+            }
+            const matched = currentData.filter(r => String(r[target]) === String(favorableVal)).length;
+            if (matched === 0) {
+                alert(`No rows have "${favorableVal}" in the column "${target}". Check that the decision column and favorable value belong together.`);
+                return;
+            }
 
             document.getElementById('auditResults').classList.remove('hidden');
 
@@ -592,133 +707,282 @@
             }, { responsive: true, displayModeBar: false });
         }
 
-        function renderFairnessMetrics(protAttr, target) {
-            const groups = {};
-            const targetVals = [...new Set(currentData.map(r => r[target]))];
-            const positiveVal = targetVals.find(v => /approved|hired|low|yes|1|positive/i.test(String(v)));
+        // ---- statistics helpers -------------------------------------------
+        // Regularized upper incomplete gamma Q(s,x), used for the chi-squared
+        // survival function. Series expansion below the transition point,
+        // Lentz continued fraction above it. Good to ~1e-10 across our range.
+        function gammaln(x) {
+            const c = [76.18009172947146, -86.50532032941677, 24.01409824083091,
+                       -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+            let y = x, tmp = x + 5.5;
+            tmp -= (x + 0.5) * Math.log(tmp);
+            let ser = 1.000000000190015;
+            for (let j = 0; j < 6; j++) ser += c[j] / ++y;
+            return -tmp + Math.log(2.5066282746310005 * ser / x);
+        }
+        function gammaQ(s, x) {
+            if (x < 0 || s <= 0) return NaN;
+            if (x === 0) return 1;
+            if (x < s + 1) {                       // series for P(s,x), then Q = 1 - P
+                let ap = s, sum = 1 / s, del = sum;
+                for (let n = 0; n < 500; n++) {
+                    ap++; del *= x / ap; sum += del;
+                    if (Math.abs(del) < Math.abs(sum) * 1e-12) break;
+                }
+                return 1 - sum * Math.exp(-x + s * Math.log(x) - gammaln(s));
+            }
+            const tiny = 1e-300;                   // continued fraction for Q(s,x)
+            let b = x + 1 - s, c = 1 / tiny, d = 1 / b, h = d;
+            for (let i = 1; i < 500; i++) {
+                const an = -i * (i - s);
+                b += 2;
+                d = an * d + b; if (Math.abs(d) < tiny) d = tiny;
+                c = b + an / c; if (Math.abs(c) < tiny) c = tiny;
+                d = 1 / d;
+                const del = d * c;
+                h *= del;
+                if (Math.abs(del - 1) < 1e-12) break;
+            }
+            return Math.exp(-x + s * Math.log(x) - gammaln(s)) * h;
+        }
+        // P(X >= chiSq) for X ~ chi-squared with df degrees of freedom.
+        function chiSquaredPValue(chiSq, df) {
+            if (!(df > 0) || !isFinite(chiSq) || chiSq < 0) return NaN;
+            return gammaQ(df / 2, chiSq / 2);
+        }
 
+        // ---- the audit ------------------------------------------------------
+        // Builds a real confusion matrix per group. `truthCol` may be null, in
+        // which case only selection-rate metrics are computable and the
+        // error-rate metrics are reported as unavailable rather than as zero.
+        function computeGroupStats(protAttr, decisionCol, favorableVal, truthCol, truthPositiveVal) {
+            const groups = {};
             currentData.forEach(row => {
                 const g = row[protAttr];
-                if (!groups[g]) groups[g] = { total: 0, positive: 0, tp: 0, fp: 0, tn: 0, fn: 0 };
-                groups[g].total++;
-                const isPositive = String(row[target]) === String(positiveVal);
-                if (isPositive) groups[g].positive++;
-                // For simplicity, approximate TP/FP/TN/FN using outcome as prediction stand-in
-                // In a real audit you’d compare predictions vs. actuals
-                if (isPositive) { groups[g].tp++; } else { groups[g].tn++; }
+                if (g === null || g === undefined || g === '') return;
+                if (!groups[g]) groups[g] = { total: 0, selected: 0, tp: 0, fp: 0, tn: 0, fn: 0, labelled: 0 };
+                const s = groups[g];
+                s.total++;
+                const predictedFavorable = String(row[decisionCol]) === String(favorableVal);
+                if (predictedFavorable) s.selected++;
+                if (!truthCol) return;
+                const truthVal = row[truthCol];
+                if (truthVal === null || truthVal === undefined || truthVal === '') return;
+                s.labelled++;
+                const deserved = String(truthVal) === String(truthPositiveVal);
+                if (deserved && predictedFavorable) s.tp++;
+                else if (!deserved && predictedFavorable) s.fp++;
+                else if (!deserved && !predictedFavorable) s.tn++;
+                else s.fn++;
+            });
+            return groups;
+        }
+
+        function renderFairnessMetrics(protAttr, target) {
+            const favorableVal = document.getElementById('favorableVal').value;
+            const truthCol = document.getElementById('truthVar').value || null;
+            const truthPositiveVal = document.getElementById('truthPositiveVal').value;
+            const targetVals = [...new Set(currentData.map(r => r[target]))];
+
+            const groups = computeGroupStats(protAttr, target, favorableVal, truthCol, truthPositiveVal);
+            const groupNames = Object.keys(groups);
+            if (!groupNames.length) return;
+
+            const rates = groupNames.map(g => {
+                const s = groups[g];
+                const pos = s.tp + s.fn;          // actually deserved the favorable outcome
+                const neg = s.fp + s.tn;          // actually did not
+                return {
+                    name: g,
+                    rate: s.selected / s.total,
+                    total: s.total,
+                    positive: s.selected,
+                    labelled: s.labelled,
+                    tpr: pos > 0 ? s.tp / pos : null,
+                    fpr: neg > 0 ? s.fp / neg : null,
+                    ppv: (s.tp + s.fp) > 0 ? s.tp / (s.tp + s.fp) : null,
+                    baseRate: s.labelled > 0 ? pos / s.labelled : null
+                };
             });
 
-            const groupNames = Object.keys(groups);
-            const rates = groupNames.map(g => ({
-                name: g,
-                rate: groups[g].positive / groups[g].total,
-                total: groups[g].total,
-                positive: groups[g].positive,
-                tpr: groups[g].positive > 0 ? groups[g].tp / groups[g].positive : 0,
-                fpr: (groups[g].total - groups[g].positive) > 0 ? groups[g].fp / (groups[g].total - groups[g].positive) : 0
-            }));
             const maxRate = Math.max(...rates.map(r => r.rate));
             const minRate = Math.min(...rates.map(r => r.rate));
-            const disparateImpact = maxRate > 0 ? minRate / maxRate : 1;
-            const statParity = maxRate - minRate;
+            // If nobody was selected at all, every rate-based metric is
+            // degenerate. Report that rather than a comfortable 0.000.
+            const degenerate = maxRate === 0;
+            const disparateImpact = degenerate ? null : minRate / maxRate;
+            const statParity = degenerate ? null : maxRate - minRate;
 
-            // Equal Opportunity Difference (TPR gap)
-            const tprs = rates.map(r => r.tpr);
-            const eqOpp = Math.max(...tprs) - Math.min(...tprs);
+            // Error-rate metrics: only defined when every group has both a
+            // positive and a negative ground-truth stratum.
+            const spread = key => {
+                const vals = rates.map(r => r[key]).filter(v => v !== null);
+                return vals.length === rates.length && vals.length > 1
+                    ? Math.max(...vals) - Math.min(...vals) : null;
+            };
+            const eqOpp = truthCol && !degenerate ? spread('tpr') : null;
+            const predEq = truthCol && !degenerate ? spread('fpr') : null;
+            const eqOdds = (eqOpp !== null && predEq !== null) ? Math.max(eqOpp, predEq) : null;
+            const calib = truthCol && !degenerate ? spread('ppv') : null;
 
-            // Predictive Equality (FPR gap)
-            const fprs = rates.map(r => r.fpr);
-            const predEq = Math.max(...fprs) - Math.min(...fprs);
-
-            // Equalized Odds (max of TPR gap and FPR gap)
-            const eqOdds = Math.max(eqOpp, predEq);
-
-            // Theil Index (between-group inequality)
-            const totalN = currentData.length;
-            const totalPos = rates.reduce((s, r) => s + r.positive, 0);
-            const overallRate = totalPos / totalN;
-            let theilIndex = 0;
+            // Theil index (between-group component) on selection rates.
+            const totalN = rates.reduce((s, r) => s + r.total, 0);
+            const overallRate = rates.reduce((s, r) => s + r.positive, 0) / totalN;
+            let theilIndex = degenerate ? null : 0;
             if (overallRate > 0) {
                 rates.forEach(r => {
                     if (r.rate > 0 && r.total > 0) {
-                        const weight = r.total / totalN;
-                        theilIndex += weight * (r.rate / overallRate) * Math.log(r.rate / overallRate);
+                        theilIndex += (r.total / totalN) * (r.rate / overallRate) * Math.log(r.rate / overallRate);
                     }
                 });
             }
 
-            // Chi-squared test for independence
-            const observed = [];
-            const expected = [];
+            // Chi-squared test of independence between group and decision.
+            let chiSq = 0;
             targetVals.forEach(tv => {
                 const totalTV = currentData.filter(r => String(r[target]) === String(tv)).length;
                 groupNames.forEach(g => {
                     const obs = currentData.filter(r => r[protAttr] === g && String(r[target]) === String(tv)).length;
                     const exp = (groups[g].total * totalTV) / totalN;
-                    observed.push(obs);
-                    expected.push(exp);
+                    if (exp > 0) chiSq += (obs - exp) ** 2 / exp;
                 });
             });
-            let chiSq = 0;
-            for (let i = 0; i < observed.length; i++) {
-                if (expected[i] > 0) chiSq += (observed[i] - expected[i]) ** 2 / expected[i];
-            }
             const df = (groupNames.length - 1) * (targetVals.length - 1);
-            // Approximate p-value using chi-squared CDF (simplified)
-            const chiPValue = df > 0 ? Math.exp(-chiSq / 2) : 1; // rough approximation
+            const chiPValue = chiSquaredPValue(chiSq, df);
+            const minExpected = Math.min(...targetVals.flatMap(tv => {
+                const totalTV = currentData.filter(r => String(r[target]) === String(tv)).length;
+                return groupNames.map(g => (groups[g].total * totalTV) / totalN);
+            }));
 
+            const NA = 'Needs a ground-truth column';
             const metrics = [
-                { name: 'Disparate Impact Ratio', value: disparateImpact, threshold: 0.8, direction: '>=', desc: 'Min/Max selection rate ratio. Should be ≥ 0.8 (80% rule)', icon: 'gavel' },
-                { name: 'Statistical Parity Diff', value: statParity, threshold: 0.1, direction: '<=', desc: 'Max rate diff between groups. Should be ≤ 0.1', icon: 'balance' },
-                { name: 'Equal Opportunity Diff', value: eqOpp, threshold: 0.1, direction: '<=', desc: 'TPR gap between groups. Should be ≤ 0.1', icon: 'accessibility' },
-                { name: 'Predictive Equality', value: predEq, threshold: 0.1, direction: '<=', desc: 'FPR gap between groups. Should be ≤ 0.1', icon: 'rule' },
-                { name: 'Equalized Odds', value: eqOdds, threshold: 0.1, direction: '<=', desc: 'Max of TPR and FPR gaps. Should be ≤ 0.1', icon: 'library_books' },
-                { name: 'Theil Index', value: theilIndex, threshold: 0.1, direction: '<=', desc: 'Between-group inequality. Should be ≤ 0.1', icon: 'show_chart' },
-                { name: 'Chi-Squared (χ²)', value: chiSq, threshold: null, direction: null, desc: `χ² = ${chiSq.toFixed(2)}, df = ${df}, p ≈ ${chiPValue.toFixed(4)}`, icon: 'science' },
+                {
+                    name: 'Disparate Impact Ratio', value: disparateImpact, threshold: 0.8, direction: '>=',
+                    desc: 'Min ÷ max selection rate. The EEOC four-fifths rule looks for ≥ 0.80', icon: 'gavel'
+                },
+                {
+                    name: 'Statistical Parity Diff', value: statParity, threshold: 0.1, direction: '<=',
+                    desc: 'Largest gap in selection rate between groups', icon: 'balance'
+                },
+                {
+                    name: 'Equal Opportunity Diff', value: eqOpp, threshold: 0.1, direction: '<=',
+                    desc: eqOpp === null ? NA : 'Gap in true positive rate — among people who deserved the favorable outcome, who actually got it', icon: 'accessibility'
+                },
+                {
+                    name: 'Predictive Equality', value: predEq, threshold: 0.1, direction: '<=',
+                    desc: predEq === null ? NA : 'Gap in false positive rate — among people who did not deserve it, who got it anyway', icon: 'rule'
+                },
+                {
+                    name: 'Equalized Odds', value: eqOdds, threshold: 0.1, direction: '<=',
+                    desc: eqOdds === null ? NA : 'The larger of the TPR and FPR gaps', icon: 'library_books'
+                },
+                {
+                    name: 'Calibration Gap (PPV)', value: calib, threshold: 0.1, direction: '<=',
+                    desc: calib === null ? NA : 'Gap in positive predictive value — of those given the favorable outcome, how many deserved it', icon: 'tune'
+                },
+                {
+                    name: 'Theil Index', value: theilIndex, threshold: 0.1, direction: '<=',
+                    desc: 'Between-group inequality in selection rates (0 = parity)', icon: 'show_chart'
+                },
+                {
+                    name: 'Chi-Squared (χ²)', value: chiSq, threshold: null, direction: null,
+                    desc: `df = ${df}, p = ${isFinite(chiPValue) ? (chiPValue < 1e-4 ? '< 0.0001' : chiPValue.toFixed(4)) : 'n/a'}` +
+                        (minExpected < 5 ? ' · smallest expected count < 5, treat p with caution' : ''),
+                    icon: 'science'
+                },
             ];
+
+            const scored = metrics.filter(m => m.direction && m.value !== null);
+            const failed = scored.filter(m => !(m.direction === '>=' ? m.value >= m.threshold : m.value <= m.threshold));
+            const unavailable = metrics.filter(m => m.direction && m.value === null);
 
             const container = document.getElementById('fairnessMetrics');
             container.innerHTML = `
             <div class="space-y-3">
                 ${rates.map(r => `
                     <div class="flex items-center justify-between">
-                        <span class="text-sm text-slate-600 dark:text-slate-400 w-24">${r.name}</span>
+                        <span class="text-sm text-slate-600 dark:text-slate-400 w-24 truncate" title="${esc(r.name)}">${esc(r.name)}</span>
                         <div class="flex-1 mx-3">
                             <div class="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                                 <div class="h-full rounded-full ${r.rate === maxRate ? 'bg-green-500' : r.rate === minRate ? 'bg-red-500' : 'bg-primary'}" style="width: ${(r.rate * 100).toFixed(0)}%"></div>
                             </div>
                         </div>
-                        <span class="text-sm font-medium text-slate-800 dark:text-slate-200 w-16 text-right">${(r.rate * 100).toFixed(1)}%</span>
+                        <span class="text-sm font-medium text-slate-800 dark:text-slate-200 w-16 text-right tabular-nums">${(r.rate * 100).toFixed(1)}%</span>
                     </div>
                 `).join('')}
             </div>
+            ${truthCol ? `
+            <div class="mt-4 overflow-x-auto">
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">Confusion matrix by group
+                    <span class="font-normal text-slate-400">— decision “${esc(favorableVal)}” vs ground truth “${esc(truthPositiveVal)}”</span></p>
+                <p class="text-[10px] text-slate-400 mb-2 leading-snug">Rates are defined relative to the favorable
+                    outcome you chose. A person wrongly <em>denied</em> the favorable outcome counts here as a false
+                    negative. ProPublica's COMPAS analysis scored the high-risk flag as the positive class, so what they
+                    called a false positive is the false <em>negative</em> in this table — same people, opposite sign.</p>
+                <table class="w-full text-xs">
+                    <thead class="text-slate-400"><tr>
+                        <th class="text-left py-1 pr-2">Group</th><th class="text-right px-2">n</th>
+                        <th class="text-right px-2">TP</th><th class="text-right px-2">FP</th>
+                        <th class="text-right px-2">FN</th><th class="text-right px-2">TN</th>
+                        <th class="text-right px-2">TPR</th><th class="text-right px-2">FPR</th>
+                        <th class="text-right px-2">PPV</th><th class="text-right pl-2">Base rate</th>
+                    </tr></thead>
+                    <tbody class="text-slate-600 dark:text-slate-300 tabular-nums">
+                    ${rates.map(r => {
+                        const s = groups[r.name];
+                        const f = v => v === null ? '—' : v.toFixed(3);
+                        return `<tr class="border-t border-slate-200 dark:border-slate-700">
+                            <td class="text-left py-1 pr-2 truncate">${esc(r.name)}</td>
+                            <td class="text-right px-2">${r.labelled}</td>
+                            <td class="text-right px-2">${s.tp}</td><td class="text-right px-2">${s.fp}</td>
+                            <td class="text-right px-2">${s.fn}</td><td class="text-right px-2">${s.tn}</td>
+                            <td class="text-right px-2">${f(r.tpr)}</td><td class="text-right px-2">${f(r.fpr)}</td>
+                            <td class="text-right px-2">${f(r.ppv)}</td><td class="text-right pl-2">${f(r.baseRate)}</td>
+                        </tr>`;
+                    }).join('')}
+                    </tbody>
+                </table>
+            </div>` : ''}
             <hr class="border-slate-200 dark:border-slate-700 my-4"/>
             <div class="space-y-2">
                 ${metrics.map(m => {
-                const pass = m.direction === '>=' ? m.value >= m.threshold : m.direction === '<=' ? m.value <= m.threshold : null;
+                const pass = m.value === null || !m.direction ? null
+                    : (m.direction === '>=' ? m.value >= m.threshold : m.value <= m.threshold);
                 const statusColor = pass === true ? 'text-green-500' : pass === false ? 'text-red-500' : 'text-slate-400';
-                const badge = pass === true ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-500 ml-2">PASS</span>' : pass === false ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-500 ml-2">FAIL</span>' : '';
+                const badge = pass === true
+                    ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-600 dark:text-green-400 ml-2">✓ PASS</span>'
+                    : pass === false
+                        ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-600 dark:text-red-400 ml-2">✗ FAIL</span>'
+                        : m.direction
+                            ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/20 text-slate-500 ml-2">— UNAVAILABLE</span>'
+                            : '';
                 return `<div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-surface-dark-lighter">
                         <div class="flex items-center gap-2">
-                            <span class="material-icons-outlined text-sm ${statusColor}">${m.icon}</span>
+                            <span class="material-icons-outlined text-sm ${statusColor}" aria-hidden="true">${m.icon}</span>
                             <div>
-                                <p class="text-xs font-medium text-slate-700 dark:text-slate-300">${m.name}${badge}</p>
-                                <p class="text-[10px] text-slate-400">${m.desc}</p>
+                                <p class="text-xs font-medium text-slate-700 dark:text-slate-300">${esc(m.name)}${badge}</p>
+                                <p class="text-[10px] text-slate-400">${esc(m.desc)}</p>
                             </div>
                         </div>
-                        <span class="text-sm font-bold ${statusColor}">${m.value.toFixed(3)}</span>
+                        <span class="text-sm font-bold tabular-nums ${statusColor}">${m.value === null ? '—' : m.value.toFixed(3)}</span>
                     </div>`;
             }).join('')}
             </div>
-            <div class="mt-3 p-3 rounded-lg ${metrics.filter(m => m.direction).every(m => m.direction === '>=' ? m.value >= m.threshold : m.value <= m.threshold) ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}">
-                <p class="text-xs font-bold ${metrics.filter(m => m.direction).every(m => m.direction === '>=' ? m.value >= m.threshold : m.value <= m.threshold) ? 'text-green-500' : 'text-red-500'}">
-                    ${metrics.filter(m => m.direction).every(m => m.direction === '>=' ? m.value >= m.threshold : m.value <= m.threshold) ? '✓ All metrics pass fairness thresholds' : '✗ ' + metrics.filter(m => m.direction && !(m.direction === '>=' ? m.value >= m.threshold : m.value <= m.threshold)).length + ' of ' + metrics.filter(m => m.direction).length + ' metrics fail fairness thresholds'}
+            <div class="mt-3 p-3 rounded-lg ${failed.length === 0 ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}">
+                <p class="text-xs font-bold ${failed.length === 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+                    ${failed.length === 0
+                    ? `✓ ${scored.length} of ${scored.length} computable metrics pass`
+                    : `✗ ${failed.length} of ${scored.length} computable metrics fail: ${failed.map(m => esc(m.name)).join(', ')}`}
                 </p>
+                ${unavailable.length ? `<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    ${unavailable.length} metric${unavailable.length > 1 ? 's' : ''} could not be computed without a ground-truth column.
+                    Selection rates tell you who was chosen; they cannot tell you who was chosen <em>wrongly</em>.</p>` : ''}
             </div>
         `;
+
+            lastAudit = { protAttr, target, favorableVal, truthCol, truthPositiveVal, rates, groups, metrics, scored, failed, unavailable };
         }
 
-        // ==================== INTERSECTIONAL ANALYSIS ====================
         function renderIntersectionalAnalysis(protAttr, target) {
             // Find another categorical column for intersection
             const categoricalCols = currentColumns.filter(col => {
@@ -733,8 +997,7 @@
             }
 
             const secondAttr = categoricalCols[0]; // use first available
-            const targetVals = [...new Set(currentData.map(r => r[target]))];
-            const positiveVal = targetVals.find(v => /approved|hired|low|yes|1|positive/i.test(String(v)));
+            const positiveVal = document.getElementById('favorableVal').value;
 
             // Compute rates for each intersection
             const intersections = {};
@@ -781,6 +1044,7 @@
         }
 
         function generateAlerts(protAttr, target) {
+            const favorableVal = document.getElementById('favorableVal').value;
             const alerts = [];
             const counts = {};
             currentData.forEach(row => { const g = row[protAttr]; counts[g] = (counts[g] || 0) + 1; });
@@ -791,7 +1055,7 @@
             groupNames.forEach(g => {
                 const pct = (counts[g] / total * 100);
                 if (pct < 15 && groupNames.length <= 5) {
-                    alerts.push({ type: 'warning', text: `Group "${g}" represents only ${pct.toFixed(1)}% of the dataset — potential underrepresentation.` });
+                    alerts.push({ type: 'warning', text: `Group "${String(g)}" represents only ${pct.toFixed(1)}% of the dataset — potential underrepresentation.` });
                 }
             });
 
@@ -812,9 +1076,7 @@
                 const g = row[protAttr];
                 if (!groups[g]) groups[g] = { total: 0, positive: 0 };
                 groups[g].total++;
-                const targetVals = [...new Set(currentData.map(r => r[target]))];
-                const positiveVal = targetVals.find(v => /approved|hired|low|yes|1|positive/i.test(String(v)));
-                if (String(row[target]) === String(positiveVal)) groups[g].positive++;
+                if (String(row[target]) === String(favorableVal)) groups[g].positive++;
             });
             const rates = Object.entries(groups).map(([k, v]) => ({ name: k, rate: v.positive / v.total }));
             const maxR = Math.max(...rates.map(r => r.rate));
@@ -822,7 +1084,61 @@
             if (minR / maxR < 0.8) {
                 const disadvantaged = rates.find(r => r.rate === minR);
                 const advantaged = rates.find(r => r.rate === maxR);
-                alerts.push({ type: 'danger', text: `Disparate impact detected: "${disadvantaged.name}" has a ${(disadvantaged.rate * 100).toFixed(1)}% positive rate vs. "${advantaged.name}" at ${(advantaged.rate * 100).toFixed(1)}%. This fails the 80% rule.` });
+                alerts.push({ type: 'danger', text: `Disparate impact detected: "${disadvantaged.name}" has a ${(disadvantaged.rate * 100).toFixed(1)}% selection rate vs. "${advantaged.name}" at ${(advantaged.rate * 100).toFixed(1)}%. This fails the 80% rule.` });
+            }
+
+            // Error-rate findings. These are the ones that separate "chosen less
+            // often" from "wrongly chosen less often", and they only exist when
+            // the audit had ground truth to work with.
+            if (lastAudit && lastAudit.truthCol) {
+                // Groups too small to estimate an error rate reliably are excluded
+                // from the headline findings; a tiny group otherwise dominates them.
+                const MIN_STRATUM = 25;
+                const reliable = lastAudit.rates.filter(r => {
+                    const s = lastAudit.groups[r.name];
+                    return (s.tp + s.fn) >= MIN_STRATUM && (s.fp + s.tn) >= MIN_STRATUM;
+                });
+                const excluded = lastAudit.rates.filter(r => !reliable.includes(r));
+                if (excluded.length) {
+                    alerts.push({
+                        type: 'warning',
+                        text: `Error-rate findings below exclude ${excluded.map(r => `"${r.name}"`).join(', ')}: fewer than ${MIN_STRATUM} people in one of the ground-truth strata, so the rate estimate is too noisy to compare. Small groups produce unstable fairness metrics, which is itself a reason representation matters.`
+                    });
+                }
+
+                if (reliable.length > 1) {
+                    // Wrongly denied the favorable outcome (false negative rate).
+                    const fnr = r => 1 - r.tpr;
+                    const hiFN = reliable.reduce((a, b) => fnr(b) > fnr(a) ? b : a);
+                    const loFN = reliable.reduce((a, b) => fnr(b) < fnr(a) ? b : a);
+                    if (fnr(hiFN) - fnr(loFN) > 0.1) {
+                        const ratio = fnr(loFN) > 0 ? (fnr(hiFN) / fnr(loFN)).toFixed(1) + '×' : 'an unbounded';
+                        alerts.push({
+                            type: 'danger',
+                            text: `Unequal harm from wrong decisions: among people who deserved the favorable outcome, "${hiFN.name}" was wrongly denied it ${(fnr(hiFN) * 100).toFixed(1)}% of the time vs. ${(fnr(loFN) * 100).toFixed(1)}% for "${loFN.name}" — a ${ratio} gap. This is the shape of the COMPAS disparity, and selection rates alone cannot reveal it.`
+                        });
+                    }
+                    // Wrongly granted the favorable outcome (false positive rate).
+                    const hiFP = reliable.reduce((a, b) => b.fpr > a.fpr ? b : a);
+                    const loFP = reliable.reduce((a, b) => b.fpr < a.fpr ? b : a);
+                    if (hiFP.fpr - loFP.fpr > 0.1) {
+                        alerts.push({
+                            type: 'danger',
+                            text: `Unequal false positive rates: among people who did not deserve the favorable outcome, "${hiFP.name}" received it anyway ${(hiFP.fpr * 100).toFixed(1)}% of the time vs. ${(loFP.fpr * 100).toFixed(1)}% for "${loFP.name}".`
+                        });
+                    }
+                    // The impossibility result, stated only when the data shows it.
+                    const fprGap = Math.max(...reliable.map(r => r.fpr)) - Math.min(...reliable.map(r => r.fpr));
+                    const fnrGap = Math.max(...reliable.map(fnr)) - Math.min(...reliable.map(fnr));
+                    const ppvGap = Math.max(...reliable.map(r => r.ppv)) - Math.min(...reliable.map(r => r.ppv));
+                    const baseGap = Math.max(...reliable.map(r => r.baseRate)) - Math.min(...reliable.map(r => r.baseRate));
+                    if (ppvGap < 0.12 && Math.max(fprGap, fnrGap) > 0.15 && baseGap > 0.05) {
+                        alerts.push({
+                            type: 'caution',
+                            text: `Calibration and error-rate parity are in conflict here. Of the people given the favorable outcome, roughly the same share deserved it in every group (PPV gap ${ppvGap.toFixed(3)}) — the model is well calibrated. Yet its error rates differ sharply (gap ${Math.max(fprGap, fnrGap).toFixed(3)}), because the base rates differ by ${baseGap.toFixed(3)}. Chouldechova (2017) and Kleinberg, Mullainathan & Raghavan (2017) proved these cannot all hold at once unless base rates are equal. No parameter fixes this; it is a choice about whose errors to bear.`
+                        });
+                    }
+                }
             }
 
             const alertsDiv = document.getElementById('alerts');
@@ -831,31 +1147,122 @@
                 const icons = { warning: 'warning', caution: 'error_outline', danger: 'dangerous' };
                 return `<div class="flex items-start p-4 rounded-xl border ${colors[a.type]}">
                 <span class="material-icons-outlined mr-3 mt-0.5">${icons[a.type]}</span>
-                <p class="text-sm">${a.text}</p>
+                <p class="text-sm">${esc(a.text)}</p>
             </div>`;
             }).join('');
         }
 
         // ==================== EXPORT ====================
+        // Built from the audit results, not scraped from the live DOM: the
+        // exported file has to stand on its own without Tailwind or the icon
+        // font, which the previous DOM-scraping version did not.
         function exportReport() {
-            const protAttr = document.getElementById('protectedAttr').value;
-            const target = document.getElementById('targetVar').value;
-            const html = `<!DOCTYPE html><html><head><title>Bias Audit Report</title>
-        <style>body{font-family:system-ui;max-width:800px;margin:2em auto;padding:0 1em;color:#1e293b}
-        h1{color:#137fec}table{border-collapse:collapse;width:100%}th,td{border:1px solid #e2e8f0;padding:8px;text-align:left}
-        th{background:#f1f5f9}.alert{padding:12px;border-radius:8px;margin:8px 0;background:#fef3c7;border:1px solid #fde68a}
-        .danger{background:#fee2e2;border-color:#fca5a5}.pass{color:#16a34a;font-weight:bold}.fail{color:#dc2626;font-weight:bold}</style></head>
-        <body><h1>📊 Dataset Bias Audit Report</h1>
-        <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-        <p><strong>Records:</strong> ${currentData.length} | <strong>Protected Attribute:</strong> ${protAttr} | <strong>Target:</strong> ${target}</p>
-        <h2>Alerts</h2>${document.getElementById('alerts').innerHTML}
-        <h2>Fairness Metrics</h2>${document.getElementById('fairnessMetrics').innerHTML}
-        <p><em>Generated by AI Ethics Toolkit v2.1.0</em></p></body></html>`;
+            if (!lastAudit) { alert('Run an audit first.'); return; }
+            const a = lastAudit;
+            const f = v => v === null || v === undefined ? '&mdash;' : v.toFixed(3);
+            const pct = v => v === null ? '&mdash;' : (v * 100).toFixed(1) + '%';
+
+            const alertText = [...document.querySelectorAll('#alerts p')].map(p => p.textContent);
+
+            const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Bias Audit Report — ${esc(a.protAttr)} × ${esc(a.target)}</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+         max-width: 860px; margin: 2.5em auto; padding: 0 1.5em; color: #1e293b; line-height: 1.6; }
+  h1 { color: #0f172a; font-size: 1.75rem; margin-bottom: .2em; }
+  h2 { font-size: 1.05rem; text-transform: uppercase; letter-spacing: .06em; color: #475569;
+       border-bottom: 2px solid #0f172a; padding-bottom: .4em; margin-top: 2.2em; }
+  .sub { color: #64748b; margin-top: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: .9rem; }
+  th, td { border-bottom: 1px solid #e2e8f0; padding: 8px 10px; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  th { background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: .78rem;
+       text-transform: uppercase; letter-spacing: .05em; color: #475569; }
+  td.num { font-variant-numeric: tabular-nums; }
+  .alert { padding: 12px 14px; border-radius: 6px; margin: 10px 0; border: 1px solid; font-size: .92rem; }
+  .alert-danger  { background: #fef2f2; border-color: #fca5a5; }
+  .alert-caution { background: #fff7ed; border-color: #fdba74; }
+  .alert-warning { background: #fefce8; border-color: #fde047; }
+  .pass { color: #15803d; font-weight: 600; }
+  .fail { color: #b91c1c; font-weight: 600; }
+  .na   { color: #94a3b8; font-weight: 600; }
+  .note { background: #f8fafc; border-left: 3px solid #94a3b8; padding: 10px 14px;
+          font-size: .88rem; color: #475569; margin: 1em 0; }
+  footer { margin-top: 3em; padding-top: 1em; border-top: 1px solid #e2e8f0;
+           font-size: .8rem; color: #94a3b8; }
+</style></head><body>
+
+<h1>Dataset Bias Audit Report</h1>
+<p class="sub">${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+
+<h2>Audit configuration</h2>
+<table>
+  <tr><th>Records</th><td class="num">${currentData.length}</td></tr>
+  <tr><th>Protected attribute</th><td>${esc(a.protAttr)}</td></tr>
+  <tr><th>Decision column</th><td>${esc(a.target)}</td></tr>
+  <tr><th>Favorable value</th><td>${esc(a.favorableVal)}</td></tr>
+  <tr><th>Ground-truth column</th><td>${a.truthCol ? esc(a.truthCol) + ' (favorable deserved = &ldquo;' + esc(a.truthPositiveVal) + '&rdquo;)' : 'none supplied'}</td></tr>
+</table>
+${a.truthCol ? '' : `<div class="note"><strong>No ground truth was supplied.</strong> Only selection-rate metrics
+  could be computed. Selection rates show who was chosen; without knowing what actually happened they cannot
+  show who was chosen <em>wrongly</em>, so equal opportunity, predictive equality, equalized odds and
+  calibration are all reported as unavailable rather than as passing.</div>`}
+
+<h2>Selection rates by group</h2>
+<table>
+  <thead><tr><th>Group</th><th>n</th><th>Selected</th><th>Selection rate</th></tr></thead>
+  <tbody>${a.rates.map(r => `<tr><td>${esc(r.name)}</td><td class="num">${r.total}</td>
+    <td class="num">${r.positive}</td><td class="num">${pct(r.rate)}</td></tr>`).join('')}</tbody>
+</table>
+
+${a.truthCol ? `<h2>Confusion matrix by group</h2>
+<table>
+  <thead><tr><th>Group</th><th>n labelled</th><th>TP</th><th>FP</th><th>FN</th><th>TN</th>
+    <th>TPR</th><th>FPR</th><th>PPV</th><th>Base rate</th></tr></thead>
+  <tbody>${a.rates.map(r => { const s = a.groups[r.name]; return `<tr><td>${esc(r.name)}</td>
+    <td class="num">${r.labelled}</td><td class="num">${s.tp}</td><td class="num">${s.fp}</td>
+    <td class="num">${s.fn}</td><td class="num">${s.tn}</td><td class="num">${f(r.tpr)}</td>
+    <td class="num">${f(r.fpr)}</td><td class="num">${f(r.ppv)}</td><td class="num">${f(r.baseRate)}</td></tr>`; }).join('')}</tbody>
+</table>` : ''}
+
+<h2>Fairness metrics</h2>
+<table>
+  <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Result</th></tr></thead>
+  <tbody>${a.metrics.map(m => {
+        const pass = m.value === null || !m.direction ? null
+            : (m.direction === '>=' ? m.value >= m.threshold : m.value <= m.threshold);
+        const verdict = pass === true ? '<span class="pass">PASS</span>'
+            : pass === false ? '<span class="fail">FAIL</span>'
+                : m.direction ? '<span class="na">UNAVAILABLE</span>' : '&mdash;';
+        return `<tr><td>${esc(m.name)}<br><small style="color:#64748b">${esc(m.desc)}</small></td>
+      <td class="num">${m.value === null ? '&mdash;' : m.value.toFixed(3)}</td>
+      <td class="num">${m.direction ? m.direction + ' ' + m.threshold : '&mdash;'}</td>
+      <td>${verdict}</td></tr>`;
+    }).join('')}</tbody>
+</table>
+<p><strong>${a.failed.length === 0
+            ? `All ${a.scored.length} computable metrics pass.`
+            : `${a.failed.length} of ${a.scored.length} computable metrics fail: ${a.failed.map(m => esc(m.name)).join(', ')}.`}</strong>
+${a.unavailable.length ? ` ${a.unavailable.length} metric(s) could not be computed.` : ''}</p>
+
+<h2>Findings</h2>
+${alertText.length
+            ? alertText.map(t => `<div class="alert alert-danger">${esc(t)}</div>`).join('')
+            : '<p>No automated findings were raised.</p>'}
+
+<footer>Generated by the AI Ethics Toolkit · Dataset Bias Auditor.
+Sample datasets are synthetic; see <code>data/generate_samples.py</code> for the generating process.</footer>
+</body></html>`;
+
             const blob = new Blob([html], { type: 'text/html' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'bias_audit_report.html';
-            a.click();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `bias_audit_${a.protAttr}_${a.target}.html`.replace(/[^\w.\-]/g, '_');
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
     </script>
 </body>

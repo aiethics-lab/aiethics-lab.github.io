@@ -47,6 +47,17 @@ REQUIRED_WORDS = {
     # Verb tenses
     'walking', 'walked', 'running', 'ran', 'swimming', 'swam',
     'flying', 'flew',
+    # WEAT target and attribute sets (Caliskan et al. 2017, tests 6-8).
+    # Several are rare enough that a top-5k frequency cut drops them, which
+    # silently degenerates the test - keep them pinned.
+    'amy', 'joan', 'lisa', 'sarah', 'diana', 'kate', 'ann', 'donna',
+    'mary', 'elizabeth', 'maria', 'susan', 'barbara', 'sharon', 'nancy',
+    'karen', 'betty', 'helen', 'rebecca', 'julia',
+    'mike', 'kevin', 'steve', 'greg', 'jeff', 'bill', 'brian', 'ronald',
+    'executive', 'management', 'corporation', 'salary', 'office',
+    'business', 'career', 'professional',
+    'parents', 'children', 'cousins', 'marriage', 'wedding', 'relatives',
+    'household', 'kids', 'himself', 'herself',
     # Additional useful words
     'computer', 'technology', 'algorithm', 'data', 'intelligence',
     'artificial', 'ethics', 'bias', 'fair', 'unfair', 'justice',

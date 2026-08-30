@@ -2,3 +2,8 @@
 stitch/
 *.pyc
 __pycache__/
+
+# Course materials live in their own PRIVATE repo:
+# https://github.com/hamedyaghoobian/ai-data-ethics-course
+# They contain exam answer keys and must never land in this public site repo.
+ai_ethics_course/

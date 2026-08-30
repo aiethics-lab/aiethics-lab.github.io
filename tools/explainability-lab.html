@@ -200,13 +200,20 @@
                         <p id="predConf" class="text-xs text-slate-500 mt-1 text-center"></p>
                     </div>
                     <div class="mt-4">
-                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">LIME Explanation</h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Word colors show contribution: <span
-                                class="text-green-500 font-medium">green = positive</span>, <span
-                                class="text-red-500 font-medium">red = negative</span></p>
+                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">LIME — local surrogate</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">The model is treated as a black box.
+                            Words are deleted at random, the model is re-queried on each variant, and a weighted linear
+                            model is fitted to those answers. These colours are that surrogate's coefficients: <span
+                                class="text-green-500 font-medium">green pushes positive</span>, <span
+                                class="text-red-500 font-medium">red pushes negative</span>.</p>
                         <div id="limeOutput"
                             class="p-4 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 text-sm leading-relaxed min-h-[60px]">
                         </div>
+                        <p id="limeMeta" class="text-[11px] text-slate-400 mt-2 leading-snug"></p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2 leading-snug">
+                            Compare with the SHAP panel. LIME <em>samples</em>; SHAP here is computed
+                            <em>analytically</em> from the model's structure. Where they disagree, that disagreement is
+                            information — it usually means the model is not locally linear.</p>
                     </div>
                 </div>
                 <div
@@ -380,8 +387,9 @@
                         <span class="material-icons-outlined text-red-500 mr-2 align-middle">gavel</span> Defendant
                         Profile
                     </h3>
-                    <p class="text-xs text-slate-500 mb-4">Based on ProPublica's COMPAS analysis. Demonstrates how ML
-                        explainability reveals racial bias.</p>
+                    <p class="text-xs text-slate-500 mb-4">Modelled on ProPublica's 2016 COMPAS analysis. The scoring
+                        function below is <strong>race-blind</strong> — race is not one of its inputs, just as it is not
+                        an input to COMPAS. Watch the disparity appear anyway.</p>
                     <div class="grid grid-cols-2 gap-4">
                         <div><label class="text-xs text-slate-500 block mb-1">Age</label><input type="range"
                                 id="compas-age" min="18" max="70" value="30" class="w-full accent-primary"
@@ -402,13 +410,6 @@
                                 <option value="0">Female</option>
                                 <option value="1" selected>Male</option>
                             </select></div>
-                        <div><label class="text-xs text-slate-500 block mb-1">Race</label><select id="compas-race"
-                                class="w-full px-2 py-1 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
-                                <option value="white">White</option>
-                                <option value="black" selected>Black</option>
-                                <option value="hispanic">Hispanic</option>
-                                <option value="other">Other</option>
-                            </select></div>
                         <div><label class="text-xs text-slate-500 block mb-1">Juvenile Felonies</label><input
                                 type="range" id="compas-juv" min="0" max="5" value="0" class="w-full accent-primary"
                                 oninput="this.nextElementSibling.textContent=this.value"><span
@@ -421,11 +422,18 @@
                     <div id="compasResult"
                         class="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 hidden">
                     </div>
+                    <div class="mt-3 p-3 rounded-lg bg-slate-100 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
+                        <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                            <strong class="text-primary">Where is the race selector?</strong> There isn't one, because
+                            the model has no race input. The chart below instead scores each group's <em>typical
+                            criminal-history profile</em> through the same race-blind function. The gap it produces is
+                            not something the model was told to create.</p>
+                    </div>
                     <!-- Bias Alert -->
                     <div id="compasBiasAlert" class="mt-3 hidden">
                         <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
                             <h4 class="text-sm font-bold text-red-500 flex items-center mb-2">
-                                <span class="material-icons-outlined mr-1 text-base">warning</span> Racial Bias Detected
+                                <span class="material-icons-outlined mr-1 text-base">warning</span> Disparate Impact Without a Race Input
                             </h4>
                             <p id="compasBiasText" class="text-xs text-slate-600 dark:text-slate-400"></p>
                         </div>
@@ -670,6 +678,114 @@
             return { wordScores, totalScore, prob, aspectScores, words };
         }
 
+        // ==================== LIME (Ribeiro et al., KDD 2016) ====================
+        // A real local surrogate, not a re-render of the model's own weights.
+        // Procedure: perturb the instance by deleting random subsets of words,
+        // ask the black-box model for a prediction on each perturbation, weight
+        // each sample by its proximity to the original, and fit a ridge
+        // regression. The surrogate's coefficients are the explanation.
+        //
+        // This can and does disagree with the coefficient view — which is the
+        // reason both are worth showing. The previous version drew the same
+        // numbers twice under two different names, so they always agreed.
+        function explainWithLIME(text, { numSamples = 800, kernelWidth = 0.75 } = {}) {
+            const tokens = text.split(/(\s+)/);
+            const wordIdx = [];
+            tokens.forEach((t, i) => { if (/\w/.test(t)) wordIdx.push(i); });
+            const d = wordIdx.length;
+            if (d === 0) return { coefficients: [], r2: 0, numSamples: 0 };
+
+            const rand = makeSeededRng(0x11E7 ^ d);
+            const X = [], y = [], weights = [];
+
+            for (let s = 0; s < numSamples; s++) {
+                // Bernoulli(0.5) mask over words, plus the all-present sample.
+                const mask = wordIdx.map(() => (s === 0 ? 1 : (rand() < 0.5 ? 1 : 0)));
+                const kept = tokens.slice();
+                mask.forEach((m, j) => { if (!m) kept[wordIdx[j]] = ''; });
+                const { prob } = scoreSentiment(kept.join(''));
+
+                const removed = mask.filter(m => !m).length;
+                const distance = d > 0 ? removed / d : 0;
+                const weight = Math.exp(-(distance * distance) / (kernelWidth * kernelWidth));
+
+                X.push(mask);
+                y.push(prob);
+                weights.push(weight);
+            }
+
+            const coefficients = weightedRidge(X, y, weights, 1.0);
+            const words = wordIdx.map(i => tokens[i]);
+
+            // Weighted R² of the surrogate: how faithfully the linear
+            // approximation tracks the model in this neighbourhood.
+            const wSum = weights.reduce((a, b) => a + b, 0);
+            const yMean = y.reduce((a, v, i) => a + v * weights[i], 0) / wSum;
+            let ssRes = 0, ssTot = 0;
+            X.forEach((row, i) => {
+                const pred = coefficients.intercept + row.reduce((a, v, j) => a + v * coefficients.beta[j], 0);
+                ssRes += weights[i] * (y[i] - pred) ** 2;
+                ssTot += weights[i] * (y[i] - yMean) ** 2;
+            });
+            const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+
+            return {
+                coefficients: words.map((w, j) => ({ word: w, weight: coefficients.beta[j], index: wordIdx[j] })),
+                r2,
+                numSamples
+            };
+        }
+
+        // Ridge regression with sample weights, solved by Gaussian elimination
+        // on the normal equations. Small problem sizes, so this is plenty.
+        function weightedRidge(X, y, w, lambda) {
+            const n = X.length, d = X[0].length;
+            const p = d + 1;                       // + intercept column
+            const A = Array.from({ length: p }, () => new Float64Array(p));
+            const b = new Float64Array(p);
+
+            for (let i = 0; i < n; i++) {
+                const row = new Float64Array(p);
+                row[0] = 1;
+                for (let j = 0; j < d; j++) row[j + 1] = X[i][j];
+                for (let a = 0; a < p; a++) {
+                    b[a] += w[i] * row[a] * y[i];
+                    for (let c = 0; c < p; c++) A[a][c] += w[i] * row[a] * row[c];
+                }
+            }
+            for (let a = 1; a < p; a++) A[a][a] += lambda;   // don't penalise the intercept
+
+            // Gaussian elimination with partial pivoting.
+            for (let col = 0; col < p; col++) {
+                let pivot = col;
+                for (let r = col + 1; r < p; r++) if (Math.abs(A[r][col]) > Math.abs(A[pivot][col])) pivot = r;
+                if (Math.abs(A[pivot][col]) < 1e-12) continue;
+                [A[col], A[pivot]] = [A[pivot], A[col]];
+                [b[col], b[pivot]] = [b[pivot], b[col]];
+                for (let r = 0; r < p; r++) {
+                    if (r === col) continue;
+                    const factor = A[r][col] / A[col][col];
+                    if (!factor) continue;
+                    for (let c = col; c < p; c++) A[r][c] -= factor * A[col][c];
+                    b[r] -= factor * b[col];
+                }
+            }
+            const sol = new Float64Array(p);
+            for (let i = 0; i < p; i++) sol[i] = Math.abs(A[i][i]) > 1e-12 ? b[i] / A[i][i] : 0;
+            return { intercept: sol[0], beta: Array.from(sol.slice(1)) };
+        }
+
+        function makeSeededRng(seed) {
+            let state = (seed >>> 0) || 1;
+            return function () {
+                state = (state + 0x6D2B79F5) >>> 0;
+                let t = state;
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
         function analyzeSentiment() {
             if (!modelLoaded || !sentimentModel) return;
             const text = document.getElementById('sentimentInput').value;
@@ -688,28 +804,34 @@
             document.getElementById('predBar').className = `h-full rounded-full transition-all duration-500 ${prob >= 0.5 ? 'bg-green-500' : 'bg-red-500'}`;
             document.getElementById('predConf').textContent = `Confidence: ${(confidence * 100).toFixed(1)}% | Raw: ${totalScore.toFixed(3)} → σ(${prob.toFixed(3)}) | Features: ${sentimentModel.feature_count || Object.keys(sentimentModel.weights).length}`;
 
-            // LIME highlights
+            // LIME: fit a local surrogate on perturbations of THIS sentence.
+            const lime = explainWithLIME(text);
+            const limeByIndex = new Map(lime.coefficients.map(c => [c.index, c.weight]));
+            const limeMax = Math.max(0.001, ...lime.coefficients.map(c => Math.abs(c.weight)));
+
             const limeDiv = document.getElementById('limeOutput');
             const originalWords = text.split(/(\s+)/);
-            const scoredTokens = wordScores.filter(w => w.source !== 'bigram_display');
-            const maxAbsScore = Math.max(0.01, ...scoredTokens.map(w => Math.abs(w.score)));
-            limeDiv.innerHTML = originalWords.map(token => {
-                const clean = token.toLowerCase().replace(/[^\w']/g, '');
-                const ws = scoredTokens.find(w => w.word === clean);
-                if (!ws || ws.score === 0) {
-                    if (ws && ws.role === 'negator') return `<span class="word-highlight" style="background: rgba(168, 85, 247, 0.3)" title="Negator: flips next word sentiment">🚫 ${token}</span>`;
-                    if (ws && ws.role === 'intensifier') return `<span class="word-highlight" style="background: rgba(59, 130, 246, 0.3)" title="Intensifier: amplifies next word">⚡ ${token}</span>`;
-                    if (ws && ws.role === 'contrastive') return `<span class="word-highlight" style="background: rgba(245, 158, 11, 0.4)" title="Contrastive: shifts emphasis to following clause">⚖️ ${token}</span>`;
-                    return `<span>${token}</span>`;
-                }
-                const normalizedIntensity = Math.min(Math.abs(ws.score) / maxAbsScore, 1);
-                const color = ws.score > 0
-                    ? `rgba(34, 197, 94, ${0.15 + normalizedIntensity * 0.7})`
-                    : `rgba(239, 68, 68, ${0.15 + normalizedIntensity * 0.7})`;
-                return `<span class="word-highlight" style="background: ${color}" title="${ws.word}: ${ws.score.toFixed(3)} (${ws.source})">${token}</span>`;
+            limeDiv.innerHTML = originalWords.map((token, i) => {
+                const wt = limeByIndex.get(i);
+                if (wt === undefined || Math.abs(wt) < 1e-6) return `<span>${token}</span>`;
+                const intensity = Math.min(Math.abs(wt) / limeMax, 1);
+                const color = wt > 0
+                    ? `rgba(34, 197, 94, ${0.15 + intensity * 0.7})`
+                    : `rgba(239, 68, 68, ${0.15 + intensity * 0.7})`;
+                return `<span class="word-highlight" style="background: ${color}" title="LIME weight ${wt.toFixed(4)}">${token}</span>`;
             }).join('');
 
-            // SHAP chart — include bigrams
+            const limeMeta = document.getElementById('limeMeta');
+            if (limeMeta) {
+                limeMeta.innerHTML = `Local surrogate fit on ${lime.numSamples} perturbations ·
+                    weighted R² = <strong>${lime.r2.toFixed(3)}</strong>
+                    ${lime.r2 < 0.7 ? '— a low R² means the linear approximation tracks the model poorly here, so treat the explanation with caution' : '— the linear approximation tracks the model closely in this neighbourhood'}`;
+            }
+
+            // Model contributions. For an additive scorer, weight x value IS the
+            // exact Shapley value, so this is genuinely SHAP - but it is computed
+            // analytically from the model, not by sampling like LIME above.
+            // Comparing the two panels is the point of the exercise.
             const allScored = wordScores.filter(w => w.score !== 0 && w.source !== 'bigram_display');
             const uniqueScored = [];
             const seen = new Set();
@@ -726,7 +848,7 @@
                 hovertemplate: '%{y}: %{x:.3f}<extra></extra>'
             }], plotLayout({
                 margin: { t: 10, l: 100, r: 20, b: 40 },
-                xaxis: { title: 'SHAP Value (TF-IDF weighted)', color: isDarkMode() ? '#94a3b8' : '#475569', gridcolor: isDarkMode() ? '#1e293b' : '#e2e8f0', zeroline: true, zerolinecolor: isDarkMode() ? '#475569' : '#94a3b8' },
+                xaxis: { title: 'Contribution to score (exact Shapley value for this additive model)', color: isDarkMode() ? '#94a3b8' : '#475569', gridcolor: isDarkMode() ? '#1e293b' : '#e2e8f0', zeroline: true, zerolinecolor: isDarkMode() ? '#475569' : '#94a3b8' },
                 yaxis: { color: isDarkMode() ? '#94a3b8' : '#475569', autorange: 'reversed' },
             }), { responsive: true, displayModeBar: false });
 
@@ -823,11 +945,13 @@
                 'Age': { value: age, weight: 0.03, baseline: 35, scale: 20, shap: 0 }
             };
 
-            // Feature interactions (non-linear)
-            const loanToIncome = amount / Math.max(income, 1);
-            const creditDtiInteraction = ((credit - 300) / 550) * (1 - dti / 100);
-            features['Loan/Income Ratio'] = { value: loanToIncome, weight: -0.15, baseline: 0.83, scale: 1.5, shap: 0 };
-            features['Credit×Low-DTI'] = { value: creditDtiInteraction, weight: 0.10, baseline: 0.43, scale: 0.5, shap: 0 };
+            // No interaction terms here, deliberately. A term such as
+            // Loan/Income is a deterministic function of two features already in
+            // the model, and Shapley values assume features can vary
+            // independently. Including both splits one feature's credit across
+            // two bars and the waterfall stops summing to anything meaningful.
+            // Keeping the model additive means weight x (value - baseline)/scale
+            // IS the exact Shapley value for each feature, with no caveat.
 
             let logit = 0;
             Object.values(features).forEach(f => {
@@ -835,7 +959,7 @@
                 logit += f.shap;
             });
 
-            const prob = 1 / (1 + Math.exp(-logit - 0.3));
+            const prob = 1 / (1 + Math.exp(-(logit + 0.3)));
             const approved = prob >= 0.5;
 
             document.getElementById('loanResult').classList.remove('hidden');
@@ -844,13 +968,13 @@
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Decision</span>
                     <span class="px-3 py-1 rounded-full text-xs font-bold ${approved ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">${approved ? 'Approved' : 'Denied'}</span>
                 </div>
-                <p class="text-xs text-slate-500">Approval probability: ${(prob * 100).toFixed(1)}% | Model: Logistic Regression (8 features incl. interactions)</p>`;
+                <p class="text-xs text-slate-500">Approval probability: ${(prob * 100).toFixed(1)}% | Logistic regression, 6 independent features</p>`;
 
             const sorted = Object.entries(features).sort((a, b) => Math.abs(b[1].shap) - Math.abs(a[1].shap));
 
             Plotly.newPlot('loanShapChart', [{
                 type: 'waterfall', orientation: 'h',
-                y: ['Base Rate', ...sorted.map(([k]) => k), 'Final'],
+                y: ['Intercept (log-odds)', ...sorted.map(([k]) => k), 'Final log-odds'],
                 x: [0.3, ...sorted.map(([, v]) => v.shap), 0],
                 connector: { line: { color: isDarkMode() ? '#475569' : '#94a3b8' } },
                 measure: ['absolute', ...sorted.map(() => 'relative'), 'total'],
@@ -878,13 +1002,10 @@
                 'Smoker': { value: smoker, weight: 0.28, baseline: 0, scale: 1, shap: 0 }
             };
 
-            // Non-linear interactions
-            const bmiAge = ((bmi - 18) / 27) * ((age - 18) / 72);
-            const smokerBP = smoker * ((bp - 80) / 120);
-            const exerciseProtection = exercise > 0 ? -0.12 * Math.log(exercise + 1) / Math.log(21) : 0;
-            features['BMI × Age'] = { value: bmiAge, weight: 0.15, baseline: 0.15, scale: 0.5, shap: 0 };
-            features['Smoker × BP'] = { value: smokerBP, weight: 0.18, baseline: 0.0, scale: 1.0, shap: 0 };
-            features['Exercise Protection'] = { value: exerciseProtection, weight: 1.0, baseline: -0.06, scale: 0.2, shap: 0 };
+            // Interaction terms removed for the same reason as the loan model:
+            // 'BMI x Age', 'Smoker x BP' and 'Exercise Protection' were each a
+            // deterministic function of features already present, so their
+            // contributions were being counted twice.
 
             let logit = -0.8;
             Object.values(features).forEach(f => {
@@ -902,7 +1023,7 @@
                     <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Risk Level</span>
                     <span class="px-3 py-1 rounded-full text-xs font-bold bg-${riskColor}-500/20 text-${riskColor}-500">${risk} Risk</span>
                 </div>
-                <p class="text-xs text-slate-500">Risk probability: ${(prob * 100).toFixed(1)}% | Model: Logistic Regression with feature interactions (9 features)</p>`;
+                <p class="text-xs text-slate-500">Risk probability: ${(prob * 100).toFixed(1)}% | Logistic regression, 6 independent features</p>`;
 
             const sorted = Object.entries(features).sort((a, b) => Math.abs(b[1].shap) - Math.abs(a[1].shap));
 
@@ -919,31 +1040,43 @@
             }), { responsive: true, displayModeBar: false });
         }
 
-        // ==================== COMPAS RECIDIVISM MODEL ====================
-        function compasScore(age, priors, charge, gender, race, juv) {
-            // Coefficients inspired by ProPublica's analysis of COMPAS
-            const raceWeights = { black: 0.67, hispanic: 0.21, white: 0.0, other: 0.10 };
+        // ==================== COMPAS-STYLE RISK MODEL ====================
+        // The model below is RACE-BLIND. There is no race coefficient, because
+        // COMPAS does not take race as an input — that is the entire reason the
+        // case is interesting. ProPublica's finding was not that the tool had a
+        // race term; it was that error rates differed by race anyway, because
+        // the inputs it does use (priors, juvenile record, age) carry the
+        // imprint of differential policing.
+        //
+        // An earlier version of this tool hardcoded a race coefficient and told
+        // students it "mirrors ProPublica's finding". It does the opposite: it
+        // demonstrates disparate treatment, the easy and legally obvious kind,
+        // in place of disparate impact, the hard kind the case is actually about.
+
+        // Typical criminal-history profiles by group. These are the PROXIES.
+        // They differ because arrest exposure differs, not because of anything
+        // the model believes about race.
+        const COHORT_PROFILES = {
+            white:    { label: 'White',    priors: 2.4, juv: 0.3, age: 36 },
+            black:    { label: 'Black',    priors: 3.6, juv: 0.6, age: 31 },
+            hispanic: { label: 'Hispanic', priors: 2.9, juv: 0.4, age: 33 },
+            other:    { label: 'Other',    priors: 2.2, juv: 0.2, age: 35 },
+        };
+
+        function compasScore(age, priors, charge, gender, juv) {
             const features = {
                 'Age': { value: age, weight: -0.035, baseline: 35, scale: 1, shap: 0 },
                 'Prior Offenses': { value: priors, weight: 0.18, baseline: 0, scale: 1, shap: 0 },
                 'Charge Severity': { value: parseInt(charge), weight: 0.42, baseline: 0, scale: 1, shap: 0 },
                 'Gender (Male)': { value: parseInt(gender), weight: 0.24, baseline: 0, scale: 1, shap: 0 },
-                'Race Factor': { value: raceWeights[race] || 0, weight: 1.0, baseline: 0, scale: 1, shap: 0 },
                 'Juvenile Felonies': { value: juv, weight: 0.30, baseline: 0, scale: 1, shap: 0 },
             };
-
-            // Interaction: young + priors is worse
-            const youngPriors = age < 25 ? priors * 0.15 : 0;
-            features['Young × Priors'] = { value: youngPriors, weight: 1.0, baseline: 0, scale: 1, shap: 0 };
-
             let logit = -1.5;
             Object.values(features).forEach(f => {
                 f.shap = f.weight * (f.value - f.baseline) / f.scale;
                 logit += f.shap;
             });
-
-            const prob = 1 / (1 + Math.exp(-logit));
-            return { features, prob, logit };
+            return { features, prob: 1 / (1 + Math.exp(-logit)), logit };
         }
 
         function analyzeCompas() {
@@ -951,12 +1084,11 @@
             const priors = parseInt(document.getElementById('compas-priors').value);
             const charge = document.getElementById('compas-charge').value;
             const gender = document.getElementById('compas-gender').value;
-            const race = document.getElementById('compas-race').value;
             const juv = parseInt(document.getElementById('compas-juv').value);
 
-            const { features, prob } = compasScore(age, priors, charge, gender, race, juv);
+            const { features, prob } = compasScore(age, priors, charge, gender, juv);
             const riskLevel = prob >= 0.7 ? 'High' : prob >= 0.4 ? 'Medium' : 'Low';
-            const decile = Math.min(10, Math.max(1, Math.round(prob * 10)));
+            const decile = Math.min(10, Math.max(1, Math.floor(prob * 10) + 1));
             const riskColor = riskLevel === 'High' ? 'red' : riskLevel === 'Medium' ? 'yellow' : 'green';
 
             document.getElementById('compasResult').classList.remove('hidden');
@@ -968,58 +1100,67 @@
                 <div class="flex items-center gap-1 mt-2">
                     ${Array.from({ length: 10 }, (_, i) => `<div class="flex-1 h-3 rounded ${i < decile ? (decile >= 7 ? 'bg-red-500' : decile >= 4 ? 'bg-yellow-500' : 'bg-green-500') : 'bg-slate-200 dark:bg-slate-700'}"></div>`).join('')}
                 </div>
-                <p class="text-xs text-slate-500 mt-2">Recidivism probability: ${(prob * 100).toFixed(1)}%</p>`;
+                <p class="text-xs text-slate-500 mt-2">Estimated reoffence probability: ${(prob * 100).toFixed(1)}%
+                    · Inputs: age, priors, charge grade, gender, juvenile record. <strong>Race is not an input.</strong></p>`;
 
-            // SHAP waterfall
+            // Exact Shapley values for a linear model in log-odds space.
             const sorted = Object.entries(features).sort((a, b) => Math.abs(b[1].shap) - Math.abs(a[1].shap));
             Plotly.newPlot('compasShapChart', [{
                 type: 'bar', orientation: 'h',
                 y: sorted.map(([k]) => k),
                 x: sorted.map(([, v]) => v.shap),
-                marker: {
-                    color: sorted.map(([k, v]) => {
-                        if (k === 'Race Factor') return '#a855f7'; // purple for race
-                        return v.shap > 0 ? '#ef4444' : '#22c55e';
-                    })
-                },
+                marker: { color: sorted.map(([, v]) => v.shap > 0 ? '#ef4444' : '#22c55e') },
                 hovertemplate: '%{y}: %{x:.3f}<extra></extra>'
-            }], plotLayout({ margin: { t: 10, l: 120, r: 20, b: 40 }, xaxis: { title: 'Contribution to Risk Score' } }),
+            }], plotLayout({ margin: { t: 10, l: 120, r: 20, b: 40 }, xaxis: { title: 'Contribution to log-odds' } }),
                 { responsive: true, displayModeBar: false });
 
-            // Fairness comparison — same person, different race
-            const races = ['white', 'black', 'hispanic', 'other'];
-            const fairnessScores = races.map(r => {
-                const { prob: p } = compasScore(age, priors, charge, gender, r, juv);
-                return { race: r.charAt(0).toUpperCase() + r.slice(1), prob: p };
+            // The cohort comparison. Every defendant here is scored by the SAME
+            // race-blind function; only the criminal-history inputs differ, set
+            // to each group's typical profile. Any gap that appears is produced
+            // entirely by the proxies.
+            const cohorts = Object.entries(COHORT_PROFILES).map(([key, p]) => {
+                const { prob: cohortProb } = compasScore(
+                    Math.round(p.age), Math.round(p.priors), charge, gender, Math.round(p.juv));
+                return { key, label: p.label, prob: cohortProb, profile: p };
             });
 
             Plotly.newPlot('compasFairnessChart', [{
                 type: 'bar',
-                x: fairnessScores.map(f => f.race),
-                y: fairnessScores.map(f => f.prob * 100),
-                marker: { color: fairnessScores.map(f => f.race === race.charAt(0).toUpperCase() + race.slice(1) ? '#a855f7' : '#64748b') },
-                text: fairnessScores.map(f => `${(f.prob * 100).toFixed(1)}%`),
+                x: cohorts.map(c => c.label),
+                y: cohorts.map(c => c.prob * 100),
+                marker: { color: cohorts.map(c => c.key === 'black' ? '#a855f7' : '#64748b') },
+                text: cohorts.map(c => `${(c.prob * 100).toFixed(1)}%`),
                 textposition: 'outside',
                 hovertemplate: '%{x}: %{y:.1f}%<extra></extra>'
             }], plotLayout({
                 margin: { t: 20, l: 40, r: 20, b: 40 },
-                yaxis: { title: 'Risk Score %', range: [0, 100] },
+                yaxis: { title: 'Mean risk score %', range: [0, 100] },
                 xaxis: { title: '' }
             }), { responsive: true, displayModeBar: false });
 
-            // Bias alert
-            const whiteScore = fairnessScores.find(f => f.race === 'White').prob;
-            const blackScore = fairnessScores.find(f => f.race === 'Black').prob;
-            const disparity = ((blackScore / Math.max(whiteScore, 0.01)) - 1) * 100;
+            const white = cohorts.find(c => c.key === 'white');
+            const black = cohorts.find(c => c.key === 'black');
+            const gap = ((black.prob / Math.max(white.prob, 0.01)) - 1) * 100;
             const biasAlert = document.getElementById('compasBiasAlert');
-            if (disparity > 10) {
+
+            if (gap > 5) {
                 biasAlert.classList.remove('hidden');
                 document.getElementById('compasBiasText').innerHTML = `
-                    Holding all other factors constant, the Black defendant receives a risk score 
-                    <strong>${disparity.toFixed(0)}% higher</strong> than the White defendant. 
-                    This mirrors ProPublica's finding that COMPAS ratings for Black defendants were ${disparity > 30 ? 'dramatically' : 'significantly'} 
-                    inflated. The Race Factor contributes <strong>${(features['Race Factor'].shap).toFixed(3)}</strong> 
-                    to the log-odds — this single feature can shift the risk decile by 1-2 points.`;
+                    Scored with the typical criminal-history profile for each group, the model returns
+                    <strong>${(black.prob * 100).toFixed(1)}%</strong> for the Black cohort against
+                    <strong>${(white.prob * 100).toFixed(1)}%</strong> for the White cohort — a
+                    <strong>${gap.toFixed(0)}% higher</strong> risk score.
+                    <br><br>
+                    Look at the feature attributions on the right: there is no race term to point at, because race is
+                    not an input. The gap comes from <strong>priors (${black.profile.priors} vs
+                    ${white.profile.priors})</strong>, <strong>juvenile record</strong> and <strong>age</strong>, which
+                    differ across groups largely because arrest exposure differs — not because of any difference the
+                    model was told about.
+                    <br><br>
+                    This is <em>disparate impact</em>, and it is why removing protected attributes from a model does
+                    not make it fair. Deleting a race column changes nothing here; there was never one to delete.
+                    Open the <a href="proxy-detector.html" class="text-primary underline">Proxy Variable Detector</a>
+                    to see which features carry the signal.`;
             } else {
                 biasAlert.classList.add('hidden');
             }

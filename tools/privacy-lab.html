@@ -232,21 +232,33 @@ Thanks, John</textarea>
                         </table>
                     </div>
                     <div class="mt-4 space-y-3">
-                        <div>
-                            <label class="text-xs text-slate-500 block mb-1">Technique</label>
-                            <select id="anonTechnique"
-                                class="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
-                                <option value="k-anonymity">k-Anonymity</option>
-                                <option value="l-diversity">l-Diversity</option>
-                                <option value="suppression">Suppression</option>
-                                <option value="generalization">Generalization</option>
-                            </select>
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
+                            <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                                <strong class="text-primary">Quasi-identifiers:</strong> Age, ZIP ·
+                                <strong class="text-primary">Sensitive:</strong> Condition<br>
+                                The tool searches the generalization lattice for the least-damaging Age and ZIP
+                                generalization that meets your constraints, suppressing outlier records rather than
+                                over-generalizing everyone.</p>
                         </div>
                         <div>
-                            <label class="text-xs text-slate-500 flex justify-between"><span>k value</span><span
-                                    id="kVal">3</span></label>
-                            <input type="range" id="kValue" min="2" max="10" value="3" class="w-full accent-primary"
+                            <label for="kValue" class="text-xs text-slate-500 flex justify-between"><span>k — minimum equivalence class size</span><span
+                                    id="kVal" class="font-bold text-primary">3</span></label>
+                            <input type="range" id="kValue" min="2" max="12" value="3" class="w-full accent-primary"
                                 oninput="document.getElementById('kVal').textContent=this.value">
+                        </div>
+                        <div>
+                            <label for="lValue" class="text-xs text-slate-500 flex justify-between"><span>l — distinct conditions per class</span><span
+                                    id="lVal" class="font-bold text-primary">1</span></label>
+                            <input type="range" id="lValue" min="1" max="4" value="1" class="w-full accent-primary"
+                                oninput="document.getElementById('lVal').textContent=this.value">
+                            <p class="text-[10px] text-slate-400 mt-1">l = 1 means k-anonymity only. l-diversity is an
+                                extra constraint on top of k-anonymity, not a substitute for it.</p>
+                        </div>
+                        <div>
+                            <label for="suppressValue" class="text-xs text-slate-500 flex justify-between"><span>Suppression budget</span><span
+                                    id="suppressVal" class="font-bold text-primary">20%</span></label>
+                            <input type="range" id="suppressValue" min="0" max="50" value="20" step="5" class="w-full accent-primary"
+                                oninput="document.getElementById('suppressVal').textContent=this.value+'%'">
                         </div>
                         <button onclick="applyAnonymization()"
                             class="w-full py-2.5 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors text-sm">
@@ -298,31 +310,47 @@ Thanks, John</textarea>
                             </select>
                         </div>
                         <div>
-                            <label class="text-xs text-slate-500 flex justify-between"><span>Epsilon (ε) — Privacy
-                                    Budget</span><span id="epsilonVal">1.0</span></label>
-                            <input type="range" id="dpEpsilon" min="1" max="100" value="10"
+                            <label for="dpEpsilon" class="text-xs text-slate-500 flex justify-between"><span>ε per query</span><span
+                                    id="epsilonVal" class="font-bold text-purple-400">0.5</span></label>
+                            <input type="range" id="dpEpsilon" min="1" max="100" value="5"
                                 class="w-full accent-primary"
-                                oninput="document.getElementById('epsilonVal').textContent=(this.value/10).toFixed(1)">
+                                oninput="document.getElementById('epsilonVal').textContent=(this.value/10).toFixed(1); updateDPCost()">
+                            <p id="epsWarning" class="text-[10px] text-amber-500 mt-1 leading-snug hidden"></p>
                         </div>
                         <div>
-                            <label class="text-xs text-slate-500 flex justify-between"><span>Number of
-                                    Queries</span><span id="nQueriesVal">50</span></label>
+                            <label for="nQueries" class="text-xs text-slate-500 flex justify-between"><span>Queries to release</span><span
+                                    id="nQueriesVal" class="font-bold text-purple-400">50</span></label>
                             <input type="range" id="nQueries" min="10" max="200" value="50"
                                 class="w-full accent-primary"
-                                oninput="document.getElementById('nQueriesVal').textContent=this.value">
+                                oninput="document.getElementById('nQueriesVal').textContent=this.value; updateDPCost()">
                         </div>
-                        <button onclick="runDPExperiment()"
-                            class="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors text-sm">
-                            <span class="material-icons-outlined mr-1 text-base align-middle">play_arrow</span> Run
-                            Experiment
-                        </button>
+                        <div>
+                            <label for="dpBudgetCap" class="text-xs text-slate-500 flex justify-between"><span>Total budget ceiling</span><span
+                                    id="budgetCapVal" class="font-bold text-purple-400">100</span></label>
+                            <input type="range" id="dpBudgetCap" min="10" max="500" value="100" step="10"
+                                class="w-full accent-primary"
+                                oninput="document.getElementById('budgetCapVal').textContent=this.value; updateDPCost()">
+                        </div>
+                        <div id="dpCost" class="p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter text-[11px] leading-relaxed text-slate-600 dark:text-slate-400"></div>
+                        <div class="flex gap-2">
+                            <button onclick="runDPExperiment()" id="dpRunBtn"
+                                class="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                                <span class="material-icons-outlined mr-1 text-base align-middle">play_arrow</span> Run
+                            </button>
+                            <button onclick="resetDPBudget()"
+                                class="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors text-sm">
+                                Reset budget
+                            </button>
+                        </div>
                     </div>
                     <div class="mt-4 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
                         <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                            <strong class="text-purple-400">Differential Privacy</strong> adds calibrated noise to query
-                            results.
-                            Lower ε = more privacy but less accuracy. Higher ε = less privacy but more accurate results.
-                            The Laplace mechanism adds noise from Lap(Δf/ε).
+                            <strong class="text-purple-400">Differential privacy</strong> adds noise calibrated to a
+                            query's global sensitivity Δf. Laplace draws from Lap(Δf/ε) and gives pure ε-DP. Gaussian
+                            draws from N(0, σ²) with σ = Δf·√(2·ln(1.25/δ))/ε and gives the weaker (ε, δ)-DP.<br><br>
+                            <strong class="text-purple-400">Every release costs budget.</strong> Releasing n noisy
+                            answers costs n·ε, not ε — and running both mechanisms on the same data costs both. This
+                            panel charges you for all of it, which is why the budget moves faster than you might expect.
                         </p>
                     </div>
                 </div>
@@ -384,6 +412,20 @@ Thanks, John</textarea>
             { type: 'Bank Account', pattern: /\b(?:account|routing)\s*(?:#|number|no\.?)?\s*[:\s]?\d{6,17}\b/gi, risk: 'Critical', icon: 'account_balance', category: 'Financial' },
         ];
 
+        // Card numbers satisfy the Luhn checksum. Testing it removes the most
+        // common false positive from a bare 16-digit pattern.
+        function luhnValid(digits) {
+            const d = String(digits).replace(/\D/g, '');
+            if (d.length < 13 || d.length > 19) return false;
+            let sum = 0, alt = false;
+            for (let i = d.length - 1; i >= 0; i--) {
+                let n = parseInt(d[i], 10);
+                if (alt) { n *= 2; if (n > 9) n -= 9; }
+                sum += n; alt = !alt;
+            }
+            return sum % 10 === 0;
+        }
+
         function detectPII() {
             const text = document.getElementById('piiInput').value;
             const findings = [];
@@ -391,6 +433,7 @@ Thanks, John</textarea>
             [...PII_PATTERNS, ...CONTEXT_PATTERNS].forEach(({ type, pattern, risk, icon, category }) => {
                 const matches = text.matchAll(new RegExp(pattern));
                 for (const match of matches) {
+                    if (type === 'Credit Card' && !luhnValid(match[0])) continue;
                     findings.push({ type, value: match[0], start: match.index, end: match.index + match[0].length, risk, icon, category });
                 }
             });
@@ -404,13 +447,23 @@ Thanks, John</textarea>
                 else if (f.end - f.start > prev.end - prev.start) { deduped.pop(); deduped.push(f); }
             }
 
-            // Privacy Risk Score (NIST-inspired)
-            const riskWeights = { Critical: 4, High: 3, Medium: 2, Low: 1 };
-            const totalRisk = deduped.reduce((s, f) => s + riskWeights[f.risk], 0);
-            const maxRisk = deduped.length * 4;
-            const riskScore = maxRisk > 0 ? Math.round((totalRisk / maxRisk) * 100) : 0;
-            const riskLabel = riskScore > 75 ? 'Critical' : riskScore > 50 ? 'High' : riskScore > 25 ? 'Medium' : 'Low';
-            const riskColor = riskScore > 75 ? 'text-red-500' : riskScore > 50 ? 'text-orange-500' : riskScore > 25 ? 'text-yellow-500' : 'text-green-500';
+            // Severity breakdown rather than a single composite number.
+            // The previous score divided total severity by (count × 4), which
+            // made it the MEAN severity: one SSN and ten SSNs both scored 100,
+            // and a dozen emails scored lower than a single SSN. Volume is
+            // exactly what drives re-identification risk, so it is reported
+            // directly instead of being normalised away.
+            const severityOrder = ['Critical', 'High', 'Medium', 'Low'];
+            const severityCounts = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+            deduped.forEach(f => { severityCounts[f.risk] = (severityCounts[f.risk] || 0) + 1; });
+            const worst = severityOrder.find(s => severityCounts[s] > 0) || null;
+            const distinctTypes = new Set(deduped.map(f => f.type)).size;
+            const riskColor = worst === 'Critical' ? 'text-red-500' : worst === 'High' ? 'text-orange-500'
+                : worst === 'Medium' ? 'text-yellow-500' : 'text-green-500';
+            const severityChipClass = {
+                Critical: 'bg-red-500/20 text-red-500', High: 'bg-orange-500/20 text-orange-500',
+                Medium: 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500', Low: 'bg-slate-500/20 text-slate-500'
+            };
 
             // Group by category
             const categories = {};
@@ -420,15 +473,29 @@ Thanks, John</textarea>
             const resultsDiv = document.getElementById('piiResults');
             const riskColors = { Critical: 'bg-red-500/20 text-red-500 border-red-500/30', High: 'bg-orange-500/20 text-orange-500 border-orange-500/30', Medium: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' };
 
-            let html = `<div class="p-3 rounded-lg bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 mb-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-slate-400">Privacy Risk Score</span>
-                    <span class="text-lg font-bold ${riskColor}">${riskScore}/100 (${riskLabel})</span>
-                </div>
-                <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 mt-2">
-                    <div class="h-full rounded-full transition-all" style="width:${riskScore}%; background: ${riskScore > 75 ? '#ef4444' : riskScore > 50 ? '#f97316' : riskScore > 25 ? '#eab308' : '#22c55e'}"></div>
-                </div>
-            </div>`;
+            let html = deduped.length === 0
+                ? `<div class="p-3 rounded-lg bg-green-500/10 border border-green-500/20 mb-3">
+                    <p class="text-sm font-bold text-green-500">No PII matched</p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">These are regular
+                    expressions, not a classifier. "Nothing matched" means nothing matched these patterns — it is not
+                    evidence the text is free of personal data. Names, locations and free-text disclosures routinely
+                    slip through.</p>
+                </div>`
+                : `<div class="p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700 mb-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Exposure summary</span>
+                        <span class="text-sm font-bold ${riskColor}">Highest severity: ${worst}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 mb-2">
+                        ${severityOrder.filter(s => severityCounts[s] > 0).map(s =>
+                            `<span class="px-2 py-0.5 text-xs rounded-full ${severityChipClass[s]}">${severityCounts[s]} ${s}</span>`
+                        ).join('')}
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        ${deduped.length} identifier${deduped.length > 1 ? 's' : ''} across ${distinctTypes} type${distinctTypes > 1 ? 's' : ''}.
+                        Each additional attribute narrows the set of people who could match, so quantity matters as much
+                        as severity — this is the mechanism behind the Sweeney re-identification result.</p>
+                </div>`;
 
             Object.entries(categories).forEach(([cat, items]) => {
                 html += `<div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 mt-3">${cat} (${items.length})</div>`;
@@ -461,6 +528,8 @@ Thanks, John</textarea>
         }
 
         // ==================== ANONYMIZATION (Verified k-Anonymity) ====================
+        // A larger cohort than a toy ten rows, so that k-anonymity at k up to 10
+        // is a real constraint rather than "generalize everything to one class".
         const SAMPLE_DATA = [
             { Name: 'Alice Johnson', Age: 28, ZIP: '10001', Condition: 'Diabetes', Income: 65000 },
             { Name: 'Bob Smith', Age: 29, ZIP: '10002', Condition: 'Flu', Income: 72000 },
@@ -472,7 +541,150 @@ Thanks, John</textarea>
             { Name: 'Henry Moore', Age: 44, ZIP: '10005', Condition: 'Allergy', Income: 82000 },
             { Name: 'Iris Taylor', Age: 38, ZIP: '10001', Condition: 'Flu', Income: 69000 },
             { Name: 'Jack Anderson', Age: 62, ZIP: '10002', Condition: 'Cancer', Income: 105000 },
+            { Name: 'Karen Lee', Age: 33, ZIP: '10002', Condition: 'Asthma', Income: 61000 },
+            { Name: 'Luis Ortega', Age: 27, ZIP: '10001', Condition: 'Flu', Income: 54000 },
+            { Name: 'Mona Patel', Age: 45, ZIP: '10004', Condition: 'Diabetes', Income: 79000 },
+            { Name: 'Nate Cooper', Age: 58, ZIP: '10003', Condition: 'Heart Disease', Income: 99000 },
+            { Name: 'Olga Petrov', Age: 36, ZIP: '10005', Condition: 'Asthma', Income: 71000 },
+            { Name: 'Paul Nguyen', Age: 49, ZIP: '10004', Condition: 'Cancer', Income: 86000 },
+            { Name: 'Quinn Rivera', Age: 24, ZIP: '10001', Condition: 'Allergy', Income: 48000 },
+            { Name: 'Rosa Delgado', Age: 41, ZIP: '10002', Condition: 'Diabetes', Income: 74000 },
+            { Name: 'Sam Okafor', Age: 63, ZIP: '10003', Condition: 'Cancer', Income: 102000 },
+            { Name: 'Tina Brooks', Age: 30, ZIP: '10005', Condition: 'Flu', Income: 63000 },
+            { Name: 'Umar Haddad', Age: 47, ZIP: '10001', Condition: 'Heart Disease', Income: 84000 },
+            { Name: 'Vera Lindqvist', Age: 39, ZIP: '10004', Condition: 'Asthma', Income: 73000 },
+            { Name: 'Will Tanaka', Age: 56, ZIP: '10002', Condition: 'Diabetes', Income: 93000 },
+            { Name: 'Xena Marks', Age: 26, ZIP: '10003', Condition: 'Allergy', Income: 51000 },
+            { Name: 'Yusuf Ali', Age: 51, ZIP: '10005', Condition: 'Heart Disease', Income: 89000 },
+            { Name: 'Zoe Fischer', Age: 34, ZIP: '10001', Condition: 'Flu', Income: 67000 },
+            { Name: 'Adam Silva', Age: 60, ZIP: '10004', Condition: 'Cancer', Income: 97000 },
+            { Name: 'Bella Ross', Age: 43, ZIP: '10002', Condition: 'Asthma', Income: 77000 },
+            { Name: 'Caleb Wright', Age: 37, ZIP: '10003', Condition: 'Diabetes', Income: 70000 },
+            { Name: 'Dina Kaur', Age: 53, ZIP: '10005', Condition: 'Flu', Income: 87000 },
+            { Name: 'Eli Barnes', Age: 22, ZIP: '10001', Condition: 'Allergy', Income: 45000 },
+            { Name: 'Farah Aziz', Age: 46, ZIP: '10004', Condition: 'Heart Disease', Income: 83000 },
+            { Name: 'Gabe Moreau', Age: 32, ZIP: '10002', Condition: 'Asthma', Income: 66000 },
+            { Name: 'Hana Suzuki', Age: 57, ZIP: '10003', Condition: 'Cancer', Income: 96000 },
+            { Name: 'Ivan Novak', Age: 40, ZIP: '10005', Condition: 'Diabetes', Income: 75000 },
+            { Name: 'Jade Owusu', Age: 25, ZIP: '10001', Condition: 'Flu', Income: 50000 },
         ];
+
+        const QUASI_IDENTIFIERS = ['Age', 'ZIP'];
+        const SENSITIVE_ATTRIBUTE = 'Condition';
+
+        // Full-domain generalization hierarchies, in the style of Sweeney's
+        // Datafly / Incognito. Level 0 is the raw value; the top level is total
+        // suppression of that attribute.
+        const AGE_LEVELS = [1, 5, 10, 20, null];       // bin width; null = suppress
+        const ZIP_LEVELS = [5, 4, 3, 2, 0];            // digits kept
+
+        const ageRange = (() => {
+            const ages = SAMPLE_DATA.map(r => r.Age);
+            return Math.max(...ages) - Math.min(...ages);
+        })();
+
+        function generalizeAge(age, level) {
+            const width = AGE_LEVELS[level];
+            if (width === null) return { label: '*', span: ageRange };
+            if (width === 1) return { label: String(age), span: 0 };
+            const lo = Math.floor(age / width) * width;
+            return { label: `${lo}-${lo + width - 1}`, span: width - 1 };
+        }
+
+        function generalizeZip(zip, level) {
+            const keep = ZIP_LEVELS[level];
+            const str = String(zip);
+            if (keep === 0) return { label: '*', span: 1 };
+            return { label: str.slice(0, keep) + '*'.repeat(str.length - keep), span: (str.length - keep) / str.length };
+        }
+
+        function applyGeneralization(data, ageLevel, zipLevel) {
+            return data.map(r => {
+                const a = generalizeAge(r.Age, ageLevel);
+                const z = generalizeZip(r.ZIP, zipLevel);
+                return { ...r, Name: '***', Age: a.label, ZIP: z.label, _ageSpan: a.span, _zipSpan: z.span };
+            });
+        }
+
+        function computeEquivalenceClasses(data) {
+            const groups = {};
+            data.forEach(r => {
+                const key = QUASI_IDENTIFIERS.map(q => r[q]).join('|');
+                (groups[key] = groups[key] || []).push(r);
+            });
+            return groups;
+        }
+
+        // Sweeney's precision metric: the average, over every generalized cell,
+        // of how much of the attribute's domain the cell now spans. 0 = raw
+        // data, 1 = fully suppressed. Suppressed records count as total loss.
+        function informationLoss(generalized, suppressedCount, totalCount) {
+            if (!generalized.length) return 1;
+            const perRecord = generalized.map(r =>
+                ((ageRange > 0 ? r._ageSpan / ageRange : 0) + r._zipSpan) / QUASI_IDENTIFIERS.length
+            );
+            const retainedLoss = perRecord.reduce((s, v) => s + v, 0);
+            return (retainedLoss + suppressedCount) / totalCount;
+        }
+
+        function checkKAnonymity(data, k) {
+            const groups = computeEquivalenceClasses(data);
+            const sizes = Object.values(groups).map(g => g.length);
+            return {
+                satisfied: sizes.length > 0 && Math.min(...sizes) >= k,
+                minSize: sizes.length ? Math.min(...sizes) : 0,
+                numGroups: sizes.length,
+                sizes,
+                groups
+            };
+        }
+
+        // l-diversity is a constraint layered ON TOP of k-anonymity, not an
+        // alternative to it: it asks whether each already-k-anonymous class
+        // contains at least l distinct values of the sensitive attribute.
+        function checkLDiversity(data, l) {
+            const groups = computeEquivalenceClasses(data);
+            const stats = Object.entries(groups).map(([key, members]) => {
+                const values = new Set(members.map(m => m[SENSITIVE_ATTRIBUTE]));
+                return { key, size: members.length, diversity: values.size, values: [...values] };
+            });
+            return { satisfied: stats.length > 0 && stats.every(g => g.diversity >= l), stats };
+        }
+
+        // Search the generalization lattice for the least-damaging setting that
+        // satisfies k (and l, when requested), allowing a bounded number of
+        // outlier records to be suppressed instead of over-generalizing everyone.
+        function findMinimalGeneralization(k, l, maxSuppressionRate) {
+            const total = SAMPLE_DATA.length;
+            const maxSuppressed = Math.floor(total * maxSuppressionRate);
+            let best = null;
+
+            for (let ageLevel = 0; ageLevel < AGE_LEVELS.length; ageLevel++) {
+                for (let zipLevel = 0; zipLevel < ZIP_LEVELS.length; zipLevel++) {
+                    const generalized = applyGeneralization(SAMPLE_DATA, ageLevel, zipLevel);
+                    const groups = computeEquivalenceClasses(generalized);
+
+                    // Suppress records in classes that are still too small.
+                    const kept = [];
+                    let suppressed = 0;
+                    Object.values(groups).forEach(members => {
+                        const bigEnough = members.length >= k;
+                        const diverse = l <= 1 ||
+                            new Set(members.map(m => m[SENSITIVE_ATTRIBUTE])).size >= l;
+                        if (bigEnough && diverse) kept.push(...members);
+                        else suppressed += members.length;
+                    });
+                    if (suppressed > maxSuppressed) continue;
+                    if (!kept.length) continue;
+
+                    const loss = informationLoss(kept, suppressed, total);
+                    if (!best || loss < best.loss) {
+                        best = { ageLevel, zipLevel, kept, suppressed, loss, generalized };
+                    }
+                }
+            }
+            return best;
+        }
 
         function renderOriginalData() {
             document.getElementById('anonOriginal').innerHTML = SAMPLE_DATA.map(r =>
@@ -480,109 +692,82 @@ Thanks, John</textarea>
             ).join('');
         }
 
-        function computeEquivalenceClasses(data) {
-            // Group by quasi-identifiers (Age, ZIP)
-            const groups = {};
-            data.forEach(r => {
-                const key = `${r.Age}|${r.ZIP}`;
-                if (!groups[key]) groups[key] = [];
-                groups[key].push(r);
-            });
-            return groups;
-        }
-
-        function verifyKAnonymity(data, k) {
-            const groups = computeEquivalenceClasses(data);
-            const sizes = Object.values(groups).map(g => g.length);
-            const minSize = Math.min(...sizes);
-            const satisfied = minSize >= k;
-            return { satisfied, minSize, numGroups: Object.keys(groups).length, groups, sizes };
-        }
-
-        function verifyLDiversity(data, l) {
-            const groups = computeEquivalenceClasses(data);
-            let satisfied = true;
-            const groupStats = [];
-            Object.entries(groups).forEach(([key, members]) => {
-                const conditions = new Set(members.map(m => m.Condition));
-                const diverse = conditions.size >= l;
-                if (!diverse) satisfied = false;
-                groupStats.push({ key, size: members.length, diversity: conditions.size, conditions: [...conditions] });
-            });
-            return { satisfied, groupStats };
-        }
-
         function applyAnonymization() {
-            const technique = document.getElementById('anonTechnique').value;
             const k = parseInt(document.getElementById('kValue').value);
-            let result = JSON.parse(JSON.stringify(SAMPLE_DATA));
+            const l = parseInt(document.getElementById('lValue').value);
+            const maxSuppression = parseInt(document.getElementById('suppressValue').value) / 100;
 
-            if (technique === 'k-anonymity' || technique === 'generalization') {
-                result.forEach(r => {
-                    r.Name = '***';
-                    r.Age = `${Math.floor(r.Age / 10) * 10}-${Math.floor(r.Age / 10) * 10 + 9}`;
-                    r.ZIP = r.ZIP.substring(0, 3) + '**';
-                    r.Income = `$${Math.floor(r.Income / 10000) * 10}k-$${(Math.floor(r.Income / 10000) + 1) * 10}k`;
-                });
-            } else if (technique === 'l-diversity') {
-                result.forEach(r => {
-                    r.Name = '***';
-                    r.Age = `${Math.floor(r.Age / 5) * 5}-${Math.floor(r.Age / 5) * 5 + 4}`;
-                    r.ZIP = r.ZIP.substring(0, 4) + '*';
-                    r.Income = `~$${Math.round(r.Income / 5000) * 5}k`;
-                });
-            } else if (technique === 'suppression') {
-                result.forEach(r => {
-                    r.Name = '[SUPPRESSED]';
-                    r.ZIP = '[SUPPRESSED]';
-                    r.Income = '[SUPPRESSED]';
-                });
+            const result = findMinimalGeneralization(k, l, maxSuppression);
+            const body = document.getElementById('anonResult');
+            const metrics = document.getElementById('anonMetrics');
+
+            if (!result) {
+                body.innerHTML = `<tr><td colspan="5" class="px-3 py-6 text-center text-xs text-red-500">
+                    No generalization in the lattice satisfies k=${k}${l > 1 ? ` and l=${l}` : ''} while suppressing
+                    at most ${(maxSuppression * 100).toFixed(0)}% of records.</td></tr>`;
+                metrics.innerHTML = `<div class="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <p class="text-sm font-bold text-red-500 mb-1">✗ Constraint unsatisfiable</p>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">Even suppressing Age and ZIP
+                    entirely cannot meet these settings on this dataset. Lower k or l, or raise the suppression budget.
+                    Anonymity guarantees are not always achievable at an acceptable cost — that is a real finding, not
+                    a tool error.</p></div>`;
+                return;
             }
 
-            document.getElementById('anonResult').innerHTML = result.map(r =>
-                `<tr class="hover:bg-slate-50 dark:hover:bg-surface-dark-lighter"><td class="px-3 py-2 text-xs ${r.Name === '***' || r.Name === '[SUPPRESSED]' ? 'text-green-500 font-bold' : ''}">${r.Name}</td><td class="px-3 py-2 text-xs">${r.Age}</td><td class="px-3 py-2 text-xs">${r.ZIP}</td><td class="px-3 py-2 text-xs">${r.Condition}</td><td class="px-3 py-2 text-xs">${r.Income}</td></tr>`
-            ).join('');
+            const kResult = checkKAnonymity(result.kept, k);
+            const lResult = checkLDiversity(result.kept, l);
+            const ageDesc = AGE_LEVELS[result.ageLevel] === null ? 'suppressed'
+                : AGE_LEVELS[result.ageLevel] === 1 ? 'exact' : `${AGE_LEVELS[result.ageLevel]}-year bins`;
+            const zipDesc = ZIP_LEVELS[result.zipLevel] === 0 ? 'suppressed'
+                : ZIP_LEVELS[result.zipLevel] === 5 ? 'full 5 digits' : `${ZIP_LEVELS[result.zipLevel]} digits kept`;
 
-            // Verify k-anonymity on the anonymized data
-            const kResult = verifyKAnonymity(result, k);
-            const lResult = verifyLDiversity(result, 2);
-            const infoLoss = technique === 'suppression' ? 85 : technique === 'k-anonymity' ? 45 : technique === 'generalization' ? 45 : 30;
+            const suppressedRows = SAMPLE_DATA.length - result.kept.length;
+            body.innerHTML = result.kept.map(r =>
+                `<tr class="hover:bg-slate-50 dark:hover:bg-surface-dark-lighter"><td class="px-3 py-2 text-xs text-green-500 font-bold">${r.Name}</td><td class="px-3 py-2 text-xs">${r.Age}</td><td class="px-3 py-2 text-xs">${r.ZIP}</td><td class="px-3 py-2 text-xs">${r.Condition}</td><td class="px-3 py-2 text-xs">$${r.Income.toLocaleString()}</td></tr>`
+            ).join('') + (suppressedRows > 0
+                ? `<tr class="bg-red-500/5"><td colspan="5" class="px-3 py-2 text-xs text-red-500 italic">
+                     ${suppressedRows} record${suppressedRows > 1 ? 's' : ''} suppressed — belonged to an equivalence
+                     class too small to meet the constraint</td></tr>` : '');
 
-            let metricsHTML = `
-            <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
-                <span class="text-sm text-slate-600 dark:text-slate-400">Information Loss</span>
-                <span class="font-bold text-sm ${infoLoss > 50 ? 'text-red-500' : 'text-green-500'}">${infoLoss}%</span>
-            </div>
-            <div class="flex justify-between items-center p-3 rounded-lg ${kResult.satisfied ? 'bg-green-500/10 border border-green-500/20' : 'bg-red-500/10 border border-red-500/20'}">
-                <span class="text-sm text-slate-600 dark:text-slate-400">k-Anonymity (k=${k})</span>
-                <span class="font-bold text-sm ${kResult.satisfied ? 'text-green-500' : 'text-red-500'}">${kResult.satisfied ? '✓ Satisfied' : '✗ Failed'} (min group: ${kResult.minSize})</span>
-            </div>
-            <div class="flex justify-between items-center p-3 rounded-lg ${lResult.satisfied ? 'bg-green-500/10 border border-green-500/20' : 'bg-yellow-500/10 border border-yellow-500/20'}">
-                <span class="text-sm text-slate-600 dark:text-slate-400">l-Diversity (l=2)</span>
-                <span class="font-bold text-sm ${lResult.satisfied ? 'text-green-500' : 'text-yellow-500'}">${lResult.satisfied ? '✓ Satisfied' : '✗ Some groups lack diversity'}</span>
-            </div>
-            <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
-                <span class="text-sm text-slate-600 dark:text-slate-400">Equivalence Classes</span>
-                <span class="font-bold text-sm text-primary">${kResult.numGroups} groups</span>
-            </div>
-            <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
-                <span class="text-sm text-slate-600 dark:text-slate-400">Re-identification Risk</span>
-                <span class="font-bold text-sm ${kResult.minSize >= 3 ? 'text-green-500' : 'text-yellow-500'}">${kResult.minSize >= 3 ? 'Low' : kResult.minSize >= 2 ? 'Medium' : 'High'} (1/${kResult.minSize})</span>
-            </div>`;
+            const row = (label, value, ok) => `
+                <div class="flex justify-between items-center p-3 rounded-lg ${ok === null ? 'bg-slate-50 dark:bg-surface-dark-lighter'
+                    : ok ? 'bg-green-500/10 border border-green-500/20' : 'bg-red-500/10 border border-red-500/20'}">
+                    <span class="text-sm text-slate-600 dark:text-slate-400">${label}</span>
+                    <span class="font-bold text-sm ${ok === null ? 'text-primary' : ok ? 'text-green-500' : 'text-red-500'}">${value}</span>
+                </div>`;
 
-            // Show equivalence class breakdown
-            metricsHTML += `<div class="mt-2 p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
-                <p class="text-xs font-bold text-slate-500 mb-2">Equivalence Class Sizes</p>
-                <div class="flex flex-wrap gap-1">
-                    ${kResult.sizes.map(s => `<span class="px-2 py-0.5 text-xs rounded-full ${s >= k ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">${s}</span>`).join('')}
-                </div>
-            </div>`;
-
-            document.getElementById('anonMetrics').innerHTML = metricsHTML;
+            metrics.innerHTML = `
+                ${row('Generalization chosen', `Age: ${ageDesc} · ZIP: ${zipDesc}`, null)}
+                ${row('Information loss', `${(result.loss * 100).toFixed(1)}%`, null)}
+                ${row(`k-Anonymity (k=${k})`, `${kResult.satisfied ? '✓ Satisfied' : '✗ Failed'} — smallest class ${kResult.minSize}`, kResult.satisfied)}
+                ${row(`l-Diversity (l=${l})`, l <= 1 ? 'not requested' : (lResult.satisfied ? '✓ Satisfied' : '✗ Failed'), l <= 1 ? null : lResult.satisfied)}
+                ${row('Records suppressed', `${suppressedRows} of ${SAMPLE_DATA.length}`, null)}
+                ${row('Equivalence classes', `${kResult.numGroups}`, null)}
+                ${row('Re-identification risk', `at most 1 in ${kResult.minSize}`, kResult.minSize >= k)}
+                <div class="mt-2 p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
+                    <p class="text-xs font-bold text-slate-500 mb-2">Equivalence class sizes</p>
+                    <div class="flex flex-wrap gap-1">
+                        ${kResult.sizes.sort((a, b) => a - b).map(sz =>
+                            `<span class="px-2 py-0.5 text-xs rounded-full ${sz >= k ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">${sz}</span>`
+                        ).join('')}
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
+                        Information loss is Sweeney's precision metric: for every generalized cell, how much of that
+                        attribute's range it now spans, averaged over the table. Suppressed records count as total loss.
+                        Raise k and watch both the generalization level and the loss climb — that trade-off is the
+                        entire subject.</p>
+                </div>`;
         }
 
-        // ==================== DIFFERENTIAL PRIVACY (with Composition) ====================
-        let totalEpsilonSpent = 0;
+        // ==================== DIFFERENTIAL PRIVACY ====================
+        // Budget accounting is the point of this panel, so it is done honestly:
+        // releasing n noisy answers costs n·epsilon, and running two mechanisms
+        // on the same data costs both. The previous version charged a single
+        // epsilon per button press regardless of n, understating the true spend
+        // by up to two orders of magnitude.
+        const DP_DELTA = 1e-5;
+        let dpQueriesReleased = 0;
+        let dpEpsilonSpent = 0;
 
         function laplaceSample(scale) {
             const u = Math.random() - 0.5;
@@ -590,42 +775,101 @@ Thanks, John</textarea>
         }
 
         function gaussianSample(sigma) {
-            // Box-Muller transform
             const u1 = Math.random(), u2 = Math.random();
             return sigma * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        }
+
+        // Advanced composition (Dwork, Rothblum & Vadhan 2010). Reported as-is:
+        // for small k it is WORSE than sequential composition, and hiding that
+        // behind a Math.min conceals when the bound is actually useful.
+        function advancedComposition(k, epsilon, delta) {
+            return Math.sqrt(2 * k * Math.log(1 / delta)) * epsilon + k * epsilon * (Math.exp(epsilon) - 1);
+        }
+
+        function dpQueryDefinition(queryType) {
+            const n = SAMPLE_DATA.length;
+            if (queryType === 'average_age') {
+                return {
+                    trueAnswer: SAMPLE_DATA.reduce((s, r) => s + r.Age, 0) / n,
+                    sensitivity: 90 / n,
+                    note: `Δf = 90/${n} = ${(90 / n).toFixed(2)} — under bounded DP, replacing one record moves a mean of values clamped to [0, 90] by at most range/n.`
+                };
+            }
+            if (queryType === 'count_condition') {
+                return {
+                    trueAnswer: SAMPLE_DATA.filter(r => r.Condition === 'Diabetes').length,
+                    sensitivity: 1,
+                    note: 'Δf = 1 — adding or removing one person changes a count by at most one. This is the lowest sensitivity of the three, so it needs the least noise.'
+                };
+            }
+            return {
+                trueAnswer: SAMPLE_DATA.reduce((s, r) => s + r.Income, 0) / n,
+                sensitivity: 200000 / n,
+                note: `Δf = 200000/${n} = ${(200000 / n).toFixed(0)} — incomes are clamped to [0, 200k]. A wide range means a large Δf and therefore far more noise for the same ε.`
+            };
+        }
+
+        function updateDPCost() {
+            const epsilon = parseInt(document.getElementById('dpEpsilon').value) / 10;
+            const nQueries = parseInt(document.getElementById('nQueries').value);
+            const cap = parseInt(document.getElementById('dpBudgetCap').value);
+            const cost = nQueries * epsilon * 2;   // two mechanisms, n releases each
+            const remaining = cap - dpEpsilonSpent;
+            const wouldExceed = cost > remaining;
+
+            document.getElementById('dpCost').innerHTML = `
+                <div class="flex justify-between"><span>This run costs</span>
+                    <span class="font-bold text-purple-400 tabular-nums">${nQueries} × ${epsilon.toFixed(1)} × 2 = ε ${cost.toFixed(1)}</span></div>
+                <div class="flex justify-between"><span>Already spent</span>
+                    <span class="font-bold tabular-nums">ε ${dpEpsilonSpent.toFixed(1)}</span></div>
+                <div class="flex justify-between"><span>Remaining</span>
+                    <span class="font-bold tabular-nums ${remaining <= 0 ? 'text-red-500' : wouldExceed ? 'text-amber-500' : 'text-green-500'}">ε ${Math.max(0, remaining).toFixed(1)}</span></div>
+                <p class="mt-2 text-slate-500">δ fixed at ${DP_DELTA} for the Gaussian mechanism. The ×2 is because both
+                    mechanisms are run on the same data — each is a separate release.</p>
+                ${wouldExceed ? `<p class="mt-1 font-bold text-red-500">This run would exceed the ceiling. Lower ε, lower the query count, raise the ceiling, or reset.</p>` : ''}`;
+
+            const warn = document.getElementById('epsWarning');
+            if (epsilon > 1) {
+                warn.classList.remove('hidden');
+                warn.textContent = `ε > 1: the classical Gaussian bound σ = Δf·√(2·ln(1.25/δ))/ε is only valid for ε ≤ 1. Above that it no longer certifies (ε, δ)-DP — you would need the analytic Gaussian mechanism (Balle & Wang 2018). The Laplace result stays valid.`;
+            } else {
+                warn.classList.add('hidden');
+            }
+
+            document.getElementById('dpRunBtn').disabled = wouldExceed;
+        }
+
+        function resetDPBudget() {
+            dpEpsilonSpent = 0;
+            dpQueriesReleased = 0;
+            updateDPCost();
+            document.getElementById('dpStats').innerHTML = '';
+            Plotly.purge('dpChart');
         }
 
         function runDPExperiment() {
             const epsilon = parseInt(document.getElementById('dpEpsilon').value) / 10;
             const nQueries = parseInt(document.getElementById('nQueries').value);
+            const cap = parseInt(document.getElementById('dpBudgetCap').value);
             const queryType = document.getElementById('dpQuery').value;
 
-            let trueAnswer, sensitivity;
-            if (queryType === 'average_age') {
-                trueAnswer = SAMPLE_DATA.reduce((s, r) => s + r.Age, 0) / SAMPLE_DATA.length;
-                sensitivity = 90 / SAMPLE_DATA.length;
-            } else if (queryType === 'count_condition') {
-                trueAnswer = SAMPLE_DATA.filter(r => r.Condition === 'Diabetes').length;
-                sensitivity = 1;
-            } else {
-                trueAnswer = SAMPLE_DATA.reduce((s, r) => s + r.Income, 0) / SAMPLE_DATA.length;
-                sensitivity = 200000 / SAMPLE_DATA.length;
+            const cost = nQueries * epsilon * 2;
+            if (dpEpsilonSpent + cost > cap) {
+                alert('That run would exceed your privacy budget ceiling. In a real deployment the data curator would refuse the query — that refusal is what a budget is for.');
+                return;
             }
 
-            // Both Laplace and Gaussian results
-            const laplaceResults = [], gaussianResults = [];
-            const delta = 1e-5;
-            const sigma = (sensitivity / epsilon) * Math.sqrt(2 * Math.log(1.25 / delta));
+            const { trueAnswer, sensitivity, note } = dpQueryDefinition(queryType);
+            const sigma = (sensitivity / epsilon) * Math.sqrt(2 * Math.log(1.25 / DP_DELTA));
 
+            const laplaceResults = [], gaussianResults = [];
             for (let i = 0; i < nQueries; i++) {
                 laplaceResults.push(trueAnswer + laplaceSample(sensitivity / epsilon));
                 gaussianResults.push(trueAnswer + gaussianSample(sigma));
             }
 
-            // Composition theorem tracking
-            totalEpsilonSpent += epsilon;
-            const seqComposition = totalEpsilonSpent;
-            const advComposition = Math.sqrt(2 * Math.ceil(totalEpsilonSpent / epsilon) * Math.log(1 / delta)) * epsilon + Math.ceil(totalEpsilonSpent / epsilon) * epsilon * (Math.exp(epsilon) - 1);
+            dpQueriesReleased += nQueries * 2;
+            dpEpsilonSpent += cost;
 
             const isDark = document.documentElement.classList.contains('dark');
             Plotly.newPlot('dpChart', [{
@@ -636,44 +880,65 @@ Thanks, John</textarea>
                 marker: { color: '#3b82f680' }, nbinsx: 30, opacity: 0.7
             }, {
                 type: 'scatter', x: [trueAnswer, trueAnswer], y: [0, nQueries / 5],
-                mode: 'lines', line: { color: '#ef4444', width: 3, dash: 'dash' }, name: 'True Value'
+                mode: 'lines', line: { color: '#ef4444', width: 3, dash: 'dash' }, name: 'True value'
             }], {
                 margin: { t: 10, l: 40, r: 10, b: 40 },
                 paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
                 barmode: 'overlay',
-                xaxis: { title: 'Query Result', color: isDark ? '#94a3b8' : '#475569', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
+                xaxis: { title: 'Query result', color: isDark ? '#94a3b8' : '#475569', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
                 yaxis: { title: 'Frequency', color: isDark ? '#94a3b8' : '#475569', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
                 legend: { font: { color: isDark ? '#94a3b8' : '#475569', size: 10 }, bgcolor: 'transparent' },
                 font: { family: 'Space Grotesk' }
             }, { responsive: true, displayModeBar: false });
 
-            const lapMean = laplaceResults.reduce((s, v) => s + v, 0) / nQueries;
-            const lapStd = Math.sqrt(laplaceResults.reduce((s, v) => s + (v - lapMean) ** 2, 0) / nQueries);
-            const gauMean = gaussianResults.reduce((s, v) => s + v, 0) / nQueries;
-            const gauStd = Math.sqrt(gaussianResults.reduce((s, v) => s + (v - gauMean) ** 2, 0) / nQueries);
+            const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+            const std = a => { const m = mean(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
+            const lapMean = mean(laplaceResults), lapStd = std(laplaceResults);
+            const gauMean = mean(gaussianResults), gauStd = std(gaussianResults);
+
+            const adv = advancedComposition(dpQueriesReleased, epsilon, DP_DELTA);
+            const advBeatsSeq = adv < dpEpsilonSpent;
 
             document.getElementById('dpStats').innerHTML = `
             <div class="p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter text-center">
-                <p class="text-xs text-slate-500 mb-1">True Value</p>
-                <p class="text-lg font-bold text-primary">${trueAnswer.toFixed(1)}</p>
+                <p class="text-xs text-slate-500 mb-1">True value</p>
+                <p class="text-lg font-bold text-primary tabular-nums">${trueAnswer.toFixed(1)}</p>
             </div>
             <div class="p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter text-center">
-                <p class="text-xs text-slate-500 mb-1">Laplace Mean (σ=${lapStd.toFixed(1)})</p>
-                <p class="text-lg font-bold text-purple-500">${lapMean.toFixed(1)}</p>
+                <p class="text-xs text-slate-500 mb-1">Laplace mean (σ = ${lapStd.toFixed(1)})</p>
+                <p class="text-lg font-bold text-purple-500 tabular-nums">${lapMean.toFixed(1)}</p>
             </div>
             <div class="p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter text-center">
-                <p class="text-xs text-slate-500 mb-1">Gaussian Mean (σ=${gauStd.toFixed(1)})</p>
-                <p class="text-lg font-bold text-blue-500">${gauMean.toFixed(1)}</p>
+                <p class="text-xs text-slate-500 mb-1">Gaussian mean (σ = ${gauStd.toFixed(1)})</p>
+                <p class="text-lg font-bold text-blue-500 tabular-nums">${gauMean.toFixed(1)}</p>
             </div>
-            <div class="p-3 rounded-lg bg-gradient-to-r from-purple-500/10 to-red-500/10 border border-purple-500/20 text-center">
-                <p class="text-xs text-slate-500 mb-1">Privacy Budget Spent</p>
-                <p class="text-lg font-bold text-red-500">ε = ${seqComposition.toFixed(1)}</p>
-                <p class="text-xs text-slate-400 mt-1">Sequential composition<br>Advanced: ε ≈ ${Math.min(advComposition, seqComposition).toFixed(1)}</p>
+            <div class="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-center">
+                <p class="text-xs text-slate-500 mb-1">Budget spent</p>
+                <p class="text-lg font-bold text-red-500 tabular-nums">ε = ${dpEpsilonSpent.toFixed(1)} / ${cap}</p>
+                <p class="text-[10px] text-slate-400 mt-1">${dpQueriesReleased} releases</p>
             </div>
-        `;
+            <div class="col-span-2 p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
+                <p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Composition</p>
+                <div class="grid grid-cols-2 gap-2 text-xs tabular-nums">
+                    <div class="flex justify-between"><span class="text-slate-500">Sequential</span><span class="font-bold">ε = ${dpEpsilonSpent.toFixed(1)}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Advanced (δ' = ${DP_DELTA})</span><span class="font-bold ${advBeatsSeq ? 'text-green-500' : 'text-amber-500'}">ε ≈ ${adv.toFixed(1)}</span></div>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                    ${advBeatsSeq
+                    ? `Advanced composition is tighter here: over ${dpQueriesReleased} releases its √k growth beats the linear k·ε bound. That saving is bought by accepting an extra δ' failure probability.`
+                    : `Advanced composition is <strong>worse</strong> than sequential at these settings — its √(2k·ln(1/δ')) term only pays off once k is large relative to ε. Increase the query count or lower ε and watch it cross over. A tool that silently reported whichever bound looked better would hide exactly this.`}
+                </p>
+            </div>
+            <div class="col-span-2 p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter">
+                <p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Query sensitivity</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">${note}</p>
+            </div>`;
+
+            updateDPCost();
         }
 
         renderOriginalData();
+        updateDPCost();
     </script>
     <script>
         // ==================== MOBILE MENU ====================

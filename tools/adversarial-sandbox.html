@@ -480,10 +480,14 @@
                         });
 
                         const gradient = gradFunction(batch);
-                        // To minimize prob of true class, subtract gradient (untargeted attack pattern)
-                        // Actually FGSM usually adds eps*sign(grad_loss).
-                        // If we minimize prob, we act as if we are maximizing loss.
-                        // So we follow negative gradient of probability.
+                        // Untargeted FGSM. Textbook FGSM ascends the cross-entropy
+                        // loss: x' = x + eps*sign(grad_x CE). Here we descend the
+                        // predicted probability of the true class instead, which is
+                        // exactly equivalent: CE = -log(p_y), so
+                        // grad(CE) = -(1/p_y)*grad(p_y), and since p_y > 0 the 1/p_y
+                        // factor is positive and only the sign matters. Adding
+                        // eps*sign(grad CE) is therefore the same step as
+                        // subtracting eps*sign(grad p_y).
                         const noise = gradient.sign().mul(epsilon);
                         advBatch = batch.sub(noise);
 

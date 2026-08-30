@@ -257,6 +257,13 @@
                     <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Diversity Metrics Over
                         Time</h3>
                     <div id="diversityChart" class="h-[200px]"></div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                        These measure the <strong>feed</strong> the algorithm served, not your interest profile — a
+                        bubble is something the system builds around you. The purple line is your profile's diversity
+                        for contrast. Gini moves the opposite way from Shannon and Simpson: higher Gini means more
+                        concentration, so all three worsening looks like blue and green falling while red rises.
+                        Try <em>Chronological</em> mode as a control — with no personalisation the feed lines should
+                        stay flat while your profile still drifts.</p>
                 </div>
                 <div
                     class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
@@ -355,6 +362,7 @@
         let diversityHistory = [];
         let simpsonHistory = [];
         let giniHistory = [];
+        let profileHistory = [];
         let currentFeed = [];
         let autoRunInterval = null;
 
@@ -364,6 +372,7 @@
             diversityHistory = [];
             simpsonHistory = [];
             giniHistory = [];
+            profileHistory = [];
             generateFeed();
             renderUserProfile();
             updateMetrics();
@@ -437,7 +446,9 @@
             container.innerHTML = currentFeed.map((article, i) => {
                 const topic = TOPICS[article.topic];
                 // Check if any friend shared this article
-                const sharedBy = FRIENDS.filter(f => (f.bias[article.topic] || 0) >= 2);
+                const homophilyNow = parseInt(document.getElementById('homophily').value) / 100;
+                const sharedBy = homophilyNow < 0.15 ? []
+                    : FRIENDS.filter(f => (f.bias[article.topic] || 0) * homophilyNow >= 0.6);
                 const sharedTag = sharedBy.length > 0
                     ? `<span class="text-xs text-slate-400 ml-2">🔗 ${sharedBy[0].name} shared</span>` : '';
                 return `<div class="feed-card p-4 rounded-xl border border-slate-200 dark:border-slate-700/60 hover:border-primary/30 transition-all cursor-pointer" onclick="engageArticle('${article.topic}', ${i})" style="animation-delay: ${i * 50}ms">
@@ -463,8 +474,25 @@
         }
 
         function engageArticle(topic) {
-            userInterests[topic] = (userInterests[topic] || 1) + 0.5;
+            applyEngagement([topic], 0.5);
+            currentStep++;
+            generateFeed();
             renderUserProfile();
+            updateMetrics();
+            updateCharts();
+        }
+
+        // Engagement raises the clicked topics and decays everything else.
+        // Without decay, interests only ever grow, normalised shares move very
+        // slowly, and the simulation cannot actually close a bubble - it caps
+        // out around 0.66 normalised entropy no matter how long it runs.
+        const INTEREST_DECAY = 0.97;
+        const INTEREST_FLOOR = 0.05;
+        function applyEngagement(topics, amount) {
+            Object.keys(userInterests).forEach(t => {
+                userInterests[t] = Math.max(INTEREST_FLOOR, userInterests[t] * INTEREST_DECAY);
+            });
+            topics.forEach(t => { userInterests[t] = (userInterests[t] || INTEREST_FLOOR) + amount; });
         }
 
         function breakBubble() {
@@ -484,9 +512,7 @@
         function runStep() {
             // Simulate: user "engages" with top 2-3 articles
             const topArticles = currentFeed.slice(0, 2 + Math.floor(Math.random() * 2));
-            topArticles.forEach(a => {
-                userInterests[a.topic] = (userInterests[a.topic] || 1) + 0.3;
-            });
+            applyEngagement(topArticles.map(a => a.topic), 0.35);
 
             currentStep++;
             generateFeed();
@@ -503,7 +529,7 @@
                 document.getElementById('autoBtn').className = 'px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm flex items-center justify-center';
             } else {
                 autoRunInterval = setInterval(() => {
-                    if (currentStep >= 50) { clearInterval(autoRunInterval); autoRunInterval = null; return; }
+                    if (currentStep >= 100) { clearInterval(autoRunInterval); autoRunInterval = null; document.getElementById('autoBtn').innerHTML = '<span class="material-icons-outlined text-base">play_arrow</span>'; return; }
                     runStep();
                 }, 800);
                 document.getElementById('autoBtn').innerHTML = '<span class="material-icons-outlined text-base">pause</span>';
@@ -532,29 +558,50 @@
             }).join('');
         }
 
-        function updateMetrics() {
-            document.getElementById('stepNum').textContent = currentStep;
-            const total = Object.values(userInterests).reduce((s, v) => s + v, 0);
-            const probs = Object.values(userInterests).map(v => v / total);
+        // Diversity of a topic distribution. The metrics below are computed on
+        // the FEED, because the feed narrowing is what "filter bubble" names.
+        // The previous version computed them on the user's interest profile,
+        // which meant the chronological control condition still showed drift.
+        function diversityStats(counts, topicKeys) {
+            const values = topicKeys.map(k => counts[k] || 0);
+            const total = values.reduce((s, v) => s + v, 0);
+            if (total === 0) return { shannon: 0, simpson: 0, gini: 1 };
+            const probs = values.map(v => v / total);
 
-            // Shannon entropy
             const entropy = -probs.reduce((s, p) => s + (p > 0 ? p * Math.log2(p) : 0), 0);
-            const maxEntropy = Math.log2(probs.length);
-            const diversity = (entropy / maxEntropy).toFixed(3);
+            const shannon = entropy / Math.log2(probs.length);
 
-            // Simpson diversity index: 1 - sum(p^2)
-            const simpson = (1 - probs.reduce((s, p) => s + p * p, 0)).toFixed(3);
+            const simpson = 1 - probs.reduce((s, p) => s + p * p, 0);
 
-            // Gini coefficient
             const sorted = [...probs].sort((a, b) => a - b);
             const n = sorted.length;
             let giniSum = 0;
             sorted.forEach((p, i) => { giniSum += (2 * (i + 1) - n - 1) * p; });
-            const gini = (giniSum / (n * (probs.reduce((s, p) => s + p, 0) / n) * n)).toFixed(3);
+            const gini = giniSum / n;      // mean of probs is 1/n, so n^2 * mean = n
 
-            diversityHistory.push(parseFloat(diversity));
-            simpsonHistory.push(parseFloat(simpson));
-            giniHistory.push(parseFloat(gini));
+            return { shannon, simpson, gini };
+        }
+
+        function updateMetrics() {
+            document.getElementById('stepNum').textContent = currentStep;
+            const topicKeys = Object.keys(TOPICS);
+
+            // What the algorithm actually served this step.
+            const feedCounts = {};
+            currentFeed.forEach(a => { feedCounts[a.topic] = (feedCounts[a.topic] || 0) + 1; });
+            const feed = diversityStats(feedCounts, topicKeys);
+
+            // What the user's inferred profile looks like, for contrast.
+            const profile = diversityStats(userInterests, topicKeys);
+
+            const diversity = feed.shannon.toFixed(3);
+            const simpson = feed.simpson.toFixed(3);
+            const gini = feed.gini.toFixed(3);
+
+            diversityHistory.push(feed.shannon);
+            simpsonHistory.push(feed.simpson);
+            giniHistory.push(feed.gini);
+            profileHistory.push(profile.shannon);
 
             document.getElementById('diversityScore').textContent = diversity;
             document.getElementById('diversityBar').style.width = `${diversity * 100}%`;
@@ -573,9 +620,10 @@
             const layout = { margin: { t: 10, l: 30, r: 10, b: 30 }, paper_bgcolor: 'transparent', plot_bgcolor: 'transparent', font: { family: 'Space Grotesk', size: 10 } };
 
             Plotly.newPlot('diversityChart', [
-                { y: diversityHistory, name: 'Shannon', type: 'scatter', mode: 'lines', line: { color: '#137fec', width: 2 } },
-                { y: simpsonHistory, name: 'Simpson', type: 'scatter', mode: 'lines', line: { color: '#22c55e', width: 2, dash: 'dot' } },
-                { y: giniHistory, name: 'Gini', type: 'scatter', mode: 'lines', line: { color: '#ef4444', width: 2, dash: 'dash' } }
+                { y: diversityHistory, name: 'Feed · Shannon ↓ worse', type: 'scatter', mode: 'lines', line: { color: '#137fec', width: 2 } },
+                { y: simpsonHistory, name: 'Feed · Simpson ↓ worse', type: 'scatter', mode: 'lines', line: { color: '#22c55e', width: 2, dash: 'dot' } },
+                { y: giniHistory, name: 'Feed · Gini ↑ worse', type: 'scatter', mode: 'lines', line: { color: '#ef4444', width: 2, dash: 'dash' } },
+                { y: profileHistory, name: 'Your profile · Shannon', type: 'scatter', mode: 'lines', line: { color: '#a855f7', width: 1.5, dash: 'longdash' } }
             ], {
                 ...layout,
                 xaxis: { title: 'Step', color: isDark ? '#64748b' : '#94a3b8', gridcolor: isDark ? '#1e293b' : '#e2e8f0' },
