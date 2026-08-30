@@ -64,6 +64,23 @@ self.addEventListener('message', async (e) => {
         try {
             self.postMessage({ type: 'status', status: 'generating' });
 
+            // Count the prompt tokens actually fed to the model, template and
+            // all, so the UI can show a real input figure rather than a guess
+            // from character counts.
+            let inputTokens = null;
+            try {
+                const templated = generator.tokenizer.apply_chat_template(messages, {
+                    tokenize: false, add_generation_prompt: true
+                });
+                const encoded = generator.tokenizer(templated, { add_special_tokens: false });
+                inputTokens = encoded.input_ids.dims
+                    ? encoded.input_ids.dims[encoded.input_ids.dims.length - 1]
+                    : (encoded.input_ids.data ? encoded.input_ids.data.length : null);
+            } catch (e) {
+                inputTokens = null;   // tokenizer shape varies by model; not fatal
+            }
+            self.postMessage({ type: 'tokens', input: inputTokens });
+
             let outputText = "";
             let tokenCount = 0;
             let startTime = performance.now();
@@ -83,12 +100,12 @@ self.addEventListener('message', async (e) => {
                     self.postMessage({
                         type: 'chunk',
                         chunk: output,
-                        tps: tps.toFixed(1)
+                        tps: tps.toFixed(1),
+                        outputTokens: tokenCount
                     });
                 }
             });
 
-            // Format messages for the pipeline
             const apiMessages = messages.map(m => ({ role: m.role, content: m.content }));
 
             await generator(apiMessages, {
@@ -99,7 +116,7 @@ self.addEventListener('message', async (e) => {
                 stopping_criteria: stoppingCriteria
             });
 
-            self.postMessage({ type: 'complete' });
+            self.postMessage({ type: 'complete', outputTokens: tokenCount });
         } catch (err) {
             console.error("Generation error:", err);
             self.postMessage({ type: 'error', message: err.message || String(err) });

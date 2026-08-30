@@ -24,8 +24,14 @@ libraries are vendored in `vendor/` and the stylesheet is pre-built, so the
 toolkit works with no network connection.
 
 The one exception is the **LLM Ethical Sandbox**, which needs WebGPU and
-downloads roughly 1 GB of model weights from Hugging Face on first use. Plan
+downloads roughly 1.2 GB of model weights from Hugging Face on first use. Plan
 for that before running it with a full class on shared wifi.
+
+It runs a *reasoning* model: it writes a private `<think>` block before
+answering, often 500–2000 tokens, so first replies can take a while. The
+reasoning budget slider defaults to no cap, because a cap that fires mid-thought
+aborts generation before any answer is written. If that does happen, the reply
+offers a one-click retry that asks for a direct answer instead.
 
 ---
 

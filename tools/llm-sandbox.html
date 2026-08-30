@@ -196,13 +196,14 @@
                             <label for="thinkBudget"
                                 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Reasoning
                                 budget</label>
-                            <span id="thinkBudgetValue" class="text-xs text-primary font-medium">400 tokens</span>
+                            <span id="thinkBudgetValue" class="text-xs text-primary font-medium">No limit</span>
                         </div>
-                        <input type="range" id="thinkBudget" min="100" max="1500" step="50" value="400"
+                        <input type="range" id="thinkBudget" min="200" max="3000" step="100" value="3000"
                             class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary" />
                         <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">This is a reasoning model: it writes a
-                            private &lt;think&gt; block before answering. Long chains are the usual cause of a slow reply.
-                            Generation is cut off once reasoning passes this budget.</p>
+                            private &lt;think&gt; block before answering, often 500&ndash;2000 tokens. Slide left to cap it.
+                            At the far right there is no cap, which is the default &mdash; a cap that fires mid-thought
+                            leaves you with no answer at all.</p>
                     </div>
 
                     <div>
@@ -251,6 +252,27 @@
                             <span class="material-icons-outlined text-3xl mb-2" aria-hidden="true">check_circle</span>
                             <h4 class="text-sm font-medium mb-1">Model Ready</h4>
                             <p class="text-[10px] opacity-80" id="tpsCounter">Ready for inference</p>
+                        </div>
+
+                        <div id="tokenPanel"
+                            class="mt-3 p-3 rounded-lg bg-slate-50 dark:bg-surface-dark-lighter border border-slate-200 dark:border-slate-700">
+                            <p class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+                                Tokens</p>
+                            <div class="grid grid-cols-3 gap-2 text-center">
+                                <div>
+                                    <p class="text-[9px] text-slate-400 uppercase tracking-wide">In</p>
+                                    <p id="tokIn" class="text-sm font-bold text-slate-700 dark:text-slate-300 tabular-nums">&mdash;</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] text-slate-400 uppercase tracking-wide">Out</p>
+                                    <p id="tokOut" class="text-sm font-bold text-slate-700 dark:text-slate-300 tabular-nums">&mdash;</p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] text-slate-400 uppercase tracking-wide">Session</p>
+                                    <p id="tokTotal" class="text-sm font-bold text-primary tabular-nums">0</p>
+                                </div>
+                            </div>
+                            <p id="tokBreakdown" class="text-[10px] text-slate-400 mt-2 leading-snug"></p>
                         </div>
 
                         <div class="mt-3">
@@ -364,6 +386,20 @@
         let generationClock = null;
         let thinkTokens = 0;
         let thinkBudgetHit = false;
+        let inputTokens = null;
+        let outputTokens = 0;
+        let sessionTokens = 0;
+        let lastUserText = '';
+        let noThinkRetry = false;
+
+        // The slider's top position means "no cap". A cap that fires mid-thought
+        // aborts generation before the model writes anything, so capping is
+        // opt-in rather than the default.
+        const THINK_UNCAPPED = 3000;
+        function thinkBudget() {
+            const v = parseInt(thinkBudgetEl.value, 10);
+            return v >= THINK_UNCAPPED ? Infinity : v;
+        }
 
         // Check WebGPU Support
         if (!navigator.gpu) {
@@ -406,10 +442,17 @@
                     if (detail) detail.textContent = data.file
                         ? data.file.substring(data.file.lastIndexOf('/') + 1) : '';
                 }
+                else if (type === 'tokens') {
+                    inputTokens = data.input;
+                    updateTokenPanel();
+                }
                 else if (type === 'chunk') {
+                    if (typeof data.outputTokens === 'number') outputTokens = data.outputTokens;
                     handleChunk(data.chunk, data.tps);
+                    updateTokenPanel();
                 }
                 else if (type === 'complete') {
+                    if (typeof data.outputTokens === 'number') outputTokens = data.outputTokens;
                     finishGeneration();
                 }
                 else if (type === 'error') {
@@ -429,8 +472,10 @@
             tempValue.textContent = e.target.value;
         });
 
-        thinkBudgetEl.addEventListener('input', (e) => {
-            document.getElementById('thinkBudgetValue').textContent = e.target.value + ' tokens';
+        thinkBudgetEl.addEventListener('input', () => {
+            const b = thinkBudget();
+            document.getElementById('thinkBudgetValue').textContent =
+                b === Infinity ? 'No limit' : b + ' tokens';
         });
 
         // Chat logic
@@ -553,9 +598,8 @@
 
             if (currentParser.inThink) {
                 thinkTokens++;
-                const budget = parseInt(thinkBudgetEl.value, 10);
+                const budget = thinkBudget();
                 if (thinkTokens > budget && !thinkBudgetHit) {
-                    // Cut the model off rather than letting it reason forever.
                     thinkBudgetHit = true;
                     worker.postMessage({ type: 'stop' });
                 }
@@ -590,6 +634,70 @@
             if (atBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
+        // ---- token accounting ----------------------------------------------
+        // Counted by the tokenizer in the worker, not estimated from character
+        // length, so the numbers match what the model actually processed.
+        function updateTokenPanel() {
+            const el = id => document.getElementById(id);
+            el('tokIn').textContent = inputTokens === null ? '—' : inputTokens.toLocaleString();
+            el('tokOut').textContent = outputTokens ? outputTokens.toLocaleString() : '—';
+            el('tokTotal').textContent = sessionTokens.toLocaleString();
+
+            const reasoning = currentParser ? currentParser.reasoning.length : 0;
+            const answer = currentParser ? currentParser.content.length : 0;
+            el('tokBreakdown').textContent = (reasoning || answer)
+                ? `This reply: ~${thinkTokens} reasoning tokens, ${answer} characters of answer.`
+                : 'Input counts the system prompt, the whole conversation and the chat template.';
+        }
+
+        // When a cap does fire mid-thought there is no answer to show, so offer
+        // the one-click fix rather than only explaining the problem.
+        function offerDirectRetry(container) {
+            const wrap = document.createElement('div');
+            wrap.className = 'mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30';
+            wrap.innerHTML =
+                '<p class="text-xs text-amber-600 dark:text-amber-400 leading-relaxed mb-2">' +
+                'Generation stopped while the model was still reasoning, so there is no answer. ' +
+                'Either raise the reasoning budget in Model Controls, or ask for a direct answer:</p>' +
+                '<button type="button" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold">' +
+                'Retry without reasoning</button>';
+            wrap.querySelector('button').addEventListener('click', () => {
+                wrap.remove();
+                retryWithoutReasoning();
+            });
+            container.appendChild(wrap);
+        }
+
+        // Re-ask the same question with an explicit instruction to skip the
+        // think block. Nothing is injected into the model's output; it is just
+        // a differently-worded turn.
+        function retryWithoutReasoning() {
+            if (!lastUserText || isGenerating) return;
+            // Drop the failed exchange so history stays clean.
+            while (messages.length && messages[messages.length - 1].role !== 'user') messages.pop();
+            if (messages.length) messages.pop();
+
+            const direct = lastUserText +
+                '\n\n(Answer directly and concisely. Do not write a reasoning block.)';
+            const turn = buildMessages(direct);
+            messages.push({ role: 'user', content: direct });
+
+            const assistantEl = appendMessage('assistant', '');
+            assistantEl.id = 'msg-assistant';
+            isGenerating = true;
+            noThinkRetry = true;
+            currentParser = { reasoning: '', content: '', inThink: false, buf: '' };
+            generationStartedAt = Date.now();
+            thinkTokens = 0; thinkBudgetHit = false; outputTokens = 0;
+            updateInputs();
+            startGenerationClock();
+            worker.postMessage({
+                type: 'generate',
+                data: { messages: turn, temperature: parseFloat(tempSlider.value), max_new_tokens: 1024 }
+            });
+            ToolkitSession?.record('llm.retry_direct', {});
+        }
+
         // ---- generation lifecycle ------------------------------------------
         // A reasoning model can spend a long time inside <think> before any
         // visible text appears. Showing elapsed time and token count is the
@@ -600,9 +708,10 @@
                 if (!isGenerating) return;
                 const secs = Math.round((Date.now() - generationStartedAt) / 1000);
                 const phase = currentParser && currentParser.inThink ? 'Reasoning' : 'Writing';
-                const budget = parseInt(thinkBudgetEl.value, 10);
+                const budget = thinkBudget();
                 const extra = currentParser && currentParser.inThink
-                    ? ` · ${thinkTokens}/${budget} reasoning tokens` : '';
+                    ? ` · ${thinkTokens}${budget === Infinity ? '' : '/' + budget} reasoning tokens`
+                    : ` · ${outputTokens} tokens out`;
                 tpsCounter.textContent = `${phase} — ${secs}s${extra}`;
             }, 500);
         }
@@ -622,14 +731,13 @@
                 if (msgEl) {
                     const resp = msgEl.querySelector('.response-content');
                     if (!answer) {
-                        resp.innerHTML = '<span class="text-amber-500 text-sm">The model spent its whole budget reasoning and produced no answer. '
-                            + 'Raise the reasoning budget, lower the temperature, or ask something more specific.</span>';
-                    }
-                    if (thinkBudgetHit) {
+                        resp.innerHTML = '';
+                        offerDirectRetry(resp);
+                    } else if (thinkBudgetHit) {
                         const note = document.createElement('p');
                         note.className = 'text-[11px] text-amber-500 mt-2';
-                        note.textContent = 'Stopped early: reasoning passed the budget you set in Model Controls.';
-                        msgEl.querySelector('.response-content').appendChild(note);
+                        note.textContent = 'Reasoning was cut short by the budget set in Model Controls.';
+                        resp.appendChild(note);
                     }
                 }
                 ToolkitSession?.record('llm.reply', {
@@ -639,6 +747,8 @@
                     budgetHit: thinkBudgetHit
                 });
             }
+            sessionTokens += (inputTokens || 0) + (outputTokens || 0);
+            updateTokenPanel();
             const elapsed = generationStartedAt ? Math.round((Date.now() - generationStartedAt) / 1000) : null;
             currentParser = null;
             updateInputs();                       // this resets the status line…
@@ -712,6 +822,9 @@
             refreshSysState();
         });
 
+        updateTokenPanel();
+        thinkBudgetEl.dispatchEvent(new Event('input'));
+
         (function restoreSystemPrompt() {
             let saved = '';
             try { saved = localStorage.getItem(SYS_KEY) || ''; } catch (e) { }
@@ -763,6 +876,9 @@
 
             const currentTurnMsgs = buildMessages(text);
             messages.push({ role: 'user', content: text });
+            lastUserText = text;
+            noThinkRetry = false;
+            inputTokens = null; outputTokens = 0;
 
             appendMessage('user', text);
             userInput.value = '';
@@ -789,7 +905,7 @@
                 data: {
                     messages: currentTurnMsgs,
                     temperature: parseFloat(tempSlider.value),
-                    max_new_tokens: 1536
+                    max_new_tokens: 3072
                 }
             });
             renderExactPrompt();
