@@ -13,6 +13,13 @@
       "count": 20013,
       "mb": 7.63,
       "extendedVocabulary": true
+    },
+    {
+      "tier": "xl",
+      "dim": 300,
+      "count": 50000,
+      "mb": 57.22,
+      "extendedVocabulary": true
     }
   ]
 }

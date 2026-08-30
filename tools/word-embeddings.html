@@ -480,7 +480,10 @@
         // property they are told about.
         const TIERS = {
             small: { label: 'Small', file: 'small', dim: 50, words: '5k', bytes: 1.0 },
-            large: { label: 'Large', file: 'large', dim: 100, words: '20k', bytes: 7.6 }
+            large: { label: 'Large', file: 'large', dim: 100, words: '20k', bytes: 7.6 },
+            // 300d is the GloVe size people actually deploy. It is a big
+            // download on purpose: waiting for it is the point.
+            xl: { label: 'Full', file: 'xl', dim: 300, words: '50k', bytes: 57, confirm: true }
         };
 
         // A loaded tier is { dim, vocab, index, matrix, debiased }.
@@ -623,16 +626,17 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs text-slate-500 dark:text-slate-400 mr-1">Model:</span>
                     ${Object.keys(TIERS).map(chip).join('')}
-                    ${loaded.small && loaded.large
+                    ${Object.keys(TIERS).filter(t => loaded[t]).length > 1
                     ? `<button type="button" id="compareTiersBtn"
                             class="ml-auto px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors">
-                            Compare both models</button>`
+                            Compare loaded models</button>`
                     : ''}
                 </div>
                 <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">
-                    The small model is 1 MB and answers instantly. The large one is 7.6 MB and holds four times the
-                    vocabulary at twice the dimensions. Run the same query through both: what a model cannot represent
-                    is as much a design choice as what it can.</p>`;
+                    1 MB, 7.6 MB, 57 MB — the same algorithm at three scales. The small one answers instantly; the full
+                    one is the 300-dimension GloVe people actually deploy, and it makes you wait. Run the same query
+                    through each: what a model cannot represent is as much a design choice as what it can, and that
+                    choice is usually made on cost.</p>`;
 
             bar.querySelectorAll('.tier-btn').forEach(b => {
                 b.addEventListener('click', () => switchTier(b.dataset.tier, b));
@@ -647,11 +651,17 @@
                 ToolkitSession?.record('embeddings.tier', { tier: name, cached: true });
                 return;
             }
+            const spec = TIERS[name];
+            if (spec.confirm && !confirm(
+                `The ${spec.label} model is ${spec.bytes} MB — ${Math.round(spec.bytes / TIERS.small.bytes)}× the small one. ` +
+                `It downloads once and is then cached by your browser, but on a shared connection it can take a while. Continue?`)) {
+                return;
+            }
             const original = btn.textContent;
             btn.disabled = true;
             try {
                 await fetchTier(name, (got, total) => {
-                    btn.textContent = `Loading ${TIERS[name].label}… ${(got / 1048576).toFixed(1)} MB`;
+                    btn.textContent = `${spec.label}: ${(got / 1048576).toFixed(1)} / ${(total / 1048576).toFixed(0)} MB`;
                 });
                 useTier(name);
                 refreshActiveViews();
@@ -685,7 +695,7 @@
             const previous = activeTier;
             const rows = [];
 
-            for (const name of ['small', 'large']) {
+            for (const name of Object.keys(TIERS).filter(t => loaded[t])) {
                 useTier(name);
                 const missing = [w1, w2, w3].filter(w => !getEmbedding(w));
                 let nearest = null, weat = null;
@@ -717,7 +727,7 @@
             out.innerHTML = `
                 <div class="overflow-x-auto">
                 <table class="w-full text-xs">
-                    <caption class="sr-only">The same query run through both model tiers</caption>
+                    <caption class="sr-only">The same query run through each loaded model</caption>
                     <thead class="text-slate-400">
                         <tr class="border-b border-slate-200 dark:border-slate-700">
                             <th class="text-left py-2 pr-3 font-semibold">Model</th>
@@ -738,10 +748,14 @@
                 </table>
                 </div>
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
-                    Where the small model returns a worse neighbour, or cannot answer at all, that is capacity showing.
-                    Where its WEAT row reads <em>incomplete</em>, the test could not run because words the published
-                    method requires are missing from the vocabulary — a measurement that silently reports on fewer
-                    words than it claims is worse than one that refuses.</p>`;
+                    Where a smaller model returns a worse neighbour, or cannot answer at all, that is capacity
+                    showing. Where a WEAT row reads <em>incomplete</em>, the test could not run because words the
+                    published method requires are missing from that vocabulary — a measurement that silently reports on
+                    fewer words than it claims is worse than one that refuses.
+                    <br><br>
+                    Effect sizes are not directly comparable across dimensions: WEAT is standardised within a model, so
+                    a smaller <em>d</em> at 300d does not mean the larger model is less biased. Compare each model
+                    against itself, before and after debiasing.</p>`;
             ToolkitSession?.record('embeddings.compare', { query: `${w1}-${w2}+${w3}` });
         }
 
@@ -1318,8 +1332,15 @@
             return { accuracy: Math.max(agree, points.length - agree) / points.length, n: points.length };
         }
 
-        function runDebiasing() {
+        async function runDebiasing() {
             if (!isLoaded) return;
+
+            // Debiasing and clustering the full 50k x 300d model takes about
+            // half a second of straight-line work. Paint a status first and
+            // yield, so the button does not look like it hung.
+            const weatEl = document.getElementById('weatResults');
+            weatEl.innerHTML = `<p class="text-xs text-slate-400">Debiasing ${vocabSize.toLocaleString()} vectors and re-running the tests…</p>`;
+            await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 
             const missing = weatVocabReport();
 

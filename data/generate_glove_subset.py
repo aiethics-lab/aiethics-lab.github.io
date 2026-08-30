@@ -12,8 +12,9 @@ blocks the main thread.
 Two tiers are produced so the workbench is usable immediately and so the cost
 of a larger model is something a student can measure rather than be told:
 
-    glove-small.bin    5,000 words x 50d    ~1 MB
-    glove-large.bin    20,000 words x 100d  ~7.6 MB
+    glove-small.bin     5,000 words x 50d    ~1 MB
+    glove-large.bin    20,000 words x 100d   ~7.6 MB
+    glove-xl.bin       50,000 words x 300d  ~57 MB
 
 The binary layout for each is vocab_size * dim float32, little-endian and
 row-major, paired with a JSON vocabulary in row order. Loading is a fetch plus
@@ -49,6 +50,11 @@ TIERS = [
     # single-tier build did without saying so.
     {"dim": 50,  "vocab": 5000,  "suffix": "small", "extended": False},
     {"dim": 100, "vocab": 20000, "suffix": "large", "extended": True},
+    # The full-size tier: GloVe's 300d vectors, the ones people actually deploy.
+    # 57 MB is deliberately uncomfortable - a student who waits for it has
+    # learned something about the cost of the models they read about. It stays
+    # under GitHub's 100 MB per-file limit.
+    {"dim": 300, "vocab": 50000, "suffix": "xl", "extended": True},
 ]
 
 # Pinned into EVERY tier: without these the basic demos cannot run at all.

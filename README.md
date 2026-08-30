@@ -83,13 +83,28 @@ them is part of the lesson:
 | --- | --- | --- | --- | --- |
 | Small | 5,061 words | 50d | 1.0 MB | on page open |
 | Large | 20,013 words | 100d | 7.6 MB | on demand |
+| Full | 50,000 words | 300d | 57 MB | on demand, with a confirmation |
 
-The small model is ready immediately so nobody waits to start working. The large
-one is fetched when a student asks for it, and both stay live so the same query
-can be run through each. **Compare both models** puts them side by side.
+The small model is ready immediately so nobody waits to start working. The others
+are fetched when a student asks for them, all loaded tiers stay live, and
+**Compare loaded models** runs the same query through each and shows the results
+side by side. The Full tier is GloVe's 300-dimension vectors, the size people
+actually deploy; it is a big download on purpose.
 
-The gap is real, not decorative. `paris - france + japan` returns
-`tokyo, shanghai` on the small model and `tokyo, osaka` on the large one. And
+The gap is real, not decorative:
+
+```
+einstein - scientist + painter
+  Small  not in vocabulary
+  Large  picasso, painters, painting
+  Full   picasso, painters, expressionist
+
+paris - france + japan
+  Small  tokyo, shanghai      <- wrong country on the second neighbour
+  Large  tokyo, osaka
+```
+
+And
 Caliskan's WEAT 6 cannot run at all on the small tier: seven of its eight female
 target names fall outside a 5,000-word frequency cut while all eight male names
 survive. The tool reports the test as unavailable and names the missing words,
